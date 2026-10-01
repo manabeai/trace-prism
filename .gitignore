@@ -1,0 +1,12 @@
+node_modules/
+sdk/rust/target/
+examples/target/
+.viz/
+dist/
+test-results/
+playwright-report/
+.impeccable/review/
+.impeccable/*.png
+.impeccable/*.log
+.impeccable/*.jsonl
+.impeccable/browser-profile/

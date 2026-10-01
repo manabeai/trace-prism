@@ -1,0 +1,102 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://algo-visualizer.local/protocol/v2/trace.schema.json",
+  "title": "viz.trace/v2 record",
+  "description": "One line of an NDJSON trace stream. Cross-record constraints are specified in README.md.",
+  "oneOf": [
+    { "$ref": "#/$defs/snapshot" },
+    { "$ref": "#/$defs/patch" }
+  ],
+  "$defs": {
+    "seq": { "type": "string", "pattern": "^(0|[1-9][0-9]*)$", "maxLength": 20 },
+    "runId": { "type": "string", "pattern": "^[A-Za-z0-9_-]{1,128}$" },
+    "spanScalar": {
+      "oneOf": [
+        { "type": "object", "properties": { "t": { "const": "null" }, "v": { "type": "null" } }, "required": ["t", "v"], "additionalProperties": false },
+        { "type": "object", "properties": { "t": { "const": "bool" }, "v": { "type": "boolean" } }, "required": ["t", "v"], "additionalProperties": false },
+        { "type": "object", "properties": { "t": { "const": "int" }, "v": { "type": "string", "pattern": "^-?(0|[1-9][0-9]*)$" } }, "required": ["t", "v"], "additionalProperties": false },
+        { "type": "object", "properties": { "t": { "const": "float" }, "v": { "type": "string", "pattern": "^-?(0|[1-9][0-9]*)(\\.[0-9]+)?([eE][+-]?[0-9]+)?$" } }, "required": ["t", "v"], "additionalProperties": false },
+        { "type": "object", "properties": { "t": { "const": "string" }, "v": { "type": "string" } }, "required": ["t", "v"], "additionalProperties": false }
+      ]
+    },
+    "value": {
+      "oneOf": [
+        { "type": "object", "properties": { "t": { "const": "null" } }, "required": ["t"], "additionalProperties": false },
+        { "type": "object", "properties": { "t": { "const": "bool" }, "v": { "type": "boolean" } }, "required": ["t", "v"], "additionalProperties": false },
+        { "type": "object", "properties": { "t": { "const": "int" }, "v": { "type": "string", "pattern": "^-?(0|[1-9][0-9]*)$" } }, "required": ["t", "v"], "additionalProperties": false },
+        { "type": "object", "properties": { "t": { "const": "float" }, "v": { "type": "string", "pattern": "^-?(0|[1-9][0-9]*)(\\.[0-9]+)?([eE][+-]?[0-9]+)?$" } }, "required": ["t", "v"], "additionalProperties": false },
+        { "type": "object", "properties": { "t": { "const": "string" }, "v": { "type": "string" } }, "required": ["t", "v"], "additionalProperties": false },
+        { "type": "object", "properties": { "t": { "const": "array" }, "items": { "type": "array", "items": { "$ref": "#/$defs/value" } } }, "required": ["t", "items"], "additionalProperties": false },
+        { "type": "object", "properties": { "t": { "const": "set" }, "items": { "type": "array", "items": { "$ref": "#/$defs/value" } } }, "required": ["t", "items"], "additionalProperties": false },
+        { "type": "object", "properties": { "t": { "const": "map" }, "entries": { "type": "array", "items": { "type": "object", "properties": { "key": { "$ref": "#/$defs/spanScalar" }, "value": { "$ref": "#/$defs/value" } }, "required": ["key", "value"], "additionalProperties": false } } }, "required": ["t", "entries"], "additionalProperties": false },
+        { "type": "object", "properties": { "t": { "const": "record" }, "fields": { "type": "array", "items": { "$ref": "#/$defs/field" } } }, "required": ["t", "fields"], "additionalProperties": false }
+      ]
+    },
+    "field": {
+      "type": "object",
+      "properties": {
+        "name": { "type": "string", "minLength": 1, "maxLength": 256 },
+        "sourceType": { "type": "string", "maxLength": 512 },
+        "value": { "$ref": "#/$defs/value" }
+      },
+      "required": ["name", "value"],
+      "additionalProperties": false
+    },
+    "source": {
+      "type": "object",
+      "properties": {
+        "file": { "type": "string" },
+        "line": { "type": "integer", "minimum": 1 },
+        "column": { "type": "integer", "minimum": 1 }
+      },
+      "required": ["file", "line"],
+      "additionalProperties": false
+    },
+    "put": {
+      "type": "object",
+      "properties": { "op": { "const": "put" }, "name": { "type": "string", "minLength": 1, "maxLength": 256 }, "sourceType": { "type": "string", "maxLength": 512 }, "value": { "$ref": "#/$defs/value" } },
+      "required": ["op", "name", "value"],
+      "additionalProperties": false
+    },
+    "drop": {
+      "type": "object",
+      "properties": { "op": { "const": "drop" }, "name": { "type": "string", "minLength": 1, "maxLength": 256 } },
+      "required": ["op", "name"],
+      "additionalProperties": false
+    },
+    "snapshot": {
+      "type": "object",
+      "properties": {
+        "format": { "const": "viz.trace/v2" },
+        "kind": { "const": "snapshot" },
+        "runId": { "$ref": "#/$defs/runId" },
+        "seq": { "$ref": "#/$defs/seq" },
+        "span": { "type": "array", "items": { "$ref": "#/$defs/spanScalar" } },
+        "from": { "$ref": "#/$defs/seq" },
+        "values": { "type": "array", "items": { "$ref": "#/$defs/field" } },
+        "source": { "$ref": "#/$defs/source" },
+        "producer": { "type": "string" },
+        "pid": { "type": "integer", "minimum": 0 }
+      },
+      "required": ["format", "kind", "runId", "seq", "span", "values"],
+      "additionalProperties": false
+    },
+    "patch": {
+      "type": "object",
+      "properties": {
+        "format": { "const": "viz.trace/v2" },
+        "kind": { "const": "patch" },
+        "runId": { "$ref": "#/$defs/runId" },
+        "seq": { "$ref": "#/$defs/seq" },
+        "span": { "type": "array", "items": { "$ref": "#/$defs/spanScalar" } },
+        "from": { "$ref": "#/$defs/seq" },
+        "ops": { "type": "array", "items": { "oneOf": [{ "$ref": "#/$defs/put" }, { "$ref": "#/$defs/drop" }] } },
+        "source": { "$ref": "#/$defs/source" },
+        "producer": { "type": "string" },
+        "pid": { "type": "integer", "minimum": 0 }
+      },
+      "required": ["format", "kind", "runId", "seq", "span", "ops"],
+      "additionalProperties": false
+    }
+  }
+}

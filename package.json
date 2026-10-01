@@ -1,0 +1,29 @@
+{
+  "name": "algo-vis",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "bin": { "algo-vis": "bin/algo-vis.mjs" },
+  "scripts": {
+    "dev": "vite --host 127.0.0.1 --port 5173 --strictPort",
+    "serve": "node bin/algo-vis.mjs serve",
+    "build": "tsc --noEmit && vite build",
+    "preview": "vite preview --host 127.0.0.1 --port 4173",
+    "test": "playwright test"
+  },
+  "dependencies": {
+    "@corvu/resizable": "^0.2.5",
+    "@fontsource-variable/ibm-plex-sans": "^5.3.0",
+    "@fontsource/ibm-plex-mono": "^5.3.0",
+    "@kobalte/core": "^0.13.14",
+    "@tabler/icons-solidjs": "^3.48.0",
+    "solid-js": "1.9.15"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.63.0",
+    "ajv": "^8.20.0",
+    "typescript": "7.0.2",
+    "vite": "8.3.1",
+    "vite-plugin-solid": "2.11.14"
+  }
+}

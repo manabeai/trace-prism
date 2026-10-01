@@ -1,0 +1,235 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1536" height="1024" viewBox="0 0 1536 1024">
+  <title>Algorithm Visualizer — Impeccableで改善したWorkspaceのモック</title>
+  <desc>二分探索のStep 4。左に読みやすい等幅ソース、中央に配列・pointer・半開区間と装飾の差分、右に変数と選択要素、下に階層Timelineを配置する。サンプルデータによる静的なデザイン案。</desc>
+  <defs>
+    <style>
+      text { font-family: 'Noto Sans CJK JP', sans-serif; font-size: 14px; fill: #d4deed; }
+      .mono, .mono text { font-family: 'DejaVu Sans Mono', 'Noto Sans CJK JP', monospace; font-size: 13px; }
+      .dim { fill: #9aaac1; }
+      .white { fill: #f1f5f9; }
+      .blue { fill: #80b8ff; }
+      .teal { fill: #59d5b1; }
+      .amber { fill: #f4bd67; }
+      .previous-warm { fill: #d6bea1; }
+      .tiny { font-size: 12px; }
+      .small { font-size: 13px; }
+      .heading { font-size: 17px; font-weight: 600; fill: #edf2fb; }
+      .value { font-family: 'DejaVu Sans Mono', monospace; font-size: 24px; font-weight: 600; }
+      .data { font-family: 'DejaVu Sans Mono', 'Noto Sans CJK JP', monospace; font-variant-numeric: tabular-nums; }
+      .line { stroke: #2e3c52; stroke-width: 1; }
+      .panel { fill: #111a2a; stroke: #29344a; }
+    </style>
+    <marker id="pointer" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0 0L8 4L0 8Z" fill="#80b8ff"/>
+    </marker>
+  </defs>
+  <rect width="1536" height="1024" fill="#0b1220"/>
+
+  <!-- Application shell -->
+  <rect width="1536" height="52" fill="#101827"/>
+  <path d="M24 17h6v18h-6zm10 7h6v11h-6zm10-11h6v22h-6z" fill="#80b8ff"/>
+  <text x="63" y="33" class="white" style="font-size:21px;font-weight:700">viz</text>
+  <line x1="115" y1="15" x2="115" y2="37" class="line"/>
+  <text x="134" y="32" class="white">binary_search.rs</text>
+  <rect x="280" y="15" width="102" height="23" rx="5" fill="#1d2b41"/>
+  <text x="294" y="31" class="tiny dim">lower_bound</text>
+  <circle cx="1114" cy="27" r="4" fill="#59d5b1"/>
+  <text x="1127" y="32" class="small">記録完了</text>
+  <text x="1238" y="32" class="small">開く</text>
+  <text x="1301" y="32" class="small">書き出す</text>
+  <rect x="1401" y="12" width="112" height="29" rx="5" fill="#1b283d" stroke="#32415b"/>
+  <text x="1422" y="32" class="small">レイアウト</text>
+  <line x1="0" y1="52" x2="1536" y2="52" class="line"/>
+
+  <!-- Playback stays visible even when timeline is closed -->
+  <rect x="14" y="65" width="34" height="33" rx="5" fill="#172339"/>
+  <path d="M33 74l-8 8 8 8" fill="none" stroke="#b9c7de" stroke-width="2"/>
+  <rect x="56" y="65" width="48" height="33" rx="5" fill="#427cdb"/>
+  <path d="M75 73l13 9-13 9z" fill="#fff"/>
+  <rect x="112" y="65" width="34" height="33" rx="5" fill="#172339"/>
+  <path d="M125 74l8 8-8 8" fill="none" stroke="#b9c7de" stroke-width="2"/>
+  <text x="167" y="86" class="small">1.0×</text>
+  <text x="221" y="86" class="small dim">一時停止</text>
+  <line x1="299" y1="68" x2="299" y2="95" class="line"/>
+  <text x="320" y="87" class="white data" style="font-size:17px;font-weight:600">Step 4 / 5</text>
+  <text x="446" y="86">比較 #3</text>
+  <text x="534" y="86" class="dim small">二分探索</text>
+  <text x="1332" y="86" class="small">最新stepへ戻る</text>
+  <path d="M1476 81h14m-5-5l5 5-5 5" fill="none" stroke="#d4deed" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+
+  <!-- Source -->
+  <rect x="12" y="112" width="354" height="600" rx="2" class="panel"/>
+  <path d="M12 152h354" class="line"/>
+  <text x="30" y="138" class="white">Source</text>
+  <text x="116" y="138" class="dim">Objects</text>
+  <line x1="27" y1="151" x2="86" y2="151" stroke="#80b8ff" stroke-width="2"/>
+  <g fill="#9aaac1"><circle cx="326" cy="133" r="1.5"/><circle cx="332" cy="133" r="1.5"/><circle cx="338" cy="133" r="1.5"/></g>
+  <text x="29" y="177" class="small dim">main.rs</text>
+  <text x="215" y="177" class="tiny blue">記録地点: 16行</text>
+  <rect x="13" y="518" width="352" height="23" fill="#233c60"/>
+  <rect x="13" y="518" width="1" height="23" fill="#80b8ff"/>
+  <g class="mono">
+    <g fill="#61718c" text-anchor="end">
+      <text x="41" y="204" class="dim">01</text><text x="41" y="226" class="dim">02</text>
+      <text x="41" y="248" class="dim">03</text><text x="41" y="270" class="dim">04</text>
+      <text x="41" y="292" class="dim">05</text><text x="41" y="314" class="dim">06</text>
+      <text x="41" y="336" class="dim">07</text><text x="41" y="358" class="dim">08</text>
+      <text x="41" y="380" class="dim">09</text><text x="41" y="402" class="dim">10</text>
+      <text x="41" y="424" class="dim">11</text><text x="41" y="446" class="dim">12</text>
+      <text x="41" y="468" class="dim">13</text><text x="41" y="490" class="dim">14</text>
+      <text x="41" y="512" class="dim">15</text><text x="41" y="534" class="blue">16</text>
+      <text x="41" y="556" class="dim">17</text><text x="41" y="578" class="dim">18</text>
+      <text x="41" y="600" class="dim">19</text><text x="41" y="622" class="dim">20</text>
+      <text x="41" y="644" class="dim">21</text><text x="41" y="666" class="dim">22</text>
+      <text x="41" y="688" class="dim">23</text>
+    </g>
+    <g xml:space="preserve">
+      <text x="53" y="204">let a = vec![1, 3, 4, 6, 8, 9,</text>
+      <text x="53" y="226">             11, 15, 18, 21, 25, 30];</text>
+      <text x="53" y="248">let target = 11;</text>
+      <text x="53" y="270">let (mut l, mut r) = (0, a.len());</text>
+      <text x="53" y="292" class="teal">viz::vars!(l, r, target);</text>
+      <text x="53" y="314" class="teal">viz::view!("a", &amp;a);</text>
+      <text x="53" y="336" class="teal">viz::step!("初期状態");</text>
+      <text x="53" y="380" class="teal">let _s = viz::span!("二分探索");</text>
+      <text x="53" y="402">while l &lt; r {</text>
+      <text x="53" y="424">  let mid = l + (r - l) / 2;</text>
+      <text x="53" y="446" class="teal">  viz::vars!(l, r, mid, target);</text>
+      <text x="53" y="468" class="teal">  viz::mark!("mid", mid, on: "a");</text>
+      <text x="53" y="490" class="teal">  viz::range!("search", l..r,</text>
+      <text x="53" y="512" class="teal">              on: "a");</text>
+      <text x="53" y="534" class="white">  viz::step!("比較");</text>
+      <text x="53" y="578">  if a[mid] &lt; target {</text>
+      <text x="53" y="600">    l = mid + 1;</text>
+      <text x="53" y="622">  } else {</text>
+      <text x="53" y="644">    r = mid;</text>
+      <text x="53" y="666">  }</text>
+      <text x="53" y="688">}</text>
+    </g>
+  </g>
+
+  <!-- Main visualization -->
+  <rect x="378" y="112" width="792" height="600" rx="2" class="panel"/>
+  <line x1="378" y1="152" x2="1170" y2="152" class="line"/>
+  <text x="398" y="138" class="white">Array · a</text>
+  <line x1="393" y1="151" x2="475" y2="151" stroke="#80b8ff" stroke-width="2"/>
+  <path d="M1093 133h12m-6-6v12" fill="none" stroke="#9aaac1" stroke-width="1.5" stroke-linecap="round"/>
+  <g fill="#9aaac1"><circle cx="1138" cy="133" r="1.5"/><circle cx="1144" cy="133" r="1.5"/><circle cx="1150" cy="133" r="1.5"/></g>
+  <text x="404" y="183" class="small dim">12 elements</text>
+  <text x="1032" y="183" class="small dim">表示: セル</text>
+  <path d="M1119 177l4 4 4-4" fill="none" stroke="#9aaac1" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+  <text x="404" y="225" class="heading">探索区間</text>
+  <text x="497" y="225" class="teal data">[4, 6)</text>
+  <rect x="1020" y="205" width="124" height="29" rx="5" fill="#1c2940"/>
+  <text x="1039" y="225" class="small">target = 11</text>
+  <rect x="649" y="255" width="120" height="110" rx="7" fill="#133d3d"/>
+  <g text-anchor="middle" class="small">
+    <text x="439" y="283" class="dim">0</text><text x="499" y="283" class="dim">1</text>
+    <text x="559" y="283" class="dim">2</text><text x="619" y="283" class="dim">3</text>
+    <text x="679" y="283" class="teal">4</text><text x="739" y="283" class="blue">5</text>
+    <text x="799" y="283" class="dim">6</text><text x="859" y="283" class="dim">7</text>
+    <text x="919" y="283" class="dim">8</text><text x="979" y="283" class="dim">9</text>
+    <text x="1039" y="283" class="dim">10</text><text x="1099" y="283" class="dim">11</text>
+  </g>
+  <g fill="#1a263a" stroke="#334059">
+    <rect x="412" y="295" width="54" height="58" rx="5"/><rect x="472" y="295" width="54" height="58" rx="5"/>
+    <rect x="532" y="295" width="54" height="58" rx="5"/><rect x="592" y="295" width="54" height="58" rx="5"/>
+    <rect x="652" y="295" width="54" height="58" rx="5" fill="#1b4947" stroke="#419d8a"/>
+    <rect x="712" y="295" width="54" height="58" rx="5" fill="#264c7c" stroke="#80b8ff" stroke-width="2"/>
+    <rect x="772" y="295" width="54" height="58" rx="5"/><rect x="832" y="295" width="54" height="58" rx="5"/>
+    <rect x="892" y="295" width="54" height="58" rx="5"/><rect x="952" y="295" width="54" height="58" rx="5"/>
+    <rect x="1012" y="295" width="54" height="58" rx="5"/><rect x="1072" y="295" width="54" height="58" rx="5"/>
+  </g>
+  <g text-anchor="middle">
+    <text x="439" y="333" class="value dim">1</text><text x="499" y="333" class="value dim">3</text>
+    <text x="559" y="333" class="value dim">4</text><text x="619" y="333" class="value dim">6</text>
+    <text x="679" y="333" class="value white">8</text><text x="739" y="333" class="value white">9</text>
+    <text x="799" y="333" class="value dim">11</text><text x="859" y="333" class="value dim">15</text>
+    <text x="919" y="333" class="value dim">18</text><text x="979" y="333" class="value dim">21</text>
+    <text x="1039" y="333" class="value dim">25</text><text x="1099" y="333" class="value dim">30</text>
+  </g>
+  <path d="M649 256v117M769 256v117" fill="none" stroke="#59d5b1" stroke-width="1.5"/>
+  <text x="619" y="393" class="teal small data">l = 4</text><text x="774" y="393" class="teal small data">r = 6</text>
+  <path d="M739 405v-43" fill="none" stroke="#80b8ff" stroke-width="2" marker-end="url(#pointer)"/>
+  <rect x="695" y="414" width="89" height="28" rx="5" fill="#203d62"/>
+  <text x="712" y="433" class="blue small data">mid = 5</text>
+  <line x1="404" y1="505" x2="1144" y2="505" class="line"/>
+  <text x="404" y="540" class="white">前stepとの差分</text>
+  <text x="1144" y="540" class="tiny dim" text-anchor="end">配列の値は変更なし</text>
+  <text x="404" y="582" class="small dim">pointer</text>
+  <text x="490" y="582" class="data">mid</text>
+  <text x="702" y="582" class="blue data" style="font-size:17px">3 → 5</text>
+  <line x1="404" y1="599" x2="1144" y2="599" class="line"/>
+  <text x="404" y="628" class="small dim">range</text>
+  <text x="490" y="628" class="data">search</text>
+  <text x="702" y="628" class="teal data" style="font-size:17px">[0, 6) → [4, 6)</text>
+  <circle cx="410" cy="679" r="4" fill="#80b8ff"/><text x="423" y="684" class="tiny dim">pointer</text>
+  <circle cx="493" cy="679" r="4" fill="#59d5b1"/><text x="506" y="684" class="tiny dim">range</text>
+  <circle cx="568" cy="679" r="4" fill="#f4bd67"/><text x="581" y="684" class="tiny dim">値の変更</text>
+  <text x="993" y="684" class="tiny dim">半開区間 [l, r)</text>
+
+  <!-- Variables and linked selection -->
+  <rect x="1182" y="112" width="342" height="600" rx="2" class="panel"/>
+  <line x1="1182" y1="152" x2="1524" y2="152" class="line"/>
+  <text x="1201" y="138" class="white">Variables</text>
+  <g fill="#9aaac1"><circle cx="1492" cy="133" r="1.5"/><circle cx="1498" cy="133" r="1.5"/><circle cx="1504" cy="133" r="1.5"/></g>
+  <text x="1201" y="184" class="small dim">scope: 二分探索</text>
+  <text x="1201" y="220" class="tiny dim">名前</text><text x="1374" y="220" class="tiny dim">現在</text>
+  <text x="1460" y="220" class="tiny dim">前step</text>
+  <line x1="1198" y1="233" x2="1508" y2="233" class="line"/>
+  <rect x="1195" y="244" width="316" height="44" rx="4" fill="#352d23"/>
+  <text x="1211" y="272" class="data">l</text><text x="1395" y="272" class="amber data" text-anchor="end">4</text><text x="1491" y="272" class="previous-warm data" text-anchor="end">0</text>
+  <text x="1211" y="322" class="data">r</text><text x="1395" y="322" class="data" text-anchor="end">6</text><text x="1491" y="322" class="dim data" text-anchor="end">6</text>
+  <rect x="1195" y="344" width="316" height="44" rx="4" fill="#203551"/>
+  <text x="1211" y="372" class="blue data">mid</text><text x="1395" y="372" class="blue data" text-anchor="end">5</text><text x="1491" y="372" class="dim data" text-anchor="end">3</text>
+  <text x="1211" y="422" class="data">target</text><text x="1395" y="422" class="data" text-anchor="end">11</text><text x="1491" y="422" class="dim data" text-anchor="end">11</text>
+  <line x1="1198" y1="451" x2="1508" y2="451" class="line"/>
+  <text x="1201" y="482" class="white">Selection</text>
+  <text x="1201" y="521" class="white data" style="font-size:20px">a[5] = 9</text>
+  <text x="1201" y="554" class="blue small">pointer: mid</text>
+  <text x="1201" y="670" class="tiny dim">選択は各Widgetで共有</text>
+
+  <!-- Timeline: tree and positional strip -->
+  <rect x="12" y="724" width="1512" height="264" rx="2" class="panel"/>
+  <line x1="12" y1="764" x2="1524" y2="764" class="line"/>
+  <text x="31" y="750" class="white">Timeline</text><text x="133" y="750" class="dim">Logs  0</text>
+  <line x1="26" y1="763" x2="98" y2="763" stroke="#80b8ff" stroke-width="2"/>
+  <text x="1095" y="750" class="small dim">Into</text><text x="1160" y="750" class="small dim">Over</text>
+  <text x="1225" y="750" class="small dim">Out</text><text x="1380" y="750" class="small dim">5 steps</text>
+  <line x1="350" y1="765" x2="350" y2="987" class="line"/>
+  <text x="32" y="795" class="small dim">01</text><text x="68" y="795" class="small">初期状態</text>
+  <path d="M34 817l4 4 4-4" fill="none" stroke="#d4deed" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+  <text x="68" y="825" class="small">二分探索</text>
+  <path d="M61 837v115M61 851h10M61 881h10M61 911h10M61 941h10" fill="none" stroke="#33445e"/>
+  <text x="82" y="855" class="small dim">02</text><text x="115" y="855" class="small">比較 #1</text>
+  <text x="82" y="885" class="small dim">03</text><text x="115" y="885" class="small">比較 #2</text>
+  <rect x="72" y="894" width="264" height="29" rx="4" fill="#24416a"/>
+  <text x="82" y="915" class="small blue">04</text><text x="115" y="915" class="small white">比較 #3</text>
+  <text x="82" y="945" class="small dim">05</text><text x="115" y="945" class="small">探索終了</text>
+  <text x="384" y="800" class="small dim">二分探索</text>
+  <rect x="679" y="786" width="757" height="24" rx="4" fill="#182d44" stroke="#315074"/>
+  <text x="694" y="803" class="tiny blue">span</text>
+  <line x1="424" y1="863" x2="1436" y2="863" stroke="#34445c" stroke-width="3"/>
+  <line x1="424" y1="863" x2="1183" y2="863" stroke="#5b92db" stroke-width="3"/>
+  <line x1="1183" y1="822" x2="1183" y2="941" stroke="#80b8ff" stroke-dasharray="4 4" opacity="0.6"/>
+  <circle cx="424" cy="863" r="7" fill="#658dbc"/>
+  <circle cx="677" cy="863" r="7" fill="#658dbc"/>
+  <circle cx="930" cy="863" r="7" fill="#658dbc"/>
+  <circle cx="1183" cy="863" r="12" fill="#172b47" stroke="#80b8ff" stroke-width="2"/>
+  <circle cx="1183" cy="863" r="5" fill="#80b8ff"/>
+  <circle cx="1436" cy="863" r="7" fill="#26364f" stroke="#52637e"/>
+  <g text-anchor="middle">
+    <text x="424" y="894" class="small dim">初期状態</text><text x="677" y="894" class="small dim">比較 #1</text>
+    <text x="930" y="894" class="small dim">比較 #2</text><text x="1183" y="894" class="small blue">比較 #3</text>
+    <text x="1436" y="894" class="small dim">探索終了</text>
+    <text x="424" y="920" class="tiny dim data">l=0  r=12</text><text x="677" y="920" class="tiny dim data">mid=6</text>
+    <text x="930" y="920" class="tiny dim data">mid=3</text><text x="1183" y="920" class="tiny blue data">mid=5</text>
+    <text x="1436" y="920" class="tiny dim data">l=r=6</text>
+  </g>
+  <text x="384" y="967" class="tiny dim">左右キーでstep移動 · Spaceで再生 / 停止</text>
+  <text x="1183" y="967" class="tiny dim">各パネルは同じstepに同期</text>
+
+  <text x="16" y="1011" class="tiny dim">DESIGN DRAFT · 静的な画面案</text>
+  <text x="309" y="1011" class="tiny dim">binary-search.trace.jsonl</text>
+  <text x="1230" y="1011" class="tiny dim">Panelのタブをドラッグして配置</text>
+</svg>

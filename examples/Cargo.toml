@@ -1,0 +1,23 @@
+[package]
+name = "algo-vis-basic-example"
+version = "0.1.0"
+edition = "2021"
+
+[features]
+default = ["viz"]
+viz = ["dep:algo-vis"]
+
+[dependencies]
+algo-vis = { path = "../sdk/rust", optional = true }
+
+[[bin]]
+name = "basic"
+path = "basic.rs"
+
+[[bin]]
+name = "binary-search"
+path = "binary_search.rs"
+
+[[bin]]
+name = "abc007-c"
+path = "abc007_c.rs"
