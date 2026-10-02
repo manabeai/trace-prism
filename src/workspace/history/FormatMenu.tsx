@@ -1,8 +1,8 @@
 import { createSignal, For, Show } from 'solid-js';
 import { Dynamic } from 'solid-js/web';
 import { Popover } from '@kobalte/core/popover';
-import { IconCheck, IconChevronDown } from '@tabler/icons-solidjs';
-import { formatIcon, type FormatOption } from '../../presentations/values/registry';
+import { IconCheck, IconChevronDown, IconList } from '@tabler/icons-solidjs';
+import type { FormatOption } from '../../presentations/values/registry';
 import styles from './FormatMenu.module.css';
 
 export function FormatMenu(props: {
@@ -12,6 +12,7 @@ export function FormatMenu(props: {
   select: (format: string) => void;
 }) {
   const [open, setOpen] = createSignal(false);
+  const activeIcon = () => props.options.find((option) => option.id === props.format)?.icon ?? IconList;
   return (
     <Popover open={open()} onOpenChange={setOpen}>
       <Popover.Trigger
@@ -19,7 +20,7 @@ export function FormatMenu(props: {
         aria-label={`Change ${props.name} display format`}
         title={`${props.name}: ${props.options.find((item) => item.id === props.format)?.label}`}
       >
-        <Dynamic component={formatIcon(props.format)} size="17" stroke="1.8" />
+        <Dynamic component={activeIcon()} size="17" stroke="1.8" />
         <IconChevronDown size="12" stroke="1.8" />
       </Popover.Trigger>
       <Popover.Portal>

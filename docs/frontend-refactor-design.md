@@ -40,9 +40,10 @@ src/
     pollRuns.ts             ポーリングと停止処理
   presentations/
     values/
-      contract.ts           ValueFormat<T, Settings>
-      registry.ts           型ガード後の安全なディスパッチ
-      formats/              text・cells・bars・matrix 等の個別実装
+      contract.tsx          ValueFormat<T>・ValuePresentation<K>・型消去アダプター
+      registry.tsx          種別ごとのディスパッチと fallback
+      kinds/                Array・Set・Map・各 scalar の表示と適用条件
+      shared.tsx            共通の Text fallback
     algo/
       contract.ts           role・binding・解決結果
       registry.ts           定義の検索と binding 検証
@@ -86,32 +87,31 @@ type FrameKey = Readonly<{ runId: RunId; seq: Seq }>;
 
 ## 値の表示形式の拡張境界
 
-表示形式は安定 ID、名前、アイコン、型ガード、必要ならシリアライズ可能な設定、renderer を持つ descriptor として登録する。ジェネリックな登録関数が狭めた Value 型を内側に保持し、workspace には安全な共通インターフェースを公開する。
+観測値の `t` ごとに `ValuePresentation<K>` を定義する。各種別のファイルが表示形式、適用条件、セル描画を所有する。`registry.tsx` は種別へのディスパッチ、形式候補の列挙、選択形式が適用できない時の fallback だけを扱う。`Value` は判別可能な union とし、各ファイルの renderer には対応する `ValueOf<K>` が渡る。
 
 ```ts
-type ValueGuard<T extends Value> = (value: Value) => value is T;
-
-interface ValueFormat<T extends Value, Settings> {
+interface ValueFormat<T extends Value> {
   id: string;
-  label: string;
+  label: string | ((value: T) => string);
   icon: IconComponent;
-  accepts: ValueGuard<T>;
-  defaultFor?: (series: readonly Value[]) => boolean;
-  render: (input: {
-    value: T;
-    previous?: T;
-    settings: Settings;
-  }) => JSX.Element;
+  isApplicable?: (value: T) => boolean;
+  render: (value: T) => JSX.Element;
 }
 
-declare function defineValueFormat<T extends Value, Settings>(
-  format: ValueFormat<T, Settings>
-): RegisteredValueFormat;
+interface ValuePresentation<K extends Value['t']> {
+  kind: K;
+  formats: readonly ValueFormat<Extract<Value, { t: K }>>[];
+  fallback: ValueFormat<Extract<Value, { t: K }>>;
+}
+
+declare function defineValuePresentation<K extends Value['t']>(
+  definition: ValuePresentation<K>
+): ErasedValuePresentation<K>;
 ```
 
-`defineValueFormat` が型消去の境界で実行時のガードを担当し、呼び出し側は renderer 固有の型へ無検査でキャストしない。形式 ID は UI 設定に保存し、trace には入れない。ある seq の値が選択中の形式に合わなければ Text にフォールバックし、不一致を示す。空配列や途中で型が変わる変数についても、候補の適用条件をレジストリの契約とテストで定める。移行時は既存の初期表示とメニュー項目を保つ。将来 Adjacency list を追加する場合は二重配列に適用可能な別形式として登録し、二重配列を一律にグラフとは見なさない。
+`defineValuePresentation` が型消去の境界で種別と `isApplicable` を検証する。`registry.tsx` は全 protocol 種別の定義を `satisfies` で網羅し、形式 ID は UI 設定に保存して trace に入れない。ある seq の値が選択中の形式に合わなければ、その種別の Text fallback を使う。空配列や途中で型が変わる変数についても、候補の適用条件と fallback をテストする。将来 Adjacency list を追加する場合は Array のファイルに適用可能な形式を登録し、二重配列を一律にグラフとは見なさない。形式固有の設定は現行契約にまだ含めず、必要な形式を追加するときにシリアライズ形式と併せて設計する。
 
-既存の Number、Badge、Cells、Bars、Matrix、Set の Members/Count、Map の Entries/Count、Record の Fields、Text を個別実装へ移す。型付き差分は `trace/` で計算して表示入力に渡す。見た目から、記録されていない操作を事実として推定しない。
+Number、Badge、Cells、Bars、Matrix、Set の Members/Count、Map の Entries/Count、Record の Fields、Text は種別ごとのファイルへ移した。型付き差分は別の関心事として扱い、見た目から記録されていない操作を事実として推定しない。
 
 ## Algo View の拡張境界
 
@@ -148,13 +148,13 @@ const isNumericNestedArray = (value: Value): value is NumericNestedArray =>
     row => row.t === 'array' && row.items.every(cell => cell.t === 'int')
   );
 
-export const adjacencyListFormat = defineValueFormat<NumericNestedArray, undefined>({
+export const adjacencyListFormat: ValueFormat<ValueOf<'array'>> = {
   id: 'adjacency-list',
   label: 'Adjacency list',
   icon: IconGitBranch,
-  accepts: isNumericNestedArray,
-  render: ({ value }) => <AdjacencyList rows={value.items} />,
-});
+  isApplicable: isNumericNestedArray,
+  render: value => <AdjacencyList rows={value.items} />,
+};
 ```
 
 ```tsx
@@ -270,31 +270,21 @@ export class HttpRunRepository implements RunRepository {
 
 将来ファイル再生や WebSocket を追加しても、workspace は `RunRepository` だけを参照する。ポーリングの間隔と停止は `pollRuns.ts` が担当する。
 
-### 値の表示形式: 型ガードで安全にディスパッチ
+### 値の表示形式: 種別ごとの実装と型消去
 
 ```tsx
-// presentations/values/contract.tsx
-// 設定を持たない形式の登録関数。設定付き形式にも同じ検証境界を設ける。
-export function defineValueFormat<T extends Value>(
-  spec: ValueFormat<T, undefined>
-): RegisteredValueFormat {
-  return {
-    id: spec.id,
-    label: spec.label,
-    accepts: value => spec.accepts(value),
-    render: (value, previous) => {
-      if (!spec.accepts(value)) return <TextValue value={value} reason="incompatible" />;
-      return spec.render({
-        value,
-        previous: previous && spec.accepts(previous) ? previous : undefined,
-        settings: undefined,
-      });
-    },
-  };
-}
+// presentations/values/kinds/array.tsx
+export const arrayPresentation = defineValuePresentation<'array'>({
+  kind: 'array',
+  formats: [
+    { id: 'matrix', label: 'Matrix', isApplicable: isMatrix, render: value => <Matrix value={value} /> },
+    { id: 'bars', label: 'Bars', isApplicable: isNumericArray, render: value => <Bars value={value} /> },
+  ],
+  fallback: textFormat(),
+});
 ```
 
-この関数の内部だけが `Value` から `T` への絞り込みを扱う。Bars、Matrix、Text などは個別ファイルで定義し、履歴表には `switch (value.t)` や `switch (formatId)` を置かない。
+各ファイルは `ValuePresentation<K>` の契約に沿ってその種別のセル描画を定義する。`defineValuePresentation` は異種の定義を registry へ集約するためのアダプターであり、`kind` と `isApplicable` のガード、および `ValueOf<K>` から `Value` への型消去を一箇所に閉じ込める。戻り型の `ErasedValuePresentation` は registry 内部用で、各種別が直接実装するインターフェースではない。履歴表には `switch (value.t)` や `switch (formatId)` を置かない。
 
 ### Algo View: role の解決を描画から分離
 

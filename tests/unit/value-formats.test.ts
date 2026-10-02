@@ -1,7 +1,11 @@
-import { describe, expect, it } from 'vitest';
-import { formatOptions } from '../../src/presentations/values/registry';
+// @vitest-environment jsdom
+import { cleanup, render } from '@solidjs/testing-library';
+import { afterEach, describe, expect, it } from 'vitest';
+import { formatOptions, renderValue } from '../../src/presentations/values/registry';
 import type { Column, Frame, Value } from '../../src/trace/types';
 import { seqId } from '../../src/trace/ids';
+
+afterEach(cleanup);
 
 function options(value: Value): string[] {
   const column: Column = { name: 'x', kind: value.t };
@@ -32,5 +36,27 @@ describe('value formats', () => {
     ]);
     expect(options({ t: 'set', items: [] })).toEqual(['cells', 'count', 'text']);
     expect(options({ t: 'map', entries: [] })).toEqual(['entries', 'count', 'text']);
+  });
+
+  it('defines available formats for every protocol value kind', () => {
+    expect(options({ t: 'int', v: '3' })).toEqual(['number', 'text']);
+    expect(options({ t: 'float', v: '3.5' })).toEqual(['number', 'text']);
+    expect(options({ t: 'bool', v: true })).toEqual(['badge', 'text']);
+    expect(options({ t: 'string', v: 'hello' })).toEqual(['text']);
+    expect(options({ t: 'null' })).toEqual(['text']);
+    expect(options({ t: 'record', fields: [] })).toEqual(['fields', 'text']);
+  });
+
+  it('dispatches shared format IDs by value kind and falls back when a format no longer fits', () => {
+    const array = render(() => renderValue({ t: 'array', items: [{ t: 'int', v: '2' }] }, 'cells'));
+    expect(array.container.querySelector('.dg-array')?.textContent).toBe('2');
+    array.unmount();
+
+    const set = render(() => renderValue({ t: 'set', items: [{ t: 'int', v: '2' }] }, 'cells'));
+    expect(set.container.querySelector('.dg-set')?.textContent).toBe('2');
+    set.unmount();
+
+    const changedKind = render(() => renderValue({ t: 'map', entries: [] }, 'bars'));
+    expect(changedKind.container.querySelector('.lv-plain-value')?.textContent).toBe('{}');
   });
 });

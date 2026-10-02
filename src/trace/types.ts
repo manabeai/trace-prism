@@ -5,8 +5,11 @@ export type Scalar =
 export type Value =
   | { t: 'null' }
   | { t: 'bool'; v: boolean }
-  | { t: 'int' | 'float' | 'string'; v: string }
-  | { t: 'array' | 'set'; items: Value[] }
+  | { t: 'int'; v: string }
+  | { t: 'float'; v: string }
+  | { t: 'string'; v: string }
+  | { t: 'array'; items: Value[] }
+  | { t: 'set'; items: Value[] }
   | { t: 'map'; entries: { key: Scalar; value: Value }[] }
   | { t: 'record'; fields: Field[] };
 export type Field = { name: string; sourceType?: string; value: Value };
