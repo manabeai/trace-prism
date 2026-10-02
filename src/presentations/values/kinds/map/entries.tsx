@@ -1,17 +1,18 @@
 import { For, Show } from 'solid-js';
 import { IconLayoutGrid } from '@tabler/icons-solidjs';
 import { valueText } from '../../../../trace/value';
+import { changesAffectPath } from '../../../../trace/diff';
 import type { ValueFormat, ValueOf } from '../../contract';
 
 export const mapEntriesFormat = {
   id: 'entries',
   label: 'Entries',
   icon: IconLayoutGrid,
-  render: (value) => (
+  render: (value, changes) => (
     <div class="lv-entries">
       <For each={value.entries}>
         {(entry) => (
-          <code>
+          <code classList={{ 'is-updated': changesAffectPath(changes, [{ kind: 'key', key: entry.key }]) }}>
             <b>{valueText(entry.key)}</b>: {valueText(entry.value)}
           </code>
         )}

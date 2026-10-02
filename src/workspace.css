@@ -689,6 +689,11 @@
 .dg-set span {
   border-radius: 11px;
 }
+.dg-set span.is-updated {
+  border-color: var(--dg-accent);
+  color: var(--dg-accent);
+  font-weight: 700;
+}
 .dg-bool {
   display: inline-flex;
   align-items: center;
@@ -1745,6 +1750,11 @@ body {
   background: #f6f8fd;
   font: 10px var(--font-code);
 }
+.lv-matrix span.is-updated {
+  border-color: var(--dg-accent);
+  color: var(--dg-accent);
+  font-weight: 700;
+}
 .lv-entries {
   display: grid;
   gap: 3px;
@@ -1757,6 +1767,10 @@ body {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+.lv-entries code.is-updated {
+  color: var(--dg-accent);
+  font-weight: 700;
 }
 .lv-entries b {
   color: var(--dg-map);

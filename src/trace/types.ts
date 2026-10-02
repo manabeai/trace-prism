@@ -1,4 +1,5 @@
 import type { RunId, Seq } from './ids';
+import type { ValueChange } from './diff';
 
 export type Scalar =
   { t: 'null'; v: null } | { t: 'bool'; v: boolean } | { t: 'int' | 'float' | 'string'; v: string };
@@ -48,6 +49,7 @@ export type Frame = {
   source: string;
   values: Record<string, Field>;
   changed: string[];
+  deltas: Record<string, readonly ValueChange[]>;
 };
 export type Column = { name: string; kind: Value['t']; sourceType?: string };
 export type Materialized = { frames: Frame[]; columns: Column[] };

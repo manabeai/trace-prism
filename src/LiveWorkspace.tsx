@@ -22,16 +22,17 @@ import {
 import { spanKey, spanText } from './trace/value';
 import type { Field, Graph, GraphNode, HistoryNode } from './trace/types';
 import type { Seq } from './trace/ids';
+import type { ValueChange } from './trace/diff';
 import { formatOptions, renderValue } from './presentations/values/registry';
 import { AlgoCell, templates, validBindings, type Template } from './presentations/algo/registry';
 import { createWorkspaceController } from './workspace/controller';
 import { createHistoryTable } from './workspace/history/table-adapter';
 import { FormatMenu } from './workspace/history/FormatMenu';
 
-function ValueCell(props: { field?: Field; format: string; changed?: boolean }) {
-  const output = createMemo(() => renderValue(props.field?.value, props.format));
+function ValueCell(props: { field?: Field; format: string; changes?: readonly ValueChange[] }) {
+  const output = createMemo(() => renderValue(props.field?.value, props.format, props.changes));
   return (
-    <div class="dg-value-body" classList={{ 'is-updated': props.changed }}>
+    <div class="dg-value-body" classList={{ 'is-updated': Boolean(props.changes?.length) }}>
       {output()}
     </div>
   );
@@ -244,7 +245,7 @@ export default function LiveWorkspace() {
                 <ValueCell
                   field={node.frame.values[column.name]}
                   format={activeFormat(column)}
-                  changed={node.frame.changed.includes(column.name)}
+                  changes={node.frame.deltas[column.name]}
                 />
               </Show>
             </td>
@@ -523,6 +524,7 @@ export default function LiveWorkspace() {
                                   <ValueCell
                                     field={selected()?.values[column.name]}
                                     format={activeFormat(column)}
+                                    changes={selected()?.deltas[column.name]}
                                   />
                                 </div>
                               )}

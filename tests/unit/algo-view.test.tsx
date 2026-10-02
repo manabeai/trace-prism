@@ -21,6 +21,7 @@ function frame(mid: string): Frame {
     span: [],
     source: 'search.rs:1',
     changed: ['mid'],
+    deltas: {},
     values: {
       left: { name: 'left', value: { t: 'int', v: '0' } },
       right: { name: 'right', value: { t: 'int', v: '4' } },

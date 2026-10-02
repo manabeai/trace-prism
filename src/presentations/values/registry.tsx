@@ -1,6 +1,7 @@
 import type { JSX } from 'solid-js';
 import { IconList } from '@tabler/icons-solidjs';
 import type { Column, Frame, Value } from '../../trace/types';
+import type { ValueChange } from '../../trace/diff';
 import type { ErasedValuePresentation, FormatOption, ValueKind } from './contract';
 import { arrayPresentation } from './kinds/array';
 import { boolPresentation } from './kinds/bool';
@@ -37,9 +38,13 @@ export function formatOptions(column: Column, frames: Frame[]): FormatOption[] {
     .map((format) => ({ id: format.id, label: format.label(observed), icon: format.icon }));
 }
 
-export function renderValue(value: Value | undefined, formatId: string): JSX.Element {
+export function renderValue(
+  value: Value | undefined,
+  formatId: string,
+  changes: readonly ValueChange[] = [],
+): JSX.Element {
   if (!value) return <span class="dg-quiet">—</span>;
   const presentation = presentations[value.t];
   const format = presentation.formats.find((item) => item.id === formatId && item.accepts(value));
-  return (format ?? presentation.fallback).render(value);
+  return (format ?? presentation.fallback).render(value, changes);
 }

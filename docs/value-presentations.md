@@ -2,6 +2,8 @@
 
 Value の wire type と表示形式は別の軸。`array` を Matrix、Cells、Bars のいずれで表示するかは UI 設定で決め、trace には表示形式を記録しない。各セルはその時点の `Value` から描画する。
 
+値の差分は [値の差分と要素パス](value-differences.md) に従って ViewModel が生成する。表示形式の `render(value, changes)` は同じ差分を受け取り、必要なら要素単位の強調に使う。差分判定を個々の描画コンポーネントに重複実装しない。
+
 ## 配置と責務
 
 ```text

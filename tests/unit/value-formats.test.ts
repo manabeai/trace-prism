@@ -16,6 +16,7 @@ function options(value: Value): string[] {
     span: [],
     source: 'test.rs:1',
     changed: ['x'],
+    deltas: {},
     values: { x: { name: 'x', value } },
   };
   return formatOptions(column, [frame]).map((option) => option.id);
@@ -86,6 +87,130 @@ describe('value formats', () => {
       ),
     );
     expect(map.container.querySelector('.lv-entries code')?.textContent).toBe('"x": 7');
+  });
+
+  it('highlights only changed array elements in cells and bars', () => {
+    const value: Value = {
+      t: 'array',
+      items: [
+        { t: 'int', v: '2' },
+        { t: 'int', v: '3' },
+      ],
+    };
+    const changes = [
+      {
+        kind: 'updated' as const,
+        path: [{ kind: 'index' as const, index: 1 }],
+        before: { t: 'int' as const, v: '1' },
+        after: { t: 'int' as const, v: '3' },
+      },
+    ];
+    const cells = render(() => renderValue(value, 'cells', changes));
+    expect(
+      [...cells.container.querySelectorAll('.dg-array span')].map((cell) =>
+        cell.classList.contains('is-updated'),
+      ),
+    ).toEqual([false, true]);
+    cells.unmount();
+
+    const bars = render(() => renderValue(value, 'bars', changes));
+    expect(
+      [...bars.container.querySelectorAll('.dg-bar-item i')].map((bar) =>
+        bar.classList.contains('is-changed'),
+      ),
+    ).toEqual([false, true]);
+  });
+
+  it('passes typed nested paths to matrix, set, map, and record formats', () => {
+    const matrix = render(() =>
+      renderValue(
+        {
+          t: 'array',
+          items: [
+            {
+              t: 'array',
+              items: [
+                { t: 'int', v: '1' },
+                { t: 'int', v: '2' },
+              ],
+            },
+          ],
+        },
+        'matrix',
+        [
+          {
+            kind: 'updated',
+            path: [
+              { kind: 'index', index: 0 },
+              { kind: 'index', index: 1 },
+            ],
+            before: { t: 'int', v: '1' },
+            after: { t: 'int', v: '2' },
+          },
+        ],
+      ),
+    );
+    expect(
+      [...matrix.container.querySelectorAll('.lv-matrix span')].map((cell) =>
+        cell.classList.contains('is-updated'),
+      ),
+    ).toEqual([false, true]);
+    matrix.unmount();
+
+    const set = render(() =>
+      renderValue(
+        {
+          t: 'set',
+          items: [
+            { t: 'int', v: '1' },
+            { t: 'string', v: '1' },
+          ],
+        },
+        'cells',
+        [
+          {
+            kind: 'added',
+            path: [{ kind: 'member', value: { t: 'string', v: '1' } }],
+            after: { t: 'string', v: '1' },
+          },
+        ],
+      ),
+    );
+    expect(
+      [...set.container.querySelectorAll('.dg-set span')].map((cell) =>
+        cell.classList.contains('is-updated'),
+      ),
+    ).toEqual([false, true]);
+    set.unmount();
+
+    const map = render(() =>
+      renderValue(
+        { t: 'map', entries: [{ key: { t: 'string', v: 'k' }, value: { t: 'int', v: '2' } }] },
+        'entries',
+        [
+          {
+            kind: 'updated',
+            path: [{ kind: 'key', key: { t: 'string', v: 'k' } }],
+            before: { t: 'int', v: '1' },
+            after: { t: 'int', v: '2' },
+          },
+        ],
+      ),
+    );
+    expect(map.container.querySelector('.lv-entries code')?.classList.contains('is-updated')).toBe(true);
+    map.unmount();
+
+    const record = render(() =>
+      renderValue({ t: 'record', fields: [{ name: 'n', value: { t: 'int', v: '2' } }] }, 'fields', [
+        {
+          kind: 'updated',
+          path: [{ kind: 'field', name: 'n' }],
+          before: { t: 'int', v: '1' },
+          after: { t: 'int', v: '2' },
+        },
+      ]),
+    );
+    expect(record.container.querySelector('.lv-entries code')?.classList.contains('is-updated')).toBe(true);
   });
 
   it('rejects duplicate format IDs within one value kind', () => {

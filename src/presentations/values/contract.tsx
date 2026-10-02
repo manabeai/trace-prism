@@ -1,5 +1,6 @@
 import type { Component, JSX } from 'solid-js';
 import type { Value } from '../../trace/types';
+import type { ValueChange } from '../../trace/diff';
 import { valueText } from '../../trace/value';
 
 export type ValueKind = Value['t'];
@@ -11,7 +12,7 @@ export interface ValueFormat<T extends Value> {
   label: string | ((value: T) => string);
   icon: FormatIcon;
   isApplicable?: (value: T) => boolean;
-  render: (value: T) => JSX.Element;
+  render: (value: T, changes: readonly ValueChange[]) => JSX.Element;
 }
 
 export type FallbackFormat<T extends Value> = ValueFormat<T> & { isApplicable?: never };
@@ -27,7 +28,7 @@ export interface ErasedValueFormat {
   icon: FormatIcon;
   accepts: (value: Value) => boolean;
   label: (value: Value) => string;
-  render: (value: Value) => JSX.Element;
+  render: (value: Value, changes: readonly ValueChange[]) => JSX.Element;
 }
 
 export interface ErasedValuePresentation<K extends ValueKind = ValueKind> {
@@ -59,8 +60,12 @@ export function defineValuePresentation<K extends ValueKind>(
             ? format.label(value)
             : format.label
           : format.id,
-      render: (value) =>
-        accepts(value) ? format.render(value) : <code class="lv-plain-value">{valueText(value)}</code>,
+      render: (value, changes) =>
+        accepts(value) ? (
+          format.render(value, changes)
+        ) : (
+          <code class="lv-plain-value">{valueText(value)}</code>
+        ),
     };
   };
   return {
