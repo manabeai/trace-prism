@@ -6,4 +6,11 @@ import '@fontsource/ibm-plex-mono/latin-500.css';
 import '@fontsource/ibm-plex-mono/latin-600.css';
 import './workspace.css';
 
-render(() => <LiveWorkspace />, document.getElementById('root')!);
+const root = document.getElementById('root')!;
+if (window.location.pathname === '/flavors') {
+  void import('./design/FlavorGallery').then(({ default: FlavorGallery }) =>
+    render(() => <FlavorGallery />, root),
+  );
+} else {
+  render(() => <LiveWorkspace />, root);
+}
