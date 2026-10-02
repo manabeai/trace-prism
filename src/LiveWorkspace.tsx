@@ -1,4 +1,4 @@
-import { createMemo, createSignal, For, Show } from 'solid-js';
+import { createMemo, createSignal, For, Show, untrack } from 'solid-js';
 import type { JSX } from 'solid-js';
 import { Dynamic } from 'solid-js/web';
 import Resizable from '@corvu/resizable';
@@ -20,23 +20,15 @@ import {
   IconX,
 } from '@tabler/icons-solidjs';
 import { spanKey, spanText } from './trace/value';
-import type { Field, Graph, GraphNode, HistoryNode } from './trace/types';
+import type { Graph, GraphNode, HistoryNode } from './trace/types';
 import type { Seq } from './trace/ids';
-import type { ValueChange } from './trace/diff';
-import { formatOptions, renderValue } from './presentations/values/registry';
+import type { RunRepository } from './runs/RunRepository';
+import { formatOptions } from './presentations/values/registry';
 import { AlgoCell, templates, validBindings, type Template } from './presentations/algo/registry';
 import { createWorkspaceController } from './workspace/controller';
 import { createHistoryTable } from './workspace/history/table-adapter';
 import { FormatMenu } from './workspace/history/FormatMenu';
-
-function ValueCell(props: { field?: Field; format: string; changes?: readonly ValueChange[] }) {
-  const output = createMemo(() => renderValue(props.field?.value, props.format, props.changes));
-  return (
-    <div class="dg-value-body" classList={{ 'is-updated': Boolean(props.changes?.length) }}>
-      {output()}
-    </div>
-  );
-}
+import { ValueCell } from './workspace/history/ValueCell';
 function RelationGraph(props: { graph: Graph; selectedSeq: string; select: (seq: Seq) => void }) {
   const [zoom, setZoom] = createSignal(100);
   const nodes = createMemo(() => new Map(props.graph.nodes.map((node) => [node.id, node])));
@@ -137,7 +129,7 @@ function RelationGraph(props: { graph: Graph; selectedSeq: string; select: (seq:
   );
 }
 
-export default function LiveWorkspace() {
+export function LiveWorkspace(props: { repository?: RunRepository }) {
   const {
     runs,
     current,
@@ -178,7 +170,7 @@ export default function LiveWorkspace() {
     toggleView,
     setSelectedSeq,
     setFormats,
-  } = createWorkspaceController();
+  } = createWorkspaceController(untrack(() => props.repository));
   const historyTable = createHistoryTable(tree, collapsed);
   const count = (nodes: HistoryNode[]): number =>
     nodes.reduce((sum, node) => sum + (node.kind === 'frame' ? 1 : count(node.children)), 0);
@@ -739,3 +731,5 @@ export default function LiveWorkspace() {
     </div>
   );
 }
+
+export default LiveWorkspace;

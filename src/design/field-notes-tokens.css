@@ -1,0 +1,18 @@
+:root {
+  --fn-canvas: #f1f2ec;
+  --fn-sheet: #fafbf7;
+  --fn-sidebar: #e9ede6;
+  --fn-ink: #263e39;
+  --fn-muted: #52675c;
+  --fn-rule: #cbd6cc;
+  --fn-action: #3f7065;
+  --fn-action-hover: #315e53;
+  --fn-soft: #e2eee6;
+  --fn-copper: #ae724e;
+  --fn-copper-ink: #875737;
+  --fn-copper-soft: #f5ebe1;
+  --fn-error: #954f4e;
+  --fn-display: 'Newsreader Variable', Georgia, serif;
+  --fn-sans: 'IBM Plex Sans Variable', sans-serif;
+  --fn-mono: 'IBM Plex Mono', monospace;
+}

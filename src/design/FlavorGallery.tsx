@@ -108,7 +108,7 @@ function BarArray(props: { values: readonly number[]; selected?: number }) {
 
 export default function FlavorGallery() {
   const requested = new URLSearchParams(window.location.search).get('theme');
-  const [active, setActive] = createSignal<FlavorId>(isFlavor(requested) ? requested : 'prism');
+  const [active, setActive] = createSignal<FlavorId>(isFlavor(requested) ? requested : 'field-notes');
   const choose = (id: FlavorId) => {
     setActive(id);
     const url = new URL(window.location.href);
@@ -159,7 +159,13 @@ export default function FlavorGallery() {
           <strong>{selected().name}</strong>
           <span>Identical content and layout across all three previews</span>
         </div>
-        <span>Interactive tooltip: hover or focus the info icon</span>
+        {active() === 'field-notes' ? (
+          <a href="/catalog">
+            Explore the Field Notes catalog <IconChevronRight size="14" stroke="1.8" />
+          </a>
+        ) : (
+          <span>Interactive tooltip: hover or focus the info icon</span>
+        )}
       </div>
 
       <div class="fl-preview-scroll">

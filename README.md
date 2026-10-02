@@ -27,6 +27,8 @@ node bin/algo-vis.mjs run examples/abc007_c.rs < examples/fixtures/abc007-c-1.in
 
 `npm link` 後は `algo-vis run ...` と `algo-vis serve` でも呼び出せます。トレースだけ保存するなら `--no-serve` を付けます。記録は `.viz/runs/` にNDJSONとして残り、サーバーの再起動後も実行履歴に表示されます。
 
+通常の `cargo run` では、言語共通の受信サーバーを先に `algo-vis serve`（または `npm run serve`）で起動します。SDKは値の記録・送信のみを担当し、Webアプリの起動には関与しません。他言語のSDKも同じ受信サーバーを使う設計です。
+
 ## 自分の競プロコードで使う
 
 Cargoプロジェクトにローカルcrateを追加します。Cargoパッケージ名は `algo-vis`、Rustのimport名は `algo_vis` です。
@@ -79,6 +81,14 @@ cargo test --manifest-path examples/Cargo.toml
 
 フロントエンドは [リファクタリング設計](docs/frontend-refactor-design.md) に沿って、trace、実行取得、表示レジストリ、workspace controller を分離しています。[Value 表示形式の追加規則](docs/value-presentations.md) にファイル構成と追加手順を記載しています。履歴の span 展開は TanStack Table v9 の行モデルを使用します。既存 CSS を機能単位で CSS Modules へ移す方針のため、Tailwind は導入していません。
 
-画面の外観を選ぶための [デザインフレーバー比較](docs/design-flavor-study.md) は `/flavors` で開けます。同じ履歴を 3 種類のフォント・色・Tooltip で比較できます。現行 Workspace の外観には適用していません。
+採用した Field Notes の設計規則は [DESIGN.md](DESIGN.md) にまとめています。[デザインフレーバー比較](docs/design-flavor-study.md) は `/flavors` で開けます。同じ履歴を 3 種類のフォント・色・Tooltip で比較できます。
+
+現行画面の静止画は [履歴表](docs/field-notes/workspace-desktop.png)・[モバイル](docs/field-notes/workspace-mobile.png)・[表示形式メニュー](docs/field-notes/format-menu.png)・[遷移グラフ](docs/field-notes/transition-graph.png)で確認できます。
+
+Field Notes の[コンポーネントカタログ](docs/field-notes-catalog.md)は `/catalog` で開けます。色・書体・操作部品・値表示・履歴・オーバーレイを操作しながら確認できます。Storybook は `npm run storybook` で起動し、本番の Value 表示、書式メニュー、Algo View、Workspace の状態を固定 trace で確認できます。
+
+Storybook の構成、fixture、story の追加方法は [Storybook ガイド](docs/storybook.md)を参照してください。静的ビルドは `npm run build:storybook` で検証できます。
+
+手元で一連の動きを試す順序は [ローカル動作確認](docs/local-walkthrough.md)にまとめています。
 
 [値の差分と要素パス](docs/value-differences.md) は、直前 seq との構造比較、Array・Set・Map・Record の型付きパス、および要素別 seq 抽出の境界を定義しています。

@@ -1,6 +1,6 @@
 # デザインフレーバー比較
 
-選定前の視覚サンプル。`npm run dev` のあと `/flavors` を開く。同じ実行履歴・列・タイムライン・値の詳細を 3 案で切り替えられる。URL の `?theme=prism`、`?theme=graphite`、`?theme=field-notes` で案を直接指定できる。Info アイコンの Tooltip は hover / focus で開く。これらは独立した比較画面で、現行 Workspace の外観は変えていない。
+Field Notes 採用時に使用した比較サンプル。`npm run dev` のあと `/flavors` を開く。同じ実行履歴・列・タイムライン・値の詳細を 3 案で切り替えられる。URL の `?theme=prism`、`?theme=graphite`、`?theme=field-notes` で案を直接指定できる。Info アイコンの Tooltip は hover / focus で開く。比較画面は独立して残し、本画面は Field Notes を使用する。
 
 | 案 | フォント | 主な色 | 面・境界 | Tooltip |
 | --- | --- | --- | --- | --- |
@@ -10,4 +10,4 @@
 
 静止画: [Prism](flavors/prism.png)・[Tooltip](flavors/prism-tooltip.png)、[Graphite](flavors/graphite.png)・[Tooltip](flavors/graphite-tooltip.png)、[Field Notes](flavors/field-notes.png)・[Tooltip](flavors/field-notes-tooltip.png)。[モバイルでの比較画面](flavors/mobile.png)も確認できる。
 
-比較するときは、まず表の数値と選択行を長時間読めるか、次に Tooltip が履歴の主役を奪わず内容を伝えるかを見る。選んだ案を本画面に反映するときは、現在の `workspace.css` に混在する固定色をトークンへ寄せ、Kobalte の Tooltip / Popover / Dialog を同じ面・文字・影の規則で揃える。比較画面の CSS をそのまま本画面へコピーすることは前提にしない。
+選定後の実装では、配色と書体のトークンを本画面へ適用し、Value 表示・Kobalte の Popover / Dialog・関係グラフの面と状態を揃えた。比較画面の CSS は本画面へコピーせず、比較用として保持している。

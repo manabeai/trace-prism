@@ -130,7 +130,7 @@ async function serve() {
       const requested = decodeURIComponent(url.pathname);
       const path = resolve(
         distDir,
-        `.${requested === '/' || requested === '/flavors' ? '/index.html' : requested}`,
+        `.${requested === '/' || requested === '/flavors' || requested === '/catalog' ? '/index.html' : requested}`,
       );
       if (path !== distDir && !path.startsWith(distDir + sep)) {
         res.writeHead(403);

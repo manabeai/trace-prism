@@ -16,6 +16,7 @@ jobs:
       - run: npm ci
       - run: npm run check
       - run: npm run build
+      - run: npm run build:storybook
       - run: node protocol/v2/validate.test.mjs
       - run: npx playwright install --with-deps chromium
       - run: npm run test:e2e

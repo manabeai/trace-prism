@@ -14,6 +14,7 @@ import {
   type Template,
 } from '../presentations/algo/registry';
 import { HttpRunRepository } from '../runs/HttpRunRepository';
+import type { RunRepository } from '../runs/RunRepository';
 import { pollRuns } from '../runs/pollRuns';
 
 type Display = 'table' | 'graph';
@@ -35,7 +36,7 @@ const initialState = (): RunState => ({
   diffOnly: false,
 });
 
-export function createWorkspaceController() {
+export function createWorkspaceController(repository: RunRepository = new HttpRunRepository()) {
   const [runs, setRuns] = createSignal<Run[]>([]);
   const [runId, setRunId] = createSignal<RunId | null>(null);
   const [states, setStates] = createSignal<Record<string, RunState>>({});
@@ -87,7 +88,7 @@ export function createWorkspaceController() {
 
   onMount(() => {
     const stop = pollRuns(
-      new HttpRunRepository(),
+      repository,
       (result) => {
         setRuns(result.runs);
         setWarning(result.errors.join('; '));

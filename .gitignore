@@ -3,6 +3,7 @@ sdk/rust/target/
 examples/target/
 .viz/
 dist/
+storybook-static/
 test-results/
 playwright-report/
 .impeccable/review/

@@ -1,0 +1,184 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-10-02T21:49:59Z",
+  "title": "algo-vis Field Notes のデザインシステム",
+  "extensions": {
+    "colorMeta": {
+      "canvas": {
+        "role": "neutral",
+        "displayName": "紙面の下地"
+      },
+      "sheet": {
+        "role": "neutral",
+        "displayName": "記録の紙面"
+      },
+      "sidebar": {
+        "role": "neutral",
+        "displayName": "サイドバー"
+      },
+      "ink": {
+        "role": "neutral",
+        "displayName": "本文の墨色"
+      },
+      "muted": {
+        "role": "neutral",
+        "displayName": "補助文字"
+      },
+      "rule": {
+        "role": "neutral",
+        "displayName": "罫線"
+      },
+      "action": {
+        "role": "primary",
+        "displayName": "操作の緑"
+      },
+      "action-hover": {
+        "role": "primary",
+        "displayName": "濃い操作の緑"
+      },
+      "soft": {
+        "role": "neutral",
+        "displayName": "淡い緑"
+      },
+      "copper": {
+        "role": "secondary",
+        "displayName": "変化の銅色"
+      },
+      "copper-ink": {
+        "role": "secondary",
+        "displayName": "濃い銅色"
+      },
+      "copper-soft": {
+        "role": "secondary",
+        "displayName": "淡い銅色"
+      },
+      "error": {
+        "displayName": "エラー"
+      }
+    },
+    "typographyMeta": {
+      "display": {
+        "displayName": "Newsreader",
+        "purpose": "画面名と節見出し"
+      },
+      "body": {
+        "displayName": "IBM Plex Sans",
+        "purpose": "操作と説明"
+      },
+      "data": {
+        "displayName": "IBM Plex Mono",
+        "purpose": "seq・span・値"
+      }
+    },
+    "shadows": [
+      {
+        "name": "popover",
+        "value": "0 8px 22px #263e3926",
+        "purpose": "メニューを紙面から分離する"
+      },
+      {
+        "name": "dialog",
+        "value": "0 18px 45px #17282133",
+        "purpose": "ダイアログの前後関係を示す"
+      },
+      {
+        "name": "catalog-tooltip",
+        "value": "0 6px 16px #263e391f",
+        "purpose": "カタログのツールチップを紙面から分離する"
+      },
+      {
+        "name": "selected-view",
+        "value": "0 1px 3px #263e391a",
+        "purpose": "選択中の表示切り替えボタンを淡い緑のトラックから分ける"
+      }
+    ],
+    "breakpoints": [
+      {
+        "name": "workspace-compact",
+        "value": "950px"
+      },
+      {
+        "name": "workspace-small",
+        "value": "620px"
+      },
+      {
+        "name": "catalog-type-grid",
+        "value": "900px"
+      },
+      {
+        "name": "catalog-navigation",
+        "value": "650px"
+      }
+    ]
+  },
+  "components": [
+    {
+      "name": "主要ボタン",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "ダイアログの確定操作。緑の面と白文字を使う。",
+      "html": "<button class=\"ds-button-primary\">Add view</button>",
+      "css": ".ds-button-primary{background:var(--fn-action);color:#fff;border:1px solid var(--fn-action);border-radius:3px;padding:8px 12px;font:500 12px \"IBM Plex Sans Variable\",sans-serif;cursor:pointer}.ds-button-primary:hover{background:var(--fn-action-hover)}.ds-button-primary:focus-visible{outline:2px solid var(--fn-action);outline-offset:2px}"
+    },
+    {
+      "name": "補助ボタン",
+      "kind": "button",
+      "refersTo": "button-secondary",
+      "description": "ダイアログの補助操作。紙色の面と細い罫線を使う。",
+      "html": "<button class=\"ds-button-secondary\">Cancel</button>",
+      "css": ".ds-button-secondary{background:var(--fn-sheet);color:var(--fn-ink);border:1px solid var(--fn-rule);border-radius:3px;padding:8px 12px;font:500 12px \"IBM Plex Sans Variable\",sans-serif;cursor:pointer}.ds-button-secondary:hover{background:var(--fn-soft)}.ds-button-secondary:focus-visible{outline:2px solid var(--fn-action);outline-offset:2px}"
+    },
+    {
+      "name": "実行履歴項目",
+      "kind": "nav",
+      "description": "選択中の実行は淡い緑の面と左端の緑線で示す。",
+      "html": "<button class=\"ds-run-item\"><strong>binary-search.rs</strong><small>41 records · completed</small></button>",
+      "css": ".ds-run-item{position:relative;display:grid;gap:5px;width:220px;padding:10px 8px;background:var(--fn-soft);color:var(--fn-ink);border:0;border-bottom:1px solid var(--fn-rule);font:12px \"IBM Plex Sans Variable\",sans-serif;text-align:left;cursor:pointer}.ds-run-item::before{content:\"\";position:absolute;left:0;top:0;bottom:0;width:2px;background:var(--fn-action)}.ds-run-item strong{font:700 12px \"IBM Plex Mono\",monospace}.ds-run-item small{color:var(--fn-muted);font-size:10px}.ds-run-item:hover{background:var(--fn-sidebar)}.ds-run-item:focus-visible{outline:2px solid var(--fn-action);outline-offset:2px}"
+    },
+    {
+      "name": "値セル",
+      "kind": "custom",
+      "description": "等幅の値を並べ、変更された要素だけを銅色で示す。",
+      "html": "<span class=\"ds-value-cell\">15</span> <span class=\"ds-value-cell ds-value-changed\">19</span>",
+      "css": ".ds-value-cell{display:inline-grid;place-items:center;min-width:19px;height:21px;margin-right:3px;padding:0 3px;background:var(--fn-canvas);border:1px solid var(--fn-rule);color:var(--fn-ink);font:10px \"IBM Plex Mono\",monospace}.ds-value-changed{background:var(--fn-copper-soft);border-color:var(--fn-copper);color:var(--fn-copper-ink);font-weight:700}"
+    },
+    {
+      "name": "表示形式の選択肢",
+      "kind": "custom",
+      "description": "アイコンと名前を並べ、選択状態を淡い緑で示す。",
+      "html": "<button class=\"ds-format-option\"><svg viewBox=\"0 0 24 24\" width=\"16\" height=\"16\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" aria-hidden=\"true\"><rect x=\"3\" y=\"3\" width=\"18\" height=\"18\" rx=\"2\"/><path d=\"M3 9h18M9 3v18M15 3v18\"/></svg><span>Cells</span><svg viewBox=\"0 0 24 24\" width=\"15\" height=\"15\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" aria-hidden=\"true\"><path d=\"m5 12 4 4L19 6\"/></svg></button>",
+      "css": ".ds-format-option{display:flex;align-items:center;gap:10px;width:180px;min-height:36px;padding:7px 9px;background:var(--fn-soft);border:0;border-radius:2px;color:var(--fn-action);font:600 12px \"IBM Plex Sans Variable\",sans-serif;text-align:left;cursor:pointer}.ds-format-option span{flex:1}.ds-format-option:hover{background:var(--fn-sidebar)}.ds-format-option:focus-visible{outline:2px solid var(--fn-action);outline-offset:2px}"
+    }
+  ],
+  "narrative": {
+    "northStar": "Field Notes",
+    "overview": "競技プログラミングの実行を読み返せる観察記録として扱う。紙に近い面、細い罫線、控えめな緑を基調にし、seq と値の変化を読むことに視線を集中させる。アプリ、カタログ、Storybook は色と書体のトークンを共有する。",
+    "keyCharacteristics": [
+      "紙面とサイドバーの穏やかな面差、細い罫線。",
+      "見出しは Newsreader、操作文は IBM Plex Sans、seq と値は IBM Plex Mono。",
+      "緑は操作と選択、銅色は値の変化と一部の型マーカーに割り当てる。"
+    ],
+    "rules": [
+      {
+        "name": "The Change Color Rule",
+        "body": "値セル内の銅色は「この観測点で変化した」という意味を保つ。色だけに依存せず、セルの形・境界・値も残す。",
+        "section": "colors"
+      },
+      {
+        "name": "The Three Voice Rule",
+        "body": "見出し・操作・データの三つの声を混ぜない。",
+        "section": "typography"
+      }
+    ],
+    "dos": [
+      "seq、span、値の階層を余白・罫線・書体で読ませる。",
+      "差分を要素単位で示し、時系列を遡っても同じ意味を保つ。",
+      "新しいコンポーネントを Storybook に実状態の story として追加する。"
+    ],
+    "donts": [
+      "アルゴリズムの意味を一般的な値セルに埋め込む。Algo View の責務として扱う。",
+      "銅色を通常のアクション色として使う。",
+      "比較資料の色・書体を現行画面へ混ぜる。"
+    ]
+  }
+}

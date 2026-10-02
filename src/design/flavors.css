@@ -236,6 +236,15 @@
   --fl-font: 'IBM Plex Sans Variable', sans-serif;
   --fl-display: 'Newsreader Variable', serif;
 }
+.fl-preview-label a {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: #3f7065;
+  font-size: 12px;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
 .fl-preview :focus-visible {
   outline: 2px solid var(--fl-accent);
   outline-offset: 2px;

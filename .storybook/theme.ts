@@ -1,0 +1,25 @@
+import { create } from 'storybook/theming';
+
+export const fieldNotesTheme = create({
+  base: 'light',
+  brandTitle: 'algo-vis · Field Notes',
+  fontBase: '"IBM Plex Sans Variable", sans-serif',
+  fontCode: '"IBM Plex Mono", monospace',
+  colorPrimary: '#3f7065',
+  colorSecondary: '#3f7065',
+  appBg: '#f1f2ec',
+  appContentBg: '#fafbf7',
+  appPreviewBg: '#f1f2ec',
+  appBorderColor: '#cbd6cc',
+  appBorderRadius: 2,
+  textColor: '#263e39',
+  textInverseColor: '#fafbf7',
+  barTextColor: '#52675c',
+  barSelectedColor: '#3f7065',
+  barHoverColor: '#263e39',
+  barBg: '#fafbf7',
+  inputBg: '#fafbf7',
+  inputBorder: '#cbd6cc',
+  inputTextColor: '#263e39',
+  inputBorderRadius: 2,
+});
