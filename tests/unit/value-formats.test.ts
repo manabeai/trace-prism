@@ -2,6 +2,8 @@
 import { cleanup, render } from '@solidjs/testing-library';
 import { afterEach, describe, expect, it } from 'vitest';
 import { formatOptions, renderValue } from '../../src/presentations/values/registry';
+import { defineValuePresentation } from '../../src/presentations/values/contract';
+import { textFormat } from '../../src/presentations/values/shared';
 import type { Column, Frame, Value } from '../../src/trace/types';
 import { seqId } from '../../src/trace/ids';
 
@@ -58,5 +60,41 @@ describe('value formats', () => {
 
     const changedKind = render(() => renderValue({ t: 'map', entries: [] }, 'bars'));
     expect(changedKind.container.querySelector('.lv-plain-value')?.textContent).toBe('{}');
+    changedKind.unmount();
+
+    const changedShape = render(() =>
+      renderValue({ t: 'array', items: [{ t: 'array', items: [{ t: 'int', v: '7' }] }] }, 'bars'),
+    );
+    expect(changedShape.container.querySelector('.lv-plain-value')?.textContent).toBe('[[7]]');
+  });
+
+  it('keeps each format renderer attached to its own value kind', () => {
+    const matrix = render(() =>
+      renderValue({ t: 'array', items: [{ t: 'array', items: [{ t: 'int', v: '7' }] }] }, 'matrix'),
+    );
+    expect(matrix.container.querySelector('.lv-matrix span')?.textContent).toBe('7');
+    matrix.unmount();
+
+    const bars = render(() => renderValue({ t: 'array', items: [{ t: 'int', v: '7' }] }, 'bars'));
+    expect(bars.container.querySelector('.dg-bar-item small')?.textContent).toBe('7');
+    bars.unmount();
+
+    const map = render(() =>
+      renderValue(
+        { t: 'map', entries: [{ key: { t: 'string', v: 'x' }, value: { t: 'int', v: '7' } }] },
+        'entries',
+      ),
+    );
+    expect(map.container.querySelector('.lv-entries code')?.textContent).toBe('"x": 7');
+  });
+
+  it('rejects duplicate format IDs within one value kind', () => {
+    expect(() =>
+      defineValuePresentation<'null'>({
+        kind: 'null',
+        formats: [textFormat()],
+        fallback: textFormat(),
+      }),
+    ).toThrow('Duplicate format ID for null');
   });
 });

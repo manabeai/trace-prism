@@ -14,10 +14,12 @@ export interface ValueFormat<T extends Value> {
   render: (value: T) => JSX.Element;
 }
 
+export type FallbackFormat<T extends Value> = ValueFormat<T> & { isApplicable?: never };
+
 export interface ValuePresentation<K extends ValueKind> {
   kind: K;
   formats: readonly ValueFormat<ValueOf<K>>[];
-  fallback: ValueFormat<ValueOf<K>>;
+  fallback: FallbackFormat<ValueOf<K>>;
 }
 
 export interface ErasedValueFormat {
@@ -39,6 +41,10 @@ export type FormatOption = { id: string; label: string; icon: FormatIcon };
 export function defineValuePresentation<K extends ValueKind>(
   definition: ValuePresentation<K>,
 ): ErasedValuePresentation<K> {
+  const ids = [...definition.formats, definition.fallback].map((format) => format.id);
+  if (new Set(ids).size !== ids.length) {
+    throw new Error(`Duplicate format ID for ${definition.kind}`);
+  }
   type SpecificValue = ValueOf<K>;
   const erase = (format: ValueFormat<SpecificValue>): ErasedValueFormat => {
     const accepts = (value: Value): value is SpecificValue =>

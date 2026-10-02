@@ -42,7 +42,7 @@ src/
     values/
       contract.tsx          ValueFormat<T>・ValuePresentation<K>・型消去アダプター
       registry.tsx          種別ごとのディスパッチと fallback
-      kinds/                Array・Set・Map・各 scalar の表示と適用条件
+      kinds/<kind>/         index.ts は登録、<format>.tsx は形式ごとの描画
       shared.tsx            共通の Text fallback
     algo/
       contract.ts           role・binding・解決結果
@@ -87,7 +87,7 @@ type FrameKey = Readonly<{ runId: RunId; seq: Seq }>;
 
 ## 値の表示形式の拡張境界
 
-観測値の `t` ごとに `ValuePresentation<K>` を定義する。各種別のファイルが表示形式、適用条件、セル描画を所有する。`registry.tsx` は種別へのディスパッチ、形式候補の列挙、選択形式が適用できない時の fallback だけを扱う。`Value` は判別可能な union とし、各ファイルの renderer には対応する `ValueOf<K>` が渡る。
+観測値の `t` ごとに `ValuePresentation<K>` を定義する。種別ディレクトリ内の `index.ts` は形式の登録順と fallback、各 `<format>.tsx` は適用条件とセル描画を所有する。追加規則は [Value 表示形式の追加規則](value-presentations.md) に記す。`registry.tsx` は種別へのディスパッチ、形式候補の列挙、選択形式が適用できない時の fallback だけを扱う。`Value` は判別可能な union とし、各ファイルの renderer には対応する `ValueOf<K>` が渡る。
 
 ```ts
 interface ValueFormat<T extends Value> {
@@ -101,7 +101,7 @@ interface ValueFormat<T extends Value> {
 interface ValuePresentation<K extends Value['t']> {
   kind: K;
   formats: readonly ValueFormat<Extract<Value, { t: K }>>[];
-  fallback: ValueFormat<Extract<Value, { t: K }>>;
+  fallback: FallbackFormat<Extract<Value, { t: K }>>;
 }
 
 declare function defineValuePresentation<K extends Value['t']>(
@@ -139,7 +139,7 @@ interface AlgoViewDefinition<R extends Record<string, ValueGuard<Value>>> {
 以下は API 形状の例であり、現時点では未実装。Matrix と隣接リストの両方に適合する二重配列でも、表示の解釈をレジストリと UI 設定に任せる。
 
 ```tsx
-// presentations/values/adjacency-list.tsx
+// presentations/values/kinds/array/adjacency-list.tsx
 type NumericArray = { t: 'array'; items: ({ t: 'int'; v: string })[] };
 type NumericNestedArray = { t: 'array'; items: NumericArray[] };
 
@@ -273,18 +273,15 @@ export class HttpRunRepository implements RunRepository {
 ### 値の表示形式: 種別ごとの実装と型消去
 
 ```tsx
-// presentations/values/kinds/array.tsx
+// presentations/values/kinds/array/index.ts
 export const arrayPresentation = defineValuePresentation<'array'>({
   kind: 'array',
-  formats: [
-    { id: 'matrix', label: 'Matrix', isApplicable: isMatrix, render: value => <Matrix value={value} /> },
-    { id: 'bars', label: 'Bars', isApplicable: isNumericArray, render: value => <Bars value={value} /> },
-  ],
+  formats: [arrayMatrixFormat, arrayCellsFormat, arrayBarsFormat],
   fallback: textFormat(),
 });
 ```
 
-各ファイルは `ValuePresentation<K>` の契約に沿ってその種別のセル描画を定義する。`defineValuePresentation` は異種の定義を registry へ集約するためのアダプターであり、`kind` と `isApplicable` のガード、および `ValueOf<K>` から `Value` への型消去を一箇所に閉じ込める。戻り型の `ErasedValuePresentation` は registry 内部用で、各種別が直接実装するインターフェースではない。履歴表には `switch (value.t)` や `switch (formatId)` を置かない。
+各形式は `ValueFormat<ValueOf<K>>` の契約を満たす。`defineValuePresentation` は異種の定義を registry へ集約するためのアダプターであり、`kind` と `isApplicable` のガード、および `ValueOf<K>` から `Value` への型消去を一箇所に閉じ込める。戻り型の `ErasedValuePresentation` は registry 内部用で、各種別が直接実装するインターフェースではない。履歴表には `switch (value.t)` や `switch (formatId)` を置かない。
 
 ### Algo View: role の解決を描画から分離
 

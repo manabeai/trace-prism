@@ -1,9 +1,9 @@
 import { IconList } from '@tabler/icons-solidjs';
 import type { Value } from '../../trace/types';
 import { valueText } from '../../trace/value';
-import type { ValueFormat } from './contract';
+import type { FallbackFormat } from './contract';
 
-export function textFormat<T extends Value>(): ValueFormat<T> {
+export function textFormat<T extends Value>(): FallbackFormat<T> {
   return {
     id: 'text',
     label: 'Text',
