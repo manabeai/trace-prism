@@ -35,5 +35,5 @@ export function Icon(props: {name: IconName; size?: number; class?: string}) {
   return <svg class={props.class} width={props.size ?? 18} height={props.size ?? 18} viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d={paths[props.name]} /></svg>;
 }
 export function IconButton(props: {name: IconName; label: string; onClick: () => void; disabled?: boolean; class?: string; children?: JSX.Element}) {
-  return <button type="button" class={`icon-button ${props.class ?? ''}`} aria-label={props.label} title={props.label} disabled={props.disabled} onClick={props.onClick}><Icon name={props.name} />{props.children}</button>;
+  return <button type="button" class={`icon-button ${props.class ?? ''}`} aria-label={props.label} title={props.label} disabled={props.disabled} onClick={() => props.onClick()}><Icon name={props.name} />{props.children}</button>;
 }

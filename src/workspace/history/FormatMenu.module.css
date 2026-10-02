@@ -1,0 +1,80 @@
+.trigger {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1px;
+  flex: none;
+  width: 35px;
+  height: 28px;
+  padding: 0;
+  border: 1px solid transparent;
+  border-radius: 4px;
+  background: transparent;
+  color: var(--dg-accent);
+}
+
+.trigger:hover,
+.trigger[data-expanded] {
+  border-color: #b9c6e5;
+  background: #e8edfb;
+}
+
+.popover {
+  --dg-ink: #26314a;
+  --dg-accent: #435b9d;
+  --dg-seam: #cdd5e8;
+  z-index: 100;
+  width: 205px;
+  padding: 9px;
+  border: 1px solid var(--dg-seam);
+  border-radius: 7px;
+  background: #fff;
+  color: var(--dg-ink);
+  box-shadow: 0 9px 28px #25365f2f;
+  font-family: 'IBM Plex Sans Variable', sans-serif;
+}
+
+.popover h2 {
+  margin: 3px 5px 8px;
+  font-size: 12px;
+  font-weight: 650;
+}
+
+.options {
+  display: grid;
+  gap: 2px;
+}
+
+.options button {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  min-height: 36px;
+  padding: 7px 9px;
+  border: 0;
+  border-radius: 4px;
+  background: transparent;
+  color: var(--dg-ink);
+  text-align: left;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.options button:hover,
+.options button.active {
+  background: #e9edfa;
+}
+
+.options button.active {
+  color: var(--dg-accent);
+  font-weight: 650;
+}
+
+.options button span {
+  flex: 1;
+}
+
+.options button svg:last-child {
+  margin-left: auto;
+}

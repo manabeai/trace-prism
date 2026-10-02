@@ -1,6 +1,8 @@
 # フロントエンドのリファクタリング設計
 
-状態: 設計段階。現行の画面、`viz.trace/v2`、Rust SDK、受信サーバーの動作は変えない。
+状態: 段階的に実装中。現行の画面、`viz.trace/v2`、Rust SDK、受信サーバーの動作は維持する。
+
+2026-10-02 の実装では、`trace/` の型・復元・span 階層・関係グラフ、schema に基づく decode、branded な `RunId` / `Seq`、`runs/` の取得ポートと直列ポーリング、実行別状態を持つ workspace controller、値形式と Algo View のレジストリを導入した。履歴行の階層展開には TanStack Table v9 の行モデルを使い、移行した Format Menu のスタイルは CSS Module に置いた。Vitest の単体・コンポーネントテスト、Playwright の操作・axe 検査、ESLint、Prettier、Husky、CI を品質ゲートとして実行する。旧モックのスタイルは現行表示を維持するため残している。残る性能計測と CSS Modules の展開は、機能単位で進める。
 
 ## 本質
 
@@ -402,7 +404,7 @@ controller は選択中の run、選択中の seq（明示的な「最新を追�
 
 純粋な処理と限定した Solid コンポーネントの契約には Vitest、一連の操作には Playwright を使う。単体テストの対象は v1/v2 decode、snapshot/patch の materialize、ブランド ID の不正値拒否と名前空間分離、大きな seq、`from` と時系列の独立、span の prefix と ID の再出現、行・列 ID の安定性、表示形式の適用判定とフォールバック、role の候補、binding の検証、実行ごとの状態分離。`RunId`、`Seq`、`ValueName`、`ColumnId` の混同には `@ts-expect-error` によるコンパイル時の否定例も置く。Format Menu と binding ダイアログの操作・アクセシビリティはコンポーネントテストで確認する。既存の Playwright テストは実行選択、表・グラフの切り替え、再生、形式変更、Algo View 追加の受け入れ基準として残す。表の renderer を置き換える前に desktop と compact layout の画面比較用画像を採取する。
 
-ESLint の flat config に `eslint-plugin-solid` の TypeScript 向けルール、特に `solid/reactivity`、`solid/no-destructure`、`solid/prefer-for` を入れる。TypeScript には `typescript-eslint`、型検査には `tsc --noEmit` を使う。`strict` を維持し、危険な添字アクセスを直してから `noUncheckedIndexedAccess` を追加する。1.0 未満の Solid plugin は minor version を固定する。2026-10-02 時点で、現在の TypeScript 7.0.2 は `typescript-eslint` 8.71.0 の対応宣言 `<6.1` から外れる。lint 導入前に TypeScript を 6.0.3 に固定して build とテストを確認し、peer dependency の不一致を無視してインストールしない。
+ESLint の flat config に `eslint-plugin-solid` の TypeScript 向けルール、特に `solid/reactivity`、`solid/no-destructure`、`solid/prefer-for` を入れる。TypeScript には `typescript-eslint`、型検査には `tsc --noEmit` を使う。`strict` を維持し、危険な添字アクセスを直してから `noUncheckedIndexedAccess` を追加する。1.0 未満の Solid plugin は minor version を固定する。Node 22.12.0 では `@typescript-eslint` 8.71.0 の間接依存が Node 22.13.0 を要求するため、TypeScript 5.9.3 と `typescript-eslint` 8.55.0 に固定し、Solid plugin の `@typescript-eslint/utils` も同版へ override する。
 
 Husky の `pre-commit` では lint-staged による staged file の ESLint/Prettier、プロジェクト全体の型検査、単体テストを実行する。CI の `npm run check` は全対象の lint・format check・型検査・単体テストを行い、さらに build、protocol テスト、Playwright、Rust の検査を実行する。Husky はチェックの起動役であり、CI の代わりではない。Git repository は今回作成したので、実装時には hook の動作をこの repository で確認できる。
 
@@ -410,7 +412,7 @@ Husky の `pre-commit` では lint-staged による staged file の ESLint/Prett
 
 ### 作業
 
-1. **基準点を固定する。** 現在の Git repository はまだ初回 commit がない。生成物を除外した内容を確認し、リファクタ前のコード、例題、protocol、デザイン資料を基準 commit にする。既存 UI の主要状態を Playwright のスクリーンショット比較で固定する。描画差の検査は同じブラウザ・フォント・OS 環境で行う。
+1. **基準点を固定する。** リファクタ前のコード、例題、protocol、デザイン資料は `8c4f294` に保存済み。既存 UI の主要状態を Playwright のスクリーンショット比較で固定する。描画差の検査は同じブラウザ・フォント・OS 環境で行う。
 2. **依存方向を機械的に検査する。** `trace/` から `workspace/`、`presentations/`、Solid、TanStack への import を ESLint の `no-restricted-imports` で禁止する。`runs/` も UI を import しない。設計書だけに書いた境界を CI で破れないようにする。
 3. **protocol schema を単一の真実源にする。** 既存の `protocol/v2/trace.schema.json` と Ajv を再利用し、browser 側の validator が必要なら Ajv の standalone code を build 時に生成する。別の Zod/Valibot schema を手書きで並行管理しない。v1 の互換入力は専用 decoder に閉じ込める。
 4. **取得の競合と失敗を設計する。** `RunRepository.list(signal?: AbortSignal)` にして不要な要求を中止可能にし、前のポーリングが終わる前に次の要求を重ねない。通信失敗、壊れた run、実行中の末尾更新を別の状態として扱い、選択中の run と seq を不用意に戻さない。
@@ -427,9 +429,11 @@ Husky の `pre-commit` では lint-staged による staged file の ESLint/Prett
 | hook・整形 | `husky`, `prettier`, `lint-staged` v16 | このリファクタで採用。staged file の整形と高速な品質ゲートを組む。 |
 | アクセシビリティ検査 | `@axe-core/playwright` | 主要画面・Dialog・Popover の E2E に追加する。手動のキーボード操作確認も残す。 |
 
-2026-10-02 時点の Node は `22.12.0`。ESLint 10 は `22.13.0` 以上、lint-staged 17 は `22.22.1` 以上、jsdom 30 は `22.22.2` 以上を要求するため、上表では互換のある ESLint 9、lint-staged 16、jsdom 28.1.0 を選ぶ。TypeScript は前述のとおり、`typescript-eslint` が対応する 6.0.3 に固定する。バージョンの選定は実装時に lockfile と実行結果で再確認する。
+2026-10-02 時点の Node は `22.12.0`。ESLint 10 は `22.13.0` 以上、lint-staged 17 は `22.22.1` 以上、jsdom 30 は `22.22.2` 以上を要求するため、互換のある ESLint 9、lint-staged 16、jsdom 28.1.0 を選んだ。TypeScript は前述のとおり 5.9.3 に固定した。lockfile にもバージョンを記録する。
 
 `ajv` は既存の依存を再利用する。`@tanstack/solid-virtual`、TanStack Query、MSW、別の schema ライブラリ、追加のグラフ描画ライブラリは初期移行には入れない。前者は計測後に判断し、他は現行の repository 境界、Playwright の route mock、既存 schema、SVG 描画で要求を満たせる。Prettier 導入時に旧ファイルを一括整形して意味変更と混ぜず、新規・移行済みファイルから順に対象へ加える。
+
+Tailwind は現時点では導入しない。既存画面の見た目はグローバル CSS と固有 class によって定まっており、今回の移行単位は feature 別 CSS Modules と共通 token にする。Tailwind を重ねると style の所有境界が二つになるため、移行後に utility class が必要な箇所を実測して再判断する。
 
 ## 移行順序と完了条件
 

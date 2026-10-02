@@ -7,16 +7,16 @@ const typeIcons:Record<ObjectDef['kind'],IconName>={integer:'integer',array:'arr
 type Viewer={run:Accessor<Run>;cursor:Accessor<number>;visible:Accessor<string[]>;changesOnly:Accessor<boolean>;selected:Accessor<string|null>;seek:(seq:number)=>void;inspect:(seq:number,id:string)=>void;showAll:()=>void};
 
 function History(props:{viewer:Viewer}) {
-  const v=props.viewer;
-  const trace=()=>v.run().trace;
+  const v=()=>props.viewer;
+  const trace=()=>v().run().trace;
   let scroller!:HTMLDivElement;
   let observer:ResizeObserver|undefined;
   let pending=0;
-  const columns=createMemo(()=>trace().objects.filter(object=>v.visible().includes(object.id)));
+  const columns=createMemo(()=>trace().objects.filter(object=>v().visible().includes(object.id)));
   const keepCurrentVisible=()=>{
     cancelAnimationFrame(pending);
     pending=requestAnimationFrame(()=>{
-      const row=scroller?.querySelector<HTMLElement>(`[data-seq="${v.cursor()}"]`);
+      const row=scroller?.querySelector<HTMLElement>(`[data-seq="${v().cursor()}"]`);
       if(!row)return;
       const rect=row.getBoundingClientRect(),area=scroller.getBoundingClientRect();
       const header=scroller.querySelector('thead')!.getBoundingClientRect().height;
@@ -25,21 +25,21 @@ function History(props:{viewer:Viewer}) {
     });
   };
   const attachScroller=(element:HTMLDivElement)=>{scroller=element;observer?.disconnect();observer=new ResizeObserver(keepCurrentVisible);observer.observe(element);keepCurrentVisible();};
-  createEffect(()=>{v.run();v.cursor();v.visible();v.changesOnly();keepCurrentVisible();});
+  createEffect(()=>{v().run();v().cursor();v().visible();v().changesOnly();keepCurrentVisible();});
   onCleanup(()=>{observer?.disconnect();cancelAnimationFrame(pending);});
   return <section class="history-panel" aria-label="値の履歴">
     <div class="history-intro"><span><Icon name="down" size={14}/>上から記録順</span><span class="wide-hint">セルを選ぶと、その時点の値を表示</span><span class="narrow-hint">横にスクロール / データで列を絞る</span></div>
-    <Show when={columns().length>0} fallback={<div class="empty-history"><Icon name="grid" size={30}/><h2>表示するデータを選択</h2><p>一覧から、履歴を並べたいデータを選んでください。</p><button class="primary-button" onClick={v.showAll}>すべて表示する</button></div>}>
+    <Show when={columns().length>0} fallback={<div class="empty-history"><Icon name="grid" size={30}/><h2>表示するデータを選択</h2><p>一覧から、履歴を並べたいデータを選んでください。</p><button class="primary-button" onClick={v().showAll}>すべて表示する</button></div>}>
       <div class="history-scroll" ref={attachScroller} tabIndex={0} aria-label="データの履歴をスクロール"><table class="history-table"><colgroup><col class="sequence-column"/><For each={columns()}>{object=><col class={`column-${object.kind}`}/>}</For></colgroup>
         <thead><tr><th scope="col" class="sequence-heading">seq<small>観測時点</small></th><For each={columns()}>{object=><th scope="col"><div class="object-heading"><Icon name={typeIcons[object.kind]} size={17}/><code>{object.name}</code></div><span class="object-type">{typeNames[object.kind]}</span></th>}</For></tr></thead>
-        <tbody><For each={trace().frames}>{(frame,index)=><tr data-seq={frame.seq} classList={{'current-row':v.cursor()===index()}} aria-current={v.cursor()===index()?'step':undefined}>
-          <th scope="row" class="sequence-cell"><button class="sequence-button" onClick={()=>v.seek(index())} aria-label={`記録 ${frame.seq}: ${frame.label}`}><span class="sequence-number"><span class="sequence-dot"/>{String(frame.seq).padStart(2,'0')}</span><span class="sequence-label">{frame.label}</span></button></th>
+        <tbody><For each={trace().frames}>{(frame,index)=><tr data-seq={frame.seq} classList={{'current-row':v().cursor()===index()}} aria-current={v().cursor()===index()?'step':undefined}>
+          <th scope="row" class="sequence-cell"><button class="sequence-button" onClick={()=>v().seek(index())} aria-label={`記録 ${frame.seq}: ${frame.label}`}><span class="sequence-number"><span class="sequence-dot"/>{String(frame.seq).padStart(2,'0')}</span><span class="sequence-label">{frame.label}</span></button></th>
           <For each={columns()}>{object=>{
             const previous=()=>trace().frames[index()-1]?.values[object.id];
             const value=()=>frame.values[object.id];
             const diff=createMemo(()=>changes(previous(),value()));
-            return <td data-object={object.id} classList={{'cell-unchanged':index()>0 && diff().length===0,'cell-inspected':v.cursor()===index() && v.selected()===object.id}}><button class="history-value-button" onClick={()=>v.inspect(index(),object.id)} aria-label={`${object.name} の記録 ${frame.seq} を詳しく見る`}>
-              <Show when={!v.changesOnly() || index()===0 || diff().length>0} fallback={<span class="same-value">—<span>変更なし</span></span>}>
+            return <td data-object={object.id} classList={{'cell-unchanged':index()>0 && diff().length===0,'cell-inspected':v().cursor()===index() && v().selected()===object.id}}><button class="history-value-button" onClick={()=>v().inspect(index(),object.id)} aria-label={`${object.name} の記録 ${frame.seq} を詳しく見る`}>
+              <Show when={!v().changesOnly() || index()===0 || diff().length>0} fallback={<span class="same-value">—<span>変更なし</span></span>}>
                 <ValueView value={value()} previous={previous()}/><div class="cell-diff"><Show when={diff().length>0} fallback={<span class="unchanged-label">{index()===0?'初期値':'変更なし'}</span>}><For each={diff().slice(0,2)}>{change=><ChangeText change={change}/>}</For><Show when={diff().length>2}><span class="more-changes">ほか{diff().length-2}件</span></Show></Show></div>
               </Show>
             </button></td>;
@@ -52,15 +52,15 @@ function History(props:{viewer:Viewer}) {
 }
 
 function Inspector(props:{viewer:Viewer}) {
-  const v=props.viewer;
-  const trace=()=>v.run().trace;
-  const current=()=>trace().frames[v.cursor()];
-  const selectedObjects=()=>v.selected()?trace().objects.filter(o=>o.id===v.selected()):trace().objects;
+  const v=()=>props.viewer;
+  const trace=()=>v().run().trace;
+  const current=()=>trace().frames[v().cursor()];
+  const selectedObjects=()=>v().selected()?trace().objects.filter(o=>o.id===v().selected()):trace().objects;
   return <section class="inspector" aria-label="選択時点の値"><div class="inspector-heading"><span>seq <strong>{String(current().seq).padStart(2,'0')}</strong></span><p>{current().label}</p></div><For each={selectedObjects()}>{object=>{
     const value=()=>current().values[object.id];
-    const previous=()=>trace().frames[v.cursor()-1]?.values[object.id];
+    const previous=()=>trace().frames[v().cursor()-1]?.values[object.id];
     const diff=()=>changes(previous(),value());
-    return <article class="inspector-object"><h2><Icon name={typeIcons[object.kind]} size={17}/><code>{object.name}</code><span>{typeNames[object.kind]}</span></h2><ValueView value={value()} previous={previous()} expanded/><p class="inspector-size">{object.kind==='integer'?'単独の整数':`${sizeOf(value())} ${object.kind==='map'?'entries':'elements'}`}</p><div class="inspector-diff"><h3>前の記録から</h3><Show when={diff().length>0} fallback={<p class="inspector-muted">{v.cursor()===0?'初期値の記録です。':'値の変更はありません。'}</p>}><For each={diff()}>{change=><div><ChangeText change={change}/></div>}</For></Show></div><Show when={object.kind==='set'||object.kind==='map'}><p class="inspector-note">{object.kind==='set'?'集合の所属で比較します。表示順は値で整列しています。':'キーで対応付けて比較します。表示順はキーで整列しています。'}</p></Show></article>;
+    return <article class="inspector-object"><h2><Icon name={typeIcons[object.kind]} size={17}/><code>{object.name}</code><span>{typeNames[object.kind]}</span></h2><ValueView value={value()} previous={previous()} expanded/><p class="inspector-size">{object.kind==='integer'?'単独の整数':`${sizeOf(value())} ${object.kind==='map'?'entries':'elements'}`}</p><div class="inspector-diff"><h3>前の記録から</h3><Show when={diff().length>0} fallback={<p class="inspector-muted">{v().cursor()===0?'初期値の記録です。':'値の変更はありません。'}</p>}><For each={diff()}>{change=><div><ChangeText change={change}/></div>}</For></Show></div><Show when={object.kind==='set'||object.kind==='map'}><p class="inspector-note">{object.kind==='set'?'集合の所属で比較します。表示順は値で整列しています。':'キーで対応付けて比較します。表示順はキーで整列しています。'}</p></Show></article>;
   }}</For></section>;
 }
 

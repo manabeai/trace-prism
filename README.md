@@ -62,9 +62,19 @@ SDKは [`viz.trace/v2` のsnapshot/patch](protocol/v2/README.md)を送信しま�
 
 現在のMVPはローカルのRust SDK、受信サーバー、保存、実行履歴、値の履歴表・表示形式、Algo Viewの二分探索・グリッド、関係グラフまで動作します。crateはローカルpath dependencyで、crates.ioには未公開です。固定データの[デザインモック](http://127.0.0.1:4317/?mock)と[コンポーネントカタログ](docs/design-catalog.md)も残しています。`/?legacy` は従来の操作モックです。
 
+## 開発と品質チェック
+
 ```sh
+npm run check
 npm run build
-npm test
-cargo test --manifest-path sdk/rust/Cargo.toml
+npm run test:e2e
 node protocol/v2/validate.test.mjs
+cargo fmt --manifest-path sdk/rust/Cargo.toml -- --check
+cargo clippy --manifest-path sdk/rust/Cargo.toml --all-targets -- -D warnings
+cargo test --manifest-path sdk/rust/Cargo.toml
+cargo test --manifest-path examples/Cargo.toml
 ```
+
+`npm run check` は ESLint、Prettier、アプリとテストの型検査、Vitest を実行します。Husky の pre-commit hook は staged file の整形・lint、型検査、単体テストを実行し、GitHub Actions ではビルド、protocol、Playwright、Rust も検査します。
+
+フロントエンドは [リファクタリング設計](docs/frontend-refactor-design.md) に沿って、trace、実行取得、表示レジストリ、workspace controller を分離しています。履歴の span 展開は TanStack Table v9 の行モデルを使用します。既存 CSS を機能単位で CSS Modules へ移す方針のため、Tailwind は導入していません。

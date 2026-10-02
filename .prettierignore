@@ -1,0 +1,17 @@
+node_modules/
+dist/
+test-results/
+playwright-report/
+sdk/rust/target/
+examples/target/
+.impeccable/
+# The existing UI and docs are formatted as their respective features move.
+src/*.ts
+src/*.tsx
+src/*.css
+docs/
+protocol/
+examples/
+sdk/
+tests/live.spec.ts
+tests/workspace.spec.ts

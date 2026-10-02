@@ -4,7 +4,7 @@ import { expect, test } from '@playwright/test';
 const records = readFileSync(new URL('../protocol/v2/example.ndjson', import.meta.url), 'utf8').trim().split('\n').map(line => JSON.parse(line));
 const startedAt = '2026-09-30T09:00:00.000Z';
 const runs = [
-  { id: 'with-from', source: 'binary.rs', input: 'sample.in', startedAt, durationMs: 8, status: 'completed', frames: records },
+  { id: 'with-from', source: 'binary.rs', input: 'sample.in', startedAt, durationMs: 8, status: 'completed', frames: records.map(record => ({ ...record, runId: 'with-from' })) },
   { id: 'without-from', source: 'hierarchy.rs', input: 'sample.in', startedAt, durationMs: 8, status: 'completed', frames: records.map(({ from: _from, ...record }) => ({ ...record, runId: 'without-from' })) },
 ];
 
@@ -31,6 +31,7 @@ test('v2 trace materializes in the live workspace and remains explorable', async
   await expect(page.locator('.dg-graph-meta strong')).toHaveText('Transition graph');
   await expect(page.locator('.dg-graph-node')).toHaveCount(4);
   await page.locator('.dg-run-list button').filter({ hasText: 'hierarchy.rs' }).click();
+  await page.getByRole('button', { name: 'Graph', exact: true }).click();
   await expect(page.locator('.dg-graph-meta strong')).toHaveText('Span hierarchy');
   expect(await page.locator('.dg-graph-node').count()).toBeGreaterThan(4);
   expect(errors).toEqual([]);
@@ -56,4 +57,32 @@ test('grid Algo View binds recorded matrix and position values', async ({ page }
   await page.getByRole('button', { name: 'Add column' }).click();
   await expect(page.locator('.dg-grid-view')).toHaveCount(2);
   await expect(page.locator('.dg-grid-view .current')).toHaveCount(2);
+});
+
+test('selection and display settings are retained separately for each run', async ({ page }) => {
+  await page.route('**/api/runs', route => route.fulfill({ json: { runs } }));
+  await page.goto('/');
+  await expect(page.locator('.dg-frame-row')).toHaveCount(4);
+  await page.getByRole('button', { name: 'Select record 1' }).click();
+  await page.getByRole('button', { name: 'Change a display format' }).click();
+  await page.getByRole('button', { name: 'Bars' }).click();
+  await page.locator('.dg-run-list button').filter({ hasText: 'hierarchy.rs' }).click();
+  await expect(page.locator('.dg-bars')).toHaveCount(0);
+  await page.getByRole('button', { name: 'Select record 2' }).click();
+  await page.locator('.dg-run-list button').filter({ hasText: 'binary.rs' }).click();
+  await expect(page.locator('.dg-frame-row.is-selected')).toContainText('1');
+  await expect(page.locator('.dg-bars')).toHaveCount(4);
+});
+
+test('nested span groups collapse and expand through the table row model', async ({ page }) => {
+  await page.route('**/api/runs', route => route.fulfill({ json: { runs: [runs[0]] } }));
+  await page.goto('/');
+  await expect(page.locator('.dg-frame-row')).toHaveCount(4);
+  const outer = page.locator('.dg-group-row button').filter({ hasText: '[0]' }).first();
+  await outer.click();
+  await expect(outer).toHaveAttribute('aria-expanded', 'false');
+  await expect(page.locator('.dg-frame-row')).toHaveCount(2);
+  await outer.click();
+  await expect(outer).toHaveAttribute('aria-expanded', 'true');
+  await expect(page.locator('.dg-frame-row')).toHaveCount(4);
 });
