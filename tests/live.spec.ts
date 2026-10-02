@@ -56,6 +56,26 @@ test('v2 trace materializes in the live workspace and remains explorable', async
   expect(errors).toEqual([]);
 });
 
+test('format popover stays open across run polling while moving into its options', async ({ page }) => {
+  let requests = 0;
+  await page.route('**/api/runs', (route) => {
+    requests += 1;
+    return route.fulfill({ json: { runs: [runs[0]] } });
+  });
+  await page.goto('/');
+  const trigger = page.getByRole('button', { name: 'Change a display format' });
+  await trigger.click();
+  const popover = page.getByRole('dialog', { name: 'Display a' });
+  await expect(popover).toBeVisible();
+
+  await expect.poll(() => requests, { timeout: 10_000 }).toBeGreaterThanOrEqual(3);
+  await expect(popover).toBeVisible();
+  await popover.getByRole('button', { name: 'Bars' }).hover();
+  await expect(popover).toBeVisible();
+  await popover.getByRole('button', { name: 'Bars' }).click();
+  await expect(page.locator('.dg-bars')).toHaveCount(4);
+});
+
 test('grid Algo View binds recorded matrix and position values', async ({ page }) => {
   const integer = (value: number) => ({ t: 'int', v: String(value) });
   const array = (items: unknown[]) => ({ t: 'array', items });

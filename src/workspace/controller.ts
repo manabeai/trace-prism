@@ -71,7 +71,26 @@ export function createWorkspaceController(repository: RunRepository = new HttpRu
 
   const model = createMemo(() => materialize(current()?.frames ?? []));
   const frames = createMemo(() => model().frames);
-  const columns = createMemo(() => model().columns);
+  // Keep keyed header components mounted when polling rematerializes the same columns.
+  const columnModel = createMemo<{ runId: RunId | null; columns: Column[] }>((previous) => {
+    const runId = current()?.id ?? null;
+    const observed = model().columns;
+    const previousByName = new Map(
+      previous?.runId === runId ? previous.columns.map((column) => [column.name, column]) : [],
+    );
+    const stable = observed.map((column) => {
+      const old = previousByName.get(column.name);
+      return old?.kind === column.kind && old.sourceType === column.sourceType ? old : column;
+    });
+    if (
+      previous?.runId === runId &&
+      stable.length === previous.columns.length &&
+      stable.every((column, index) => column === previous.columns[index])
+    )
+      return previous;
+    return { runId, columns: stable };
+  });
+  const columns = () => columnModel().columns;
   const shownColumns = createMemo(() =>
     columns().filter((column) => visible() === null || visible()!.includes(column.name)),
   );
