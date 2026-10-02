@@ -60,7 +60,7 @@ record!([i, j], from: origin, a, left, right);
 
 SDKは [`viz.trace/v2` のsnapshot/patch](protocol/v2/README.md)を送信します。最初の記録が完全なsnapshot、その後は値が変わった名前だけを `put` するpatchです。同値の場合も空のpatchを残し、観測点を失いません。`span` は型付きIDの配列、`from` は同一実行内の過去のseq参照です。UIはseq順に完全な状態を復元します。古いv1の保存済みtraceも読み取れます。
 
-現在のMVPはローカルのRust SDK、受信サーバー、保存、実行履歴、値の履歴表・表示形式、Algo Viewの二分探索・グリッド、関係グラフまで動作します。crateはローカルpath dependencyで、crates.ioには未公開です。固定データの[デザインモック](http://127.0.0.1:4317/?mock)と[コンポーネントカタログ](docs/design-catalog.md)も残しています。`/?legacy` は従来の操作モックです。
+現在のMVPはローカルのRust SDK、受信サーバー、保存、実行履歴、値の履歴表・表示形式、Algo Viewの二分探索・グリッド、関係グラフまで動作します。crateはローカルpath dependencyで、crates.ioには未公開です。
 
 ## 開発と品質チェック
 

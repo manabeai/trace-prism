@@ -1,14 +1,14 @@
 # フロントエンドのリファクタリング設計
 
-状態: 段階的に実装中。現行の画面、`viz.trace/v2`、Rust SDK、受信サーバーの動作は維持する。
+状態: 段階的に実装中。現行の画面、`viz.trace/v2`、Rust SDK、受信サーバーの動作は維持する。旧操作モックと固定データのデザインモックは削除済み。
 
-2026-10-02 の実装では、`trace/` の型・復元・span 階層・関係グラフ、schema に基づく decode、branded な `RunId` / `Seq`、`runs/` の取得ポートと直列ポーリング、実行別状態を持つ workspace controller、値形式と Algo View のレジストリを導入した。履歴行の階層展開には TanStack Table v9 の行モデルを使い、移行した Format Menu のスタイルは CSS Module に置いた。Vitest の単体・コンポーネントテスト、Playwright の操作・axe 検査、ESLint、Prettier、Husky、CI を品質ゲートとして実行する。旧モックのスタイルは現行表示を維持するため残している。残る性能計測と CSS Modules の展開は、機能単位で進める。
+2026-10-02 の実装では、`trace/` の型・復元・span 階層・関係グラフ、schema に基づく decode、branded な `RunId` / `Seq`、`runs/` の取得ポートと直列ポーリング、実行別状態を持つ workspace controller、値形式と Algo View のレジストリを導入した。履歴行の階層展開には TanStack Table v9 の行モデルを使い、移行した Format Menu のスタイルは CSS Module に置いた。Vitest の単体・コンポーネントテスト、Playwright の操作・axe 検査、ESLint、Prettier、Husky、CI を品質ゲートとして実行する。現行画面の共有スタイルは `workspace.css` に統合した。残る性能計測と CSS Modules の展開は、機能単位で進める。
 
 ## 本質
 
 **trace の事実、事実から導出した状態、表示の解釈を分離する。** `seq` は状態を確定する順序、`span` は履歴のグルーピング、`from` は記録間の関係であり、いずれも UI の表示形式を指定しない。二重配列が Matrix か隣接リストかも trace の形だけでは決められない。表示形式と Algo View は、同じ観測値に後から適用・変更できる設定とする。
 
-現在の `LiveWorkspace.tsx` には API ポーリング、実行選択、materialize、span 行、関係グラフ、列表示、表示形式の判定、Algo View の定義と binding、ダイアログ、描画が集中している。特に `formatOptions()` の `switch` は、最初に観測した数値の二重配列に Matrix / Text だけを提示する。`trace-model.ts` も旧 v1 変換、v2 materialize、span 階層、グラフ射影を併せ持つ。この結合を解き、拡張時に中央の分岐を増やさない構造にする。
+移行前は `LiveWorkspace.tsx` に API ポーリング、実行選択、materialize、span 行、関係グラフ、列表示、表示形式の判定、Algo View の定義と binding、ダイアログ、描画が集中していた。`formatOptions()` の `switch` は、最初に観測した数値の二重配列に Matrix / Text だけを提示していた。旧 `trace-model.ts` も v1 変換、v2 materialize、span 階層、グラフ射影を併せ持っていた。本設計はこれらの結合を解き、拡張時に中央の分岐を増やさないことを目的とする。
 
 ## 依存方向と責務
 
@@ -20,7 +20,7 @@ HTTP / 保存済み trace
   → 履歴表に限って TanStack Table アダプター
 ```
 
-想定するディレクトリ構成。`App.tsx` と `DesignGalleryV2.tsx` は移行中も既存ルートとして残し、ライブ画面の新しいコードをこの構造へ移す。
+想定するディレクトリ構成。ライブ画面のコードをこの構造へ移す。
 
 ```text
 src/
@@ -431,7 +431,7 @@ Husky の `pre-commit` では lint-staged による staged file の ESLint/Prett
 
 2026-10-02 時点の Node は `22.12.0`。ESLint 10 は `22.13.0` 以上、lint-staged 17 は `22.22.1` 以上、jsdom 30 は `22.22.2` 以上を要求するため、互換のある ESLint 9、lint-staged 16、jsdom 28.1.0 を選んだ。TypeScript は前述のとおり 5.9.3 に固定した。lockfile にもバージョンを記録する。
 
-`ajv` は既存の依存を再利用する。`@tanstack/solid-virtual`、TanStack Query、MSW、別の schema ライブラリ、追加のグラフ描画ライブラリは初期移行には入れない。前者は計測後に判断し、他は現行の repository 境界、Playwright の route mock、既存 schema、SVG 描画で要求を満たせる。Prettier 導入時に旧ファイルを一括整形して意味変更と混ぜず、新規・移行済みファイルから順に対象へ加える。
+`ajv` は既存の依存を再利用する。`@tanstack/solid-virtual`、TanStack Query、MSW、別の schema ライブラリ、追加のグラフ描画ライブラリは初期移行には入れない。前者は計測後に判断し、他は現行の repository 境界、Playwright の route mock、既存 schema、SVG 描画で要求を満たせる。現行の TypeScript と CSS はすべて Prettier のチェック対象にした。
 
 Tailwind は現時点では導入しない。既存画面の見た目はグローバル CSS と固有 class によって定まっており、今回の移行単位は feature 別 CSS Modules と共通 token にする。Tailwind を重ねると style の所有境界が二つになるため、移行後に utility class が必要な箇所を実測して再判断する。
 

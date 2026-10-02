@@ -1,12 +1,9 @@
 import { describe, expect, it } from 'vitest';
-import {
-  deriveGraph,
-  groupFrames,
-  materialize,
-  spanKey,
-  type Scalar,
-  type TraceRecord,
-} from '../../src/trace-model';
+import { deriveGraph } from '../../src/trace/relation-graph';
+import { groupFrames } from '../../src/trace/span-tree';
+import { materialize } from '../../src/trace/materialize';
+import { spanKey } from '../../src/trace/value';
+import type { Scalar, TraceRecord } from '../../src/trace/types';
 
 const integer = (v: string) => ({ t: 'int', v }) as const;
 const span = (...values: string[]): Scalar[] => values.map((v) => integer(v));
