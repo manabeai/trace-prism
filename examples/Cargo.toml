@@ -21,3 +21,7 @@ path = "binary_search.rs"
 [[bin]]
 name = "abc007-c"
 path = "abc007_c.rs"
+
+[[bin]]
+name = "dfs"
+path = "dfs.rs"

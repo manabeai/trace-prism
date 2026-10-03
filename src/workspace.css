@@ -398,65 +398,20 @@
   min-height: 0;
   display: flex;
   flex-direction: column;
-  padding: 0 20px;
+  padding: 12px 20px 0;
 }
-.dg-main-title {
+.dg-main-heading-row {
+  display: flex;
   flex: none;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 20px;
-  min-height: 90px;
-  border-bottom: 1px solid var(--dg-seam);
-}
-.dg-main-title p {
-  margin: 0 0 5px;
-  color: var(--dg-secondary);
-  font: 11px var(--font-code);
-}
-.dg-main-title h1 {
-  margin: 0;
-  font: 500 34px/1 var(--fn-display);
-  letter-spacing: -0.025em;
-}
-.dg-main-summary {
-  display: flex;
-  align-items: baseline;
-  gap: 14px;
-  white-space: nowrap;
-}
-.dg-main-summary strong {
-  font: 700 11px var(--font-code);
-}
-.dg-main-summary span {
-  color: var(--dg-secondary);
-  font-size: 10px;
-}
-.dg-history-toolbar {
-  flex: none;
-  display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 15px;
-  min-height: 59px;
-}
-.dg-history-toolbar > div:first-child {
-  display: flex;
-  align-items: baseline;
-  gap: 10px;
-}
-.dg-history-toolbar h2 {
-  margin: 0;
-  font: 500 20px/1 var(--fn-display);
-}
-.dg-history-toolbar span {
-  color: var(--dg-secondary);
-  font-size: 10px;
-}
-.dg-toolbar-actions {
-  display: flex;
-  align-items: center;
   gap: 16px;
+  margin-bottom: 8px;
+}
+.dg-main-heading {
+  margin: 0;
+  font: 500 27px/1 var(--fn-display);
+  letter-spacing: -0.025em;
 }
 .dg-diff-control {
   display: flex;
@@ -472,27 +427,64 @@
   height: 14px;
   margin: 0;
 }
-.dg-view-switch {
+.dg-history-layout {
+  flex: 1;
+  min-height: 0;
+}
+.dg-history-table-panel,
+.dg-history-graph-panel {
   display: flex;
-  padding: 2px;
-  border: 1px solid var(--dg-seam);
-  border-radius: 3px;
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+}
+.dg-history-table-panel {
+  flex-direction: column;
+}
+.dg-history-divider {
+  position: relative;
+  z-index: 3;
+  flex: none;
+  width: 28px;
+  background: var(--fn-canvas);
+}
+.dg-history-grip {
+  position: absolute !important;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  border: 0;
+  cursor: col-resize;
+}
+.dg-history-divider:hover,
+.dg-history-divider:has(.dg-history-grip[data-dragging]) {
   background: var(--fn-soft);
 }
-.dg-view-switch button {
-  min-width: 45px;
-  padding: 5px 9px;
-  border: 0;
-  border-radius: 2px;
-  background: transparent;
-  color: var(--dg-secondary);
-  font-size: 11px;
+.dg-history-actions {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  transform: translate(-50%, -50%);
 }
-.dg-view-switch button.active {
+.dg-history-actions button {
+  display: grid;
+  place-items: center;
+  width: 22px;
+  height: 24px;
+  padding: 0;
+  border: 1px solid var(--fn-rule);
+  border-radius: 3px;
   background: var(--fn-sheet);
-  color: var(--dg-accent);
-  font-weight: 700;
-  box-shadow: 0 1px 3px #263e391a;
+  color: var(--fn-action);
+  cursor: pointer;
+}
+.dg-history-actions button:hover {
+  background: var(--fn-soft);
 }
 .dg-table-scroll {
   flex: 1;
@@ -534,9 +526,6 @@
 }
 .dg-history-table thead th:first-child {
   width: 64px;
-}
-.dg-history-table thead th:nth-child(2) {
-  width: 114px;
 }
 .dg-history-table thead th code {
   display: block;
@@ -632,17 +621,6 @@
 .dg-frame-row.is-selected .dg-seq-dot {
   background: var(--dg-accent);
   box-shadow: 0 0 0 3px #3f70652e;
-}
-.dg-source-cell code {
-  display: block;
-  color: var(--dg-secondary);
-  font-size: 10px;
-}
-.dg-source-cell span {
-  display: block;
-  margin-top: 4px;
-  color: var(--dg-secondary);
-  font: 9px var(--font-code);
 }
 .dg-value-cell {
   min-width: 70px;
@@ -870,17 +848,12 @@
   min-width: 50px;
   accent-color: var(--dg-accent);
 }
-.dg-playback small {
-  color: var(--dg-secondary);
-  font: 10px var(--font-code);
-  white-space: nowrap;
-}
 .dg-graph-layout {
   display: flex;
   flex: 1;
   flex-direction: column;
+  width: 100%;
   min-height: 0;
-  gap: 10px;
 }
 .dg-graph {
   display: flex;
@@ -901,8 +874,8 @@
 }
 .dg-graph-meta > div {
   display: flex;
-  align-items: baseline;
-  gap: 12px;
+  flex-direction: column;
+  gap: 3px;
 }
 .dg-graph-meta strong {
   font-size: 13px;
@@ -1016,59 +989,6 @@
   background: var(--dg-accent);
   border-color: var(--dg-accent);
 }
-.dg-record-inspector {
-  flex: none;
-  min-height: 98px;
-  max-height: 155px;
-  overflow: auto;
-  padding: 10px 12px;
-  border: 1px solid var(--dg-seam);
-  background: var(--fn-sheet);
-}
-.dg-record-inspector > div:first-child {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  margin-bottom: 9px;
-}
-.dg-record-inspector strong {
-  font: 700 11px var(--font-code);
-}
-.dg-record-inspector > div:first-child span {
-  color: var(--dg-secondary);
-  font: 10px var(--font-code);
-}
-.dg-inspector-values {
-  display: flex;
-  align-items: stretch;
-  gap: 0;
-  overflow: auto;
-}
-.dg-inspector-values > div {
-  flex: none;
-  min-width: 75px;
-  max-width: 235px;
-  padding: 0 12px;
-  border-right: 1px solid var(--dg-seam);
-}
-.dg-inspector-values > div:first-child {
-  padding-left: 0;
-}
-.dg-inspector-values > div:last-child {
-  border-right: 0;
-}
-.dg-inspector-values small {
-  display: block;
-  margin-bottom: 6px;
-  color: var(--dg-secondary);
-  font-size: 9px;
-}
-.dg-inspector-values .dg-value-body {
-  min-height: 44px;
-}
-.dg-inspector-values .dg-inspector-algo {
-  min-width: 214px;
-}
 .dg-dialog-overlay {
   position: fixed;
   inset: 0;
@@ -1147,24 +1067,33 @@
     height: 650px;
   }
   .dg-main {
-    padding: 0 16px;
-  }
-  .dg-main-title {
-    min-height: 76px;
+    padding: 12px 16px 0;
   }
   .dg-config,
   .dg-runs {
     padding: 14px;
   }
 }
+@media (max-width: 780px) {
+  .dg-main-panel {
+    height: 970px;
+  }
+  .dg-history-divider {
+    width: 100%;
+    height: 28px;
+  }
+  .dg-history-grip {
+    cursor: row-resize;
+  }
+  .dg-history-actions {
+    flex-direction: row;
+  }
+}
 @media (max-width: 620px) {
   .dg-app-header {
     padding: 0 14px;
   }
-  .dg-header-meta small,
-  .dg-main-summary span,
-  .dg-history-toolbar > div:first-child span,
-  .dg-playback small {
+  .dg-header-meta small {
     display: none;
   }
   .dg-side-panel {
@@ -1193,23 +1122,7 @@
     flex: 0 0 190px;
   }
   .dg-main-panel {
-    height: 690px;
-  }
-  .dg-main-title h1 {
-    font-size: 21px;
-  }
-  .dg-history-toolbar {
-    gap: 5px;
-  }
-  .dg-history-toolbar h2 {
-    font-size: 13px;
-  }
-  .dg-toolbar-actions {
-    gap: 7px;
-  }
-  .dg-view-switch button {
-    min-width: 35px;
-    padding: 5px 6px;
+    height: 970px;
   }
   .dg-table-scroll {
     width: 100%;
@@ -1220,12 +1133,8 @@
   .dg-graph-meta label {
     margin-top: 8px;
   }
-  .dg-record-inspector {
-    max-height: 145px;
-  }
 }
 @media (prefers-reduced-motion: no-preference) {
-  .dg-view-switch button,
   .dg-run-list button,
   .dg-graph-node circle,
   .dg-resize-handle {
@@ -1240,8 +1149,6 @@
   font-family: var(--fn-sans);
 }
 .dg-app-header,
-.dg-main-title,
-.dg-history-toolbar,
 .dg-config,
 .dg-runs,
 .dg-history-table,
@@ -1259,15 +1166,6 @@
 }
 .dg-brand > span:last-child {
   font-size: 12px;
-}
-.dg-main-title h1 {
-  font: 500 34px/1 var(--fn-display);
-}
-.dg-history-toolbar h2 {
-  font: 500 20px/1 var(--fn-display);
-}
-.dg-history-toolbar > div:first-child span {
-  font-size: 11px;
 }
 .dg-config,
 .dg-runs {
@@ -1383,12 +1281,6 @@
 .dg-frame-row th button {
   font-size: 12px;
 }
-.dg-source-cell code {
-  font-size: 11px;
-}
-.dg-source-cell span {
-  font-size: 10px;
-}
 .dg-group-row button code {
   font-size: 11px;
 }
@@ -1440,17 +1332,6 @@
 }
 .dg-algo-head-action {
   color: var(--dg-algo);
-}
-.dg-view-switch button {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-  min-width: 68px;
-  font-size: 11px;
-}
-.dg-view-switch button svg {
-  flex: none;
 }
 .dg-diff-control {
   font-size: 11px;
@@ -1641,16 +1522,6 @@
     column-gap: 12px;
   }
   .dg-column small {
-    display: none;
-  }
-  .dg-history-toolbar > div:first-child {
-    display: block;
-  }
-  .dg-view-switch button {
-    min-width: 48px;
-    padding: 5px;
-  }
-  .dg-view-switch button svg {
     display: none;
   }
   .dg-binding-row {
@@ -1852,9 +1723,6 @@ body {
     gap: 7px;
   }
   .lv-workspace .dg-playback > span code {
-    display: none;
-  }
-  .lv-workspace .dg-main-summary {
     display: none;
   }
   .lv-workspace .dg-run-list button {

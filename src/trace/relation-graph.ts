@@ -69,15 +69,19 @@ export function deriveGraph(frames: Frame[]): Graph {
   };
   for (const node of nodes.filter((node) => !parents.has(node.id))) place(node.id, 0);
   for (const node of nodes) if (!positions.has(node.id)) place(node.id, 0);
-  const maxLeaf = Math.max(1, leaf - 1);
+  const leafGap = 92;
+  const contentWidth = Math.max(0, leaf - 1) * leafGap;
+  const width = Math.max(420, contentWidth + 128);
+  const inset = (width - contentWidth) / 2;
   return {
     mode,
     nodes: nodes.map((node) => ({
       ...node,
-      x: 150 + (positions.get(node.id)!.x / maxLeaf) * 700,
+      x: inset + positions.get(node.id)!.x * leafGap,
       y: positions.get(node.id)!.y,
     })),
     edges,
+    width,
     height: Math.max(440, maxDepth * 76 + 100),
   };
 }

@@ -1,0 +1,58 @@
+.root {
+  width: 256px;
+  max-width: 100%;
+  display: grid;
+  gap: 3px;
+}
+
+.canvas {
+  display: block;
+  width: 100%;
+  height: auto;
+  border: 1px solid var(--dg-seam);
+  border-radius: 4px;
+  background: var(--fn-sheet);
+}
+
+.edge {
+  stroke: var(--fn-muted);
+  stroke-width: 1.2;
+}
+
+.arrow {
+  fill: var(--fn-muted);
+}
+
+.vertex circle {
+  fill: var(--fn-sheet);
+  stroke: var(--fn-rule);
+  stroke-width: 1.4;
+}
+
+.vertex text {
+  fill: var(--fn-ink);
+  font: 600 10px var(--font-code);
+}
+
+.visited circle {
+  fill: var(--fn-soft);
+  stroke: var(--fn-action);
+}
+
+.current circle {
+  fill: var(--fn-action);
+  stroke: var(--fn-action);
+  stroke-width: 2;
+}
+
+.current text {
+  fill: var(--fn-sheet);
+}
+
+.meta {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  color: var(--fn-muted);
+  font: 10px var(--font-code);
+}

@@ -80,3 +80,25 @@ export const gridFrame: Frame = {
   changed: [],
   deltas: {},
 };
+
+export const graphFrame: Frame = {
+  seq: seqId('2'),
+  span: [{ t: 'int', v: '1' }],
+  source: 'dfs.rs:20',
+  values: {
+    adjacency: {
+      name: 'adjacency',
+      value: {
+        t: 'array',
+        items: [[1, 2], [3, 4], [5], [], [5], []].map((row) => ({ t: 'array', items: row.map(int) })),
+      },
+    },
+    seen: {
+      name: 'seen',
+      value: { t: 'array', items: [true, true, false, true, false, false].map((v) => ({ t: 'bool', v })) },
+    },
+    u: { name: 'u', value: int(3) },
+  },
+  changed: ['seen', 'u'],
+  deltas: {},
+};

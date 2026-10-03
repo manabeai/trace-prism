@@ -17,13 +17,11 @@ import { HttpRunRepository } from '../runs/HttpRunRepository';
 import type { RunRepository } from '../runs/RunRepository';
 import { pollRuns } from '../runs/pollRuns';
 
-type Display = 'table' | 'graph';
 type RunState = {
   selectedSeq: Seq | null;
   visible: string[] | null;
   formats: Record<string, string>;
   collapsed: string[];
-  display: Display;
   diffOnly: boolean;
 };
 
@@ -32,7 +30,6 @@ const initialState = (): RunState => ({
   visible: null,
   formats: {},
   collapsed: [],
-  display: 'table',
   diffOnly: false,
 });
 
@@ -64,8 +61,6 @@ export function createWorkspaceController(repository: RunRepository = new HttpRu
   const collapsed = () => state().collapsed;
   const setCollapsed = (update: (keys: string[]) => string[]) =>
     updateState((previous) => ({ ...previous, collapsed: update(previous.collapsed) }));
-  const display = () => state().display;
-  const setDisplay = (next: Display) => updateState((previous) => ({ ...previous, display: next }));
   const diffOnly = () => state().diffOnly;
   const setDiffOnly = (next: boolean) => updateState((previous) => ({ ...previous, diffOnly: next }));
 
@@ -103,7 +98,7 @@ export function createWorkspaceController(repository: RunRepository = new HttpRu
   const selected = createMemo(() => frames()[selectedIndex()]);
   const tree = createMemo(() => groupFrames(frames()));
   const graph = createMemo(() => deriveGraph(frames()));
-  const columnCount = createMemo(() => 2 + shownColumns().length + shownViews().length);
+  const columnCount = createMemo(() => 1 + shownColumns().length + shownViews().length);
 
   onMount(() => {
     const stop = pollRuns(
@@ -141,7 +136,8 @@ export function createWorkspaceController(repository: RunRepository = new HttpRu
     Object.fromEntries(
       templates[next].roles.map((role) => {
         const names = candidates(role);
-        return [role.name, names.includes(role.name) ? role.name : (names[0] ?? '')];
+        const preferred = [role.name, ...(role.preferredNames ?? [])].find((name) => names.includes(name));
+        return [role.name, preferred ?? (role.optional ? '' : (names[0] ?? ''))];
       }),
     );
   const openDialog = (view?: AlgoView) => {
@@ -199,8 +195,6 @@ export function createWorkspaceController(repository: RunRepository = new HttpRu
     setFormats,
     views,
     shownViews,
-    display,
-    setDisplay,
     collapsed,
     setCollapsed,
     diffOnly,

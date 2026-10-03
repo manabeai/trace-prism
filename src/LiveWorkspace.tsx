@@ -1,4 +1,4 @@
-import { createMemo, createSignal, For, Show, untrack } from 'solid-js';
+import { createEffect, createMemo, createSignal, For, onCleanup, onMount, Show, untrack } from 'solid-js';
 import type { JSX } from 'solid-js';
 import { Dynamic } from 'solid-js/web';
 import Resizable from '@corvu/resizable';
@@ -9,14 +9,16 @@ import {
   IconChevronDown,
   IconChevronLeft,
   IconChevronRight,
+  IconChevronsDown,
+  IconChevronsLeft,
+  IconChevronsRight,
+  IconChevronsUp,
   IconCode,
   IconEye,
   IconGitBranch,
-  IconGridDots,
   IconHistory,
   IconPlus,
   IconSettings,
-  IconTable,
   IconX,
 } from '@tabler/icons-solidjs';
 import { spanKey, spanText } from './trace/value';
@@ -29,9 +31,35 @@ import { createWorkspaceController } from './workspace/controller';
 import { createHistoryTable } from './workspace/history/table-adapter';
 import { FormatMenu } from './workspace/history/FormatMenu';
 import { ValueCell } from './workspace/history/ValueCell';
-function RelationGraph(props: { graph: Graph; selectedSeq: string; select: (seq: Seq) => void }) {
+function RelationGraph(props: {
+  graph: Graph;
+  runId: string;
+  selectedSeq: string;
+  select: (seq: Seq) => void;
+}) {
   const [zoom, setZoom] = createSignal(100);
+  let viewport: HTMLDivElement | undefined;
+  let lastFocus = '';
   const nodes = createMemo(() => new Map(props.graph.nodes.map((node) => [node.id, node])));
+  const focusSelected = (behavior: ScrollBehavior, force = false) => {
+    const node = props.graph.nodes.find((item) => item.seq === props.selectedSeq);
+    const scale = zoom() / 100;
+    const focus = node ? `${props.runId}:${node.id}:${node.x}:${node.y}:${scale}` : '';
+    if (!node || !viewport || (!force && focus === lastFocus)) return;
+    viewport.scrollTo({
+      left: node.x * scale - viewport.clientWidth / 2,
+      top: node.y * scale - viewport.clientHeight / 2,
+      behavior,
+    });
+    lastFocus = focus;
+  };
+  createEffect(() => focusSelected(lastFocus ? 'smooth' : 'instant'));
+  onMount(() => {
+    if (!viewport) return;
+    const observer = new ResizeObserver(() => focusSelected('instant', true));
+    observer.observe(viewport);
+    onCleanup(() => observer.disconnect());
+  });
   const endpoint = (id: string): GraphNode => nodes().get(id)!;
   const edgePath = (from: string, to: string) => {
     const a = endpoint(from),
@@ -62,11 +90,14 @@ function RelationGraph(props: { graph: Graph; selectedSeq: string; select: (seq:
           <output>{zoom()}%</output>
         </label>
       </div>
-      <div class="dg-graph-scroll">
+      <div class="dg-graph-scroll" ref={viewport}>
         <svg
-          viewBox={`0 0 1000 ${props.graph.height}`}
-          style={{ width: `${zoom() * 10}px`, height: `${(props.graph.height * zoom()) / 100}px` }}
-          role="img"
+          viewBox={`0 0 ${props.graph.width} ${props.graph.height}`}
+          style={{
+            width: `${(props.graph.width * zoom()) / 100}px`,
+            height: `${(props.graph.height * zoom()) / 100}px`,
+          }}
+          role="group"
           aria-label="Record relations"
         >
           <For each={props.graph.edges}>
@@ -138,8 +169,6 @@ export function LiveWorkspace(props: { repository?: RunRepository }) {
     visible,
     views,
     shownViews,
-    display,
-    setDisplay,
     collapsed,
     setCollapsed,
     diffOnly,
@@ -172,6 +201,54 @@ export function LiveWorkspace(props: { repository?: RunRepository }) {
     setFormats,
   } = createWorkspaceController(untrack(() => props.repository));
   const historyTable = createHistoryTable(tree, collapsed);
+  const [wideSizes, setWideSizes] = createSignal([2 / 3, 1 / 3]);
+  const [narrowSizes, setNarrowSizes] = createSignal([0.5, 0.5]);
+  const [stacked, setStacked] = createSignal(false);
+  const historySizes = () => (stacked() ? narrowSizes() : wideSizes());
+  const setHistorySizes = (sizes: number[]) => (stacked() ? setNarrowSizes(sizes) : setWideSizes(sizes));
+  onMount(() => {
+    const media = window.matchMedia('(max-width: 780px)');
+    const update = () => setStacked(media.matches);
+    update();
+    media.addEventListener('change', update);
+    onCleanup(() => media.removeEventListener('change', update));
+  });
+  const pushHistoryDivider = (side: 'table' | 'graph') => {
+    const pushed = side === 'graph' ? historySizes()[0] < 0.2 : historySizes()[1] < 0.2;
+    setHistorySizes(
+      pushed ? (stacked() ? [0.5, 0.5] : [2 / 3, 1 / 3]) : side === 'graph' ? [0.12, 0.88] : [0.88, 0.12],
+    );
+  };
+  let tableViewport: HTMLDivElement | undefined;
+  const selectRecord = (seq: Seq | null) => {
+    const frame = frames().find((item) => item.seq === seq);
+    if (frame) {
+      const ancestors = new Set<string>(
+        frame.span.map((_, index) => spanKey(frame.span.slice(0, index + 1))),
+      );
+      if (collapsed().some((key) => ancestors.has(key)))
+        setCollapsed((keys) => keys.filter((key) => !ancestors.has(key)));
+    }
+    setSelectedSeq(seq);
+  };
+  const focusKey = createMemo(() => `${current()?.id ?? ''}:${selected()?.seq ?? ''}`);
+  createEffect(() => {
+    const key = focusKey();
+    if (key.endsWith(':')) return;
+    const frame = requestAnimationFrame(() => {
+      if (focusKey() !== key) return;
+      const row = tableViewport?.querySelector<HTMLElement>('.dg-frame-row.is-selected');
+      if (!row || !tableViewport) return;
+      const viewport = tableViewport.getBoundingClientRect();
+      const bounds = row.getBoundingClientRect();
+      const headerHeight = tableViewport.querySelector('thead')?.getBoundingClientRect().height ?? 0;
+      const top = viewport.top + headerHeight + 8;
+      const bottom = viewport.bottom - 8;
+      if (bounds.top < top) tableViewport.scrollTop += bounds.top - top;
+      else if (bounds.bottom > bottom) tableViewport.scrollTop += bounds.bottom - bottom;
+    });
+    onCleanup(() => cancelAnimationFrame(frame));
+  });
   const count = (nodes: HistoryNode[]): number =>
     nodes.reduce((sum, node) => sum + (node.kind === 'frame' ? 1 : count(node.children)), 0);
   const renderNode = (node: HistoryNode, depth: number): JSX.Element =>
@@ -221,12 +298,6 @@ export function LiveWorkspace(props: { repository?: RunRepository }) {
             {node.frame.seq}
           </button>
         </th>
-        <td class="dg-source-cell">
-          <code>{node.frame.source}</code>
-          <Show when={node.frame.from !== undefined}>
-            <span>from {node.frame.from}</span>
-          </Show>
-        </td>
         <For each={shownColumns()}>
           {(column) => (
             <td class="dg-value-cell">
@@ -332,14 +403,13 @@ export function LiveWorkspace(props: { repository?: RunRepository }) {
                             onChange={() => toggleView(view.id)}
                           />
                           <span class="dg-view-glyph">
-                            <Show when={view.template === 'binary'} fallback={<IconGridDots size="15" />}>
-                              <IconGitBranch size="15" />
-                            </Show>
+                            <Dynamic component={templates[view.template].icon} size="15" />
                           </span>
                           <span>
                             <strong>{templates[view.template].name}</strong>
                             <small>
                               {Object.entries(view.bindings)
+                                .filter(([, name]) => name)
                                 .map(([role, name]) => `${role}=${name}`)
                                 .join('  ')}
                             </small>
@@ -391,7 +461,7 @@ export function LiveWorkspace(props: { repository?: RunRepository }) {
                           onClick={() => chooseRun(run.id)}
                         >
                           <span class="dg-run-line">
-                            <strong title={run.source}>{run.source}</strong>
+                            <strong>Run</strong>
                             <time>{new Date(run.startedAt).toLocaleTimeString('en-US')}</time>
                           </span>
                           <code>{run.id}</code>
@@ -410,15 +480,18 @@ export function LiveWorkspace(props: { repository?: RunRepository }) {
         <Resizable.Handle class="dg-resize-handle dg-resize-horizontal" aria-label="Resize sidebar" />
         <Resizable.Panel minSize={0.5} class="dg-main-panel">
           <div class="dg-main">
-            <div class="dg-main-title">
-              <div>
-                <p>{current() ? `${current()!.source} / ${current()!.id}` : 'No run selected'}</p>
-                <h1>Value history</h1>
-              </div>
-              <div class="dg-main-summary">
-                <strong>{frames().length} records</strong>
-                <span>{current()?.status ?? 'waiting'}</span>
-              </div>
+            <div class="dg-main-heading-row">
+              <h1 class="dg-main-heading">Value history</h1>
+              <Show when={current()}>
+                <label class="dg-diff-control">
+                  <input
+                    type="checkbox"
+                    checked={diffOnly()}
+                    onChange={(event) => setDiffOnly(event.currentTarget.checked)}
+                  />
+                  Changes only
+                </label>
+              </Show>
             </div>
             <Show
               when={!error()}
@@ -442,48 +515,6 @@ export function LiveWorkspace(props: { repository?: RunRepository }) {
                   </div>
                 }
               >
-                <div class="dg-history-toolbar">
-                  <div>
-                    <h2>{display() === 'table' ? 'Records by span' : 'Record relations'}</h2>
-                    <span>
-                      {display() === 'table'
-                        ? 'Recorded values and configured Algo Views at every seq'
-                        : graph().mode === 'transition'
-                          ? 'Explicit from references'
-                          : 'Span ID prefixes'}
-                    </span>
-                  </div>
-                  <div class="dg-toolbar-actions">
-                    <Show when={display() === 'table'}>
-                      <label class="dg-diff-control">
-                        <input
-                          type="checkbox"
-                          checked={diffOnly()}
-                          onChange={(event) => setDiffOnly(event.currentTarget.checked)}
-                        />
-                        Changes only
-                      </label>
-                    </Show>
-                    <div class="dg-view-switch" role="group" aria-label="History view">
-                      <button
-                        classList={{ active: display() === 'table' }}
-                        aria-pressed={display() === 'table'}
-                        onClick={() => setDisplay('table')}
-                      >
-                        <IconTable size="16" />
-                        Table
-                      </button>
-                      <button
-                        classList={{ active: display() === 'graph' }}
-                        aria-pressed={display() === 'graph'}
-                        onClick={() => setDisplay('graph')}
-                      >
-                        <IconGitBranch size="16" />
-                        Graph
-                      </button>
-                    </div>
-                  </div>
-                </div>
                 <Show
                   when={frames().length}
                   fallback={
@@ -492,119 +523,121 @@ export function LiveWorkspace(props: { repository?: RunRepository }) {
                     </div>
                   }
                 >
-                  <Show
-                    when={display() === 'table'}
-                    fallback={
+                  <Resizable
+                    class="dg-history-layout"
+                    orientation={stacked() ? 'vertical' : 'horizontal'}
+                    sizes={historySizes()}
+                    onSizesChange={setHistorySizes}
+                  >
+                    <Resizable.Panel minSize={0.12} class="dg-history-table-panel">
+                      <div class="dg-table-scroll" ref={tableViewport}>
+                        <table class="dg-history-table">
+                          <thead>
+                            <tr>
+                              <th scope="col">seq</th>
+                              <For each={shownColumns()}>
+                                {(column) => (
+                                  <th scope="col" class={`dg-heading-${column.kind}`}>
+                                    <div class="dg-column-head">
+                                      <span>
+                                        <code>{column.name}</code>
+                                        <small>{column.kind}</small>
+                                      </span>
+                                      <FormatMenu
+                                        name={column.name}
+                                        options={formatOptions(column, frames())}
+                                        format={activeFormat(column)}
+                                        select={(format) =>
+                                          setFormats((current) => ({ ...current, [column.name]: format }))
+                                        }
+                                      />
+                                    </div>
+                                  </th>
+                                )}
+                              </For>
+                              <For each={shownViews()}>
+                                {(view) => (
+                                  <th scope="col" class="dg-heading-algo">
+                                    <div class="dg-column-head">
+                                      <span>
+                                        <code>{templates[view.template].name}</code>
+                                        <small>Algo View</small>
+                                      </span>
+                                      <button
+                                        class="dg-algo-head-action"
+                                        aria-label={`Edit ${templates[view.template].name} bindings`}
+                                        onClick={() => openDialog(view)}
+                                      >
+                                        <IconSettings size="17" />
+                                      </button>
+                                    </div>
+                                  </th>
+                                )}
+                              </For>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            <For each={historyTable.getRowModel().rows}>
+                              {(row) => renderNode(row.original, row.depth)}
+                            </For>
+                          </tbody>
+                        </table>
+                      </div>
+                    </Resizable.Panel>
+                    <div class="dg-history-divider">
+                      <Resizable.Handle
+                        as="div"
+                        class="dg-history-grip"
+                        aria-label="Resize table and graph"
+                      />
+                      <div class="dg-history-actions">
+                        <button
+                          type="button"
+                          aria-label="Expand graph"
+                          title="Expand graph"
+                          onClick={() => pushHistoryDivider('graph')}
+                        >
+                          <Show when={stacked()} fallback={<IconChevronsLeft size="16" />}>
+                            <IconChevronsUp size="16" />
+                          </Show>
+                        </button>
+                        <button
+                          type="button"
+                          aria-label="Expand table"
+                          title="Expand table"
+                          onClick={() => pushHistoryDivider('table')}
+                        >
+                          <Show when={stacked()} fallback={<IconChevronsRight size="16" />}>
+                            <IconChevronsDown size="16" />
+                          </Show>
+                        </button>
+                      </div>
+                    </div>
+                    <Resizable.Panel minSize={0.12} class="dg-history-graph-panel">
                       <div class="dg-graph-layout">
                         <RelationGraph
                           graph={graph()}
+                          runId={current()?.id ?? ''}
                           selectedSeq={selected()?.seq ?? ''}
-                          select={setSelectedSeq}
+                          select={selectRecord}
                         />
-                        <section class="dg-record-inspector">
-                          <div>
-                            <strong>seq {selected()?.seq}</strong>
-                            <span>
-                              {selected() ? `${spanText(selected()!.span)} · ${selected()!.source}` : ''}
-                            </span>
-                          </div>
-                          <div class="dg-inspector-values">
-                            <For each={shownColumns()}>
-                              {(column) => (
-                                <div>
-                                  <small>{column.name}</small>
-                                  <ValueCell
-                                    field={selected()?.values[column.name]}
-                                    format={activeFormat(column)}
-                                    changes={selected()?.deltas[column.name]}
-                                  />
-                                </div>
-                              )}
-                            </For>
-                            <For each={shownViews()}>
-                              {(view) => (
-                                <div class="dg-inspector-algo">
-                                  <small>{templates[view.template].name}</small>
-                                  <Show when={selected()}>
-                                    {(frame) => <AlgoCell view={view} frame={frame()} />}
-                                  </Show>
-                                </div>
-                              )}
-                            </For>
-                          </div>
-                        </section>
                       </div>
-                    }
-                  >
-                    <div class="dg-table-scroll">
-                      <table class="dg-history-table">
-                        <thead>
-                          <tr>
-                            <th scope="col">seq</th>
-                            <th scope="col">source / from</th>
-                            <For each={shownColumns()}>
-                              {(column) => (
-                                <th scope="col" class={`dg-heading-${column.kind}`}>
-                                  <div class="dg-column-head">
-                                    <span>
-                                      <code>{column.name}</code>
-                                      <small>{column.kind}</small>
-                                    </span>
-                                    <FormatMenu
-                                      name={column.name}
-                                      options={formatOptions(column, frames())}
-                                      format={activeFormat(column)}
-                                      select={(format) =>
-                                        setFormats((current) => ({ ...current, [column.name]: format }))
-                                      }
-                                    />
-                                  </div>
-                                </th>
-                              )}
-                            </For>
-                            <For each={shownViews()}>
-                              {(view) => (
-                                <th scope="col" class="dg-heading-algo">
-                                  <div class="dg-column-head">
-                                    <span>
-                                      <code>{templates[view.template].name}</code>
-                                      <small>Algo View</small>
-                                    </span>
-                                    <button
-                                      class="dg-algo-head-action"
-                                      aria-label={`Edit ${templates[view.template].name} bindings`}
-                                      onClick={() => openDialog(view)}
-                                    >
-                                      <IconSettings size="17" />
-                                    </button>
-                                  </div>
-                                </th>
-                              )}
-                            </For>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          <For each={historyTable.getRowModel().rows}>
-                            {(row) => renderNode(row.original, row.depth)}
-                          </For>
-                        </tbody>
-                      </table>
-                    </div>
-                  </Show>
+                    </Resizable.Panel>
+                  </Resizable>
                 </Show>
                 <div class="dg-playback">
                   <div class="dg-transport">
                     <button
                       aria-label="Previous record"
                       disabled={selectedIndex() <= 0}
-                      onClick={() => setSelectedSeq(frames()[selectedIndex() - 1]?.seq ?? null)}
+                      onClick={() => selectRecord(frames()[selectedIndex() - 1]?.seq ?? null)}
                     >
                       <IconChevronLeft size="16" />
                     </button>
                     <button
                       aria-label="Next record"
                       disabled={selectedIndex() >= frames().length - 1}
-                      onClick={() => setSelectedSeq(frames()[selectedIndex() + 1]?.seq ?? null)}
+                      onClick={() => selectRecord(frames()[selectedIndex() + 1]?.seq ?? null)}
                     >
                       <IconChevronRight size="16" />
                     </button>
@@ -620,13 +653,12 @@ export function LiveWorkspace(props: { repository?: RunRepository }) {
                     max={Math.max(0, frames().length - 1)}
                     value={Math.max(0, selectedIndex())}
                     onInput={(event) =>
-                      setSelectedSeq(frames()[Number(event.currentTarget.value)]?.seq ?? null)
+                      selectRecord(frames()[Number(event.currentTarget.value)]?.seq ?? null)
                     }
                   />
-                  <button class="lv-latest" onClick={() => setSelectedSeq(null)}>
+                  <button class="lv-latest" onClick={() => selectRecord(null)}>
                     Latest
                   </button>
-                  <small>{selected()?.source ?? ''}</small>
                 </div>
               </Show>
             </Show>
@@ -665,16 +697,34 @@ export function LiveWorkspace(props: { repository?: RunRepository }) {
                           <div class="dg-binding-row">
                             <div class="dg-binding-heading">
                               <strong>{role.name}</strong>
-                              <small>{role.shape}</small>
+                              <small>
+                                {role.shape === 'visited' ? 'bool[] or set<int>' : role.shape}
+                                {role.optional ? ' · optional' : ''}
+                              </small>
                             </div>
                             <div class="dg-binding-current">
                               <IconCode size="15" />
                               <code>{draft()[role.name] || 'Not assigned'}</code>
                             </div>
                             <div class="dg-binding-choices">
+                              <Show when={role.optional}>
+                                <button
+                                  classList={{ active: !draft()[role.name] }}
+                                  onClick={() => setDraft((current) => ({ ...current, [role.name]: '' }))}
+                                >
+                                  None
+                                  <Show when={!draft()[role.name]}>
+                                    <IconCheck size="14" />
+                                  </Show>
+                                </button>
+                              </Show>
                               <For
                                 each={candidates(role)}
-                                fallback={<span class="lv-no-candidates">No compatible value</span>}
+                                fallback={
+                                  role.optional ? null : (
+                                    <span class="lv-no-candidates">No compatible value</span>
+                                  )
+                                }
                               >
                                 {(name) => (
                                   <button

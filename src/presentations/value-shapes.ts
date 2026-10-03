@@ -3,6 +3,12 @@ import type { Value } from '../trace/types';
 export const isNumericArray = (value: Value): value is Value & { t: 'array' } =>
   value.t === 'array' && value.items.every((item) => item.t === 'int' || item.t === 'float');
 
+export const isBooleanArray = (value: Value): value is Value & { t: 'array' } =>
+  value.t === 'array' && value.items.every((item) => item.t === 'bool');
+
+export const isIntegerSet = (value: Value): value is Value & { t: 'set' } =>
+  value.t === 'set' && value.items.every((item) => item.t === 'int');
+
 export const isMatrix = (value: Value): value is Value & { t: 'array' } =>
   value.t === 'array' &&
   value.items.length > 0 &&

@@ -1,9 +1,14 @@
 import type { Component } from 'solid-js';
 import type { Frame, Value } from '../../trace/types';
-import { isMatrix, isPosition } from '../value-shapes';
+import { isBooleanArray, isIntegerSet, isMatrix, isPosition } from '../value-shapes';
 
-export type RoleShape = 'int' | 'bool' | 'matrix' | 'position';
-export type Role = { name: string; shape: RoleShape };
+export type RoleShape = 'int' | 'bool' | 'array' | 'visited' | 'matrix' | 'position';
+export type Role = {
+  name: string;
+  shape: RoleShape;
+  optional?: boolean;
+  preferredNames?: readonly string[];
+};
 export type AlgoView<TemplateId extends string = string> = {
   id: number;
   template: TemplateId;
@@ -27,6 +32,10 @@ export function matchesRole(value: Value | undefined, shape: RoleShape): boolean
       return value.t === 'int';
     case 'bool':
       return value.t === 'bool';
+    case 'array':
+      return value.t === 'array';
+    case 'visited':
+      return isBooleanArray(value) || isIntegerSet(value);
     case 'matrix':
       return isMatrix(value);
     case 'position':
@@ -46,5 +55,8 @@ export function validBindings(
   bindings: Record<string, string>,
   frames: Frame[],
 ): boolean {
-  return definition.roles.every((role) => candidateNames(frames, role).includes(bindings[role.name]));
+  return definition.roles.every((role) => {
+    const name = bindings[role.name];
+    return (!name && role.optional) || candidateNames(frames, role).includes(name);
+  });
 }

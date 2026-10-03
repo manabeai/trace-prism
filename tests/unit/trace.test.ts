@@ -78,6 +78,18 @@ describe('history and graph projection', () => {
       { from: 'seq:10', to: 'seq:11' },
       { from: 'seq:10', to: 'seq:12' },
     ]);
+    expect(graph.width).toBe(420);
+  });
+
+  it('widens the graph only when more independent branches need space', () => {
+    const { frames } = materialize(
+      Array.from({ length: 8 }, (_, index) => ({
+        ...base(String(index)),
+        kind: 'snapshot' as const,
+        values: [],
+      })),
+    );
+    expect(deriveGraph(frames).width).toBeGreaterThan(420);
   });
 
   it('falls back to the span tree when no transition origin is provided', () => {

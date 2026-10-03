@@ -63,7 +63,13 @@ export type GraphNode = {
   y: number;
 };
 export type GraphEdge = { from: string; to: string };
-export type Graph = { mode: 'transition' | 'span'; nodes: GraphNode[]; edges: GraphEdge[]; height: number };
+export type Graph = {
+  mode: 'transition' | 'span';
+  nodes: GraphNode[];
+  edges: GraphEdge[];
+  width: number;
+  height: number;
+};
 
 export type HistoryNode =
   { kind: 'group'; span: Scalar[]; children: HistoryNode[] } | { kind: 'frame'; frame: Frame };
