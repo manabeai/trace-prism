@@ -153,6 +153,7 @@ export default function DesignCatalog() {
           <a href="#values">Values</a>
           <a href="#history">History</a>
           <a href="#overlays">Overlays</a>
+          <a href="/catalog/search">Search prototype ↗</a>
           <div class="ct-nav-foot">
             <span class="ct-status-dot" /> Active design system
             <br />

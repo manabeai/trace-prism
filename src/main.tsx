@@ -9,7 +9,11 @@ import './design/field-notes-tokens.css';
 import './workspace.css';
 
 const root = document.getElementById('root')!;
-if (window.location.pathname === '/flavors') {
+if (window.location.pathname === '/catalog/search') {
+  void import('./design/SearchCatalog').then(({ default: SearchCatalog }) =>
+    render(() => <SearchCatalog />, root),
+  );
+} else if (window.location.pathname === '/flavors') {
   void import('./design/FlavorGallery').then(({ default: FlavorGallery }) =>
     render(() => <FlavorGallery />, root),
   );
