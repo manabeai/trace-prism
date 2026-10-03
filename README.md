@@ -1,4 +1,4 @@
-# algo-vis
+# TracePrism
 
 Rustコードの任意の箇所に `record!` を置き、実行後に値の履歴をWeb UIで追うローカルVisualizerです。通常の配列・整数・Set・Mapなどをそのまま記録します。アルゴリズム固有の意味はコードから送らず、Algo Viewを画面側で選んで記録済み変数に割り当てます。
 
@@ -23,16 +23,16 @@ cargo run --manifest-path examples/Cargo.toml --bin dfs
 単体の `.rs` ファイルはCLIからも実行できます。サーバー未起動なら自動で立ち上がり、実行後もWeb UIを開ける状態を維持します。
 
 ```sh
-node bin/algo-vis.mjs run examples/abc007_c.rs < examples/fixtures/abc007-c-1.in
+node bin/traceprism.mjs run examples/abc007_c.rs < examples/fixtures/abc007-c-1.in
 ```
 
-`npm link` 後は `algo-vis run ...` と `algo-vis serve` でも呼び出せます。トレースだけ保存するなら `--no-serve` を付けます。記録は `.viz/runs/` にNDJSONとして残り、サーバーの再起動後も実行履歴に表示されます。
+`npm link` 後は `traceprism run ...` と `traceprism serve` でも呼び出せます。従来の `algo-vis` コマンドも引き続き使えます。トレースだけ保存するなら `--no-serve` を付けます。記録は `.viz/runs/` にNDJSONとして残り、サーバーの再起動後も実行履歴に表示されます。
 
-通常の `cargo run` では、言語共通の受信サーバーを先に `algo-vis serve`（または `npm run serve`）で起動します。SDKは値の記録・送信のみを担当し、Webアプリの起動には関与しません。他言語のSDKも同じ受信サーバーを使う設計です。
+通常の `cargo run` では、言語共通の受信サーバーを先に `traceprism serve`（または `npm run serve`）で起動します。SDKは値の記録・送信のみを担当し、Webアプリの起動には関与しません。他言語のSDKも同じ受信サーバーを使う設計です。
 
 ## 自分の競プロコードで使う
 
-Cargoプロジェクトにローカルcrateを追加します。Cargoパッケージ名は `algo-vis`、Rustのimport名は `algo_vis` です。
+Cargoプロジェクトにローカルcrateを追加します。既存コードとの互換性のため、Rust SDKのCargoパッケージ名は `algo-vis`、import名は `algo_vis` のままです。
 
 ```toml
 [features]

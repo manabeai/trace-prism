@@ -102,7 +102,7 @@ TypeScript  viz.record([i, j], {u, seen}, {from: origin})
 
 これらは各言語のSDK構文例であり、共通の関数シグネチャではない。Rustの識別子、Pythonのkeyword引数、TypeScriptのobject shorthandは同じ名前付き観測へ落とす。名前の取得にスタック解析や実行時のソース解析を要求しない。式や同名変数の区別が必要なら各SDKで明示キーを指定できるようにする。キーは同一runでどのEntityを継続観測するかを決めるため、単なる画面上のラベルとは分離して扱う。`FrameRef`もSDK上のhandleであり、Protocolではrun内のFrame IDへ変換する。
 
-現行 `algo-vis` Rust crate はローカルCargoプロジェクトのdefault featureで有効になる。`node bin/algo-vis.mjs serve`が起動していれば通常の`cargo run`からlocalhostへ送信し、同じソースを単体で提出するとfallbackマクロが空展開される。SDKは `viz.trace/v2` の最初のsnapshotと、その後の変更名に対するpatchを生成する。実際の設定と提出可能なサンプルは[README](../README.md)と[examples/abc007_c.rs](../examples/abc007_c.rs)を参照。
+現行 `algo-vis` Rust crate はローカルCargoプロジェクトのdefault featureで有効になる。`node bin/traceprism.mjs serve`が起動していれば通常の`cargo run`からlocalhostへ送信し、同じソースを単体で提出するとfallbackマクロが空展開される。SDKは `viz.trace/v2` の最初のsnapshotと、その後の変更名に対するpatchを生成する。実際の設定と提出可能なサンプルは[README](../README.md)と[examples/abc007_c.rs](../examples/abc007_c.rs)を参照。
 
 `from`が必要な箇所でhandleを関数に渡すのが重い場合は、後からスコープ内の次のFrameだけに遷移元を適用するguardを検討できる。ただし初期APIは明示的な`from: FrameRef`を基準とし、暗黙の「直前の同じspan」解決は導入しない。
 

@@ -73,17 +73,6 @@
   font-size: 12px;
   color: var(--dg-secondary);
 }
-.dg-mark {
-  display: grid;
-  place-items: center;
-  width: 27px;
-  height: 27px;
-  background: var(--dg-accent);
-  color: white;
-  font-size: 19px;
-  font-weight: 800;
-  line-height: 1;
-}
 .dg-brand-divider {
   display: block;
   width: 1px;
@@ -1122,6 +1111,17 @@
   .dg-app-header {
     padding: 0 14px;
   }
+  .dg-brand {
+    gap: 8px;
+  }
+  .dg-brand-divider,
+  .dg-brand > span:last-child {
+    display: none;
+  }
+  .dg-header-meta {
+    gap: 7px;
+    white-space: nowrap;
+  }
   .dg-header-meta small {
     display: none;
   }
@@ -1183,12 +1183,6 @@
 .dg-history-table,
 .dg-playback {
   font-family: var(--fn-sans);
-}
-.dg-mark {
-  color: #fff;
-}
-.dg-mark svg {
-  display: block;
 }
 .dg-brand strong {
   font: 500 26px/1 var(--fn-display);

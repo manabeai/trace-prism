@@ -18,6 +18,7 @@ import {
   IconX,
 } from '@tabler/icons-solidjs';
 import '@fontsource-variable/newsreader/wght.css';
+import { BrandMark } from './BrandMark';
 import './design-catalog.css';
 
 const colors = [
@@ -134,11 +135,9 @@ export default function DesignCatalog() {
   return (
     <div class="ct-root">
       <header class="ct-topbar">
-        <a href="/" class="ct-brand" aria-label="algo-vis workspace">
-          <span class="ct-brand-mark">
-            <IconBinaryTree size="17" stroke="1.8" />
-          </span>
-          <strong>algo-vis</strong>
+        <a href="/" class="ct-brand" aria-label="TracePrism workspace">
+          <BrandMark />
+          <strong>TracePrism</strong>
         </a>
         <span>Field Notes · component catalog</span>
         <a href="/flavors?theme=field-notes" class="ct-top-link">
@@ -582,7 +581,7 @@ export default function DesignCatalog() {
             </Specimen>
           </section>
           <footer class="ct-footer">
-            Field Notes is the visual language of the algo-vis workspace. Sample values on this page are
+            Field Notes is the visual language of the TracePrism workspace. Sample values on this page are
             fixed.
           </footer>
         </main>

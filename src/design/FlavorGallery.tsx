@@ -21,6 +21,7 @@ import {
 import '@fontsource-variable/spline-sans/wght.css';
 import '@fontsource-variable/manrope/wght.css';
 import '@fontsource-variable/newsreader/wght.css';
+import { BrandMark } from './BrandMark';
 import './flavors.css';
 
 const flavors = [
@@ -125,7 +126,7 @@ export default function FlavorGallery() {
             <IconChevronRight size="15" stroke="1.8" />
             Back to workspace
           </a>
-          <h1>Visual language for algo-vis</h1>
+          <h1>Visual language for TracePrism</h1>
           <p>One workspace, three material directions. Compare the same run before choosing a system.</p>
         </div>
         <span class="fl-gallery-badge">Design study</span>
@@ -172,10 +173,8 @@ export default function FlavorGallery() {
         <div class="fl-preview" data-flavor={active()}>
           <div class="fl-app-header">
             <div class="fl-brand">
-              <span class="fl-brand-mark">
-                <IconGitBranch size="17" stroke="2" />
-              </span>
-              <strong>algo-vis</strong>
+              <BrandMark />
+              <strong>TracePrism</strong>
               <span class="fl-brand-separator" />
               <span>Data history</span>
             </div>

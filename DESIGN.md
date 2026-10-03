@@ -1,5 +1,5 @@
 ---
-name: algo-vis Field Notes
+name: TracePrism Field Notes
 description: 実行記録を読むための静かな紙面
 colors:
   canvas: '#f1f2ec'
@@ -48,7 +48,7 @@ components:
     padding: '8px 12px'
 ---
 
-# algo-vis のデザインシステム
+# TracePrism のデザインシステム
 
 ## Overview
 

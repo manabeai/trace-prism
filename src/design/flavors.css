@@ -268,14 +268,9 @@
   align-items: center;
   gap: 9px;
 }
-.fl-brand-mark {
-  display: grid;
-  place-items: center;
-  width: 26px;
-  height: 26px;
-  border-radius: var(--fl-radius);
-  background: var(--fl-accent);
-  color: var(--fl-accent-ink);
+.fl-preview[data-flavor='graphite'] .tp-brand-mark {
+  background: #f1f2ec;
+  border-radius: 2px;
 }
 .fl-brand strong {
   font-family: var(--fl-display);

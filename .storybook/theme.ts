@@ -2,7 +2,8 @@ import { create } from 'storybook/theming';
 
 export const fieldNotesTheme = create({
   base: 'light',
-  brandTitle: 'algo-vis · Field Notes',
+  brandTitle: 'TracePrism · Field Notes',
+  brandImage: '/traceprism-icon.png',
   fontBase: '"IBM Plex Sans Variable", sans-serif',
   fontCode: '"IBM Plex Mono", monospace',
   colorPrimary: '#3f7065',

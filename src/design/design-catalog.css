@@ -61,14 +61,6 @@
   color: var(--ct-ink);
   text-decoration: none;
 }
-.ct-brand-mark {
-  display: grid;
-  place-items: center;
-  width: 29px;
-  height: 29px;
-  background: var(--ct-action);
-  color: #fff;
-}
 .ct-brand strong {
   font:
     600 24px/1 'Newsreader Variable',

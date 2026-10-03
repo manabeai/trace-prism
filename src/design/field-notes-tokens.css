@@ -16,3 +16,21 @@
   --fn-sans: 'IBM Plex Sans Variable', sans-serif;
   --fn-mono: 'IBM Plex Mono', monospace;
 }
+
+.tp-brand-mark {
+  position: relative;
+  display: block;
+  flex: none;
+  width: 44px;
+  height: 28px;
+  overflow: hidden;
+}
+.tp-brand-mark img {
+  position: absolute;
+  top: -9.5px;
+  left: 0;
+  display: block;
+  width: 44px;
+  height: 44px;
+  max-width: none;
+}

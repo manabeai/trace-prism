@@ -24,6 +24,7 @@ import type { RunRepository } from './runs/RunRepository';
 import { formatOptions } from './presentations/values/registry';
 import { AlgoCell, templates, validBindings, type Template } from './presentations/algo/registry';
 import { createWorkspaceController } from './workspace/controller';
+import { BrandMark } from './design/BrandMark';
 import { createHistoryTable } from './workspace/history/table-adapter';
 import { FormatMenu } from './workspace/history/FormatMenu';
 import { ValueCell } from './workspace/history/ValueCell';
@@ -344,10 +345,8 @@ export function LiveWorkspace(props: { repository?: RunRepository }) {
     <div class="workspace-root workspace-theme lv-workspace">
       <header class="dg-app-header">
         <div class="dg-brand">
-          <span class="dg-mark">
-            <IconGitBranch size="18" stroke="2" />
-          </span>
-          <strong>algo-vis</strong>
+          <BrandMark />
+          <strong>TracePrism</strong>
           <span class="dg-brand-divider" />
           <span>Data history</span>
         </div>

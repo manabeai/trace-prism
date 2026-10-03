@@ -1,6 +1,6 @@
 # ローカルで `record!` を試す
 
-サーバーを起動し、小さな Rust プログラムを自分で作成して実行し、ブラウザで値の履歴を確認する手順。すべてのコマンドは algo-vis リポジトリのルートで実行する。作成するサンプルは Git 管理外の `.viz/tutorial/` に置く。
+サーバーを起動し、小さな Rust プログラムを自分で作成して実行し、ブラウザで値の履歴を確認する手順。すべてのコマンドは TracePrism リポジトリのルートで実行する。作成するサンプルは Git 管理外の `.viz/tutorial/` に置く。
 
 ## 1. ビューワのサーバーを起動する
 
@@ -12,7 +12,7 @@ npm run build
 npm run serve
 ```
 
-`algo-vis: http://127.0.0.1:4317/` と表示されたら、そのターミナルを開いたままにする。ブラウザで [http://127.0.0.1:4317/](http://127.0.0.1:4317/) を開く。`npm link` 済みなら `npm run serve` の代わりに `algo-vis serve` でもよい。
+`TracePrism: http://127.0.0.1:4317/` と表示されたら、そのターミナルを開いたままにする。ブラウザで [http://127.0.0.1:4317/](http://127.0.0.1:4317/) を開く。`npm link` 済みなら `npm run serve` の代わりに `traceprism serve` でもよい。
 
 ## 2. サンプルの Rust コードを書く
 
@@ -22,7 +22,7 @@ npm run serve
 mkdir -p .viz/tutorial/src
 cat > .viz/tutorial/Cargo.toml <<'TOML'
 [package]
-name = "algo-vis-local-demo"
+name = "traceprism-local-demo"
 version = "0.1.0"
 edition = "2021"
 
