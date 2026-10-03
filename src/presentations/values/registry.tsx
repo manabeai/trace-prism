@@ -1,7 +1,7 @@
 import type { JSX } from 'solid-js';
 import { IconList } from '@tabler/icons-solidjs';
 import type { Column, Frame, Value } from '../../trace/types';
-import type { ValueChange } from '../../trace/diff';
+import type { ValueChange, ValuePath } from '../../trace/diff';
 import type { ErasedValuePresentation, FormatOption, ValueKind } from './contract';
 import { arrayPresentation } from './kinds/array';
 import { boolPresentation } from './kinds/bool';
@@ -42,9 +42,10 @@ export function renderValue(
   value: Value | undefined,
   formatId: string,
   changes: readonly ValueChange[] = [],
+  matches: readonly ValuePath[] = [],
 ): JSX.Element {
   if (!value) return <span class="dg-quiet">—</span>;
   const presentation = presentations[value.t];
   const format = presentation.formats.find((item) => item.id === formatId && item.accepts(value));
-  return (format ?? presentation.fallback).render(value, changes);
+  return (format ?? presentation.fallback).render(value, changes, matches);
 }

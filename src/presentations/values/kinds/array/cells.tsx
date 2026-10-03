@@ -1,7 +1,7 @@
 import { For, Show } from 'solid-js';
 import { IconBrackets } from '@tabler/icons-solidjs';
 import { valueText } from '../../../../trace/value';
-import { changesAffectPath } from '../../../../trace/diff';
+import { changesAffectPath, matchesAffectPath } from '../../../../trace/diff';
 import { isMatrix, isNumericArray } from '../../../value-shapes';
 import type { ValueFormat, ValueOf } from '../../contract';
 
@@ -10,13 +10,16 @@ export const arrayCellsFormat = {
   label: (value) => (isNumericArray(value) ? 'Numbers' : 'Cells'),
   icon: IconBrackets,
   isApplicable: (value) => !isMatrix(value),
-  render: (value, changes) => (
+  render: (value, changes, matches) => (
     <div class="dg-array">
       <For each={value.items}>
         {(item, index) => (
           <span
             title={valueText(item)}
-            classList={{ 'is-updated': changesAffectPath(changes, [{ kind: 'index', index: index() }]) }}
+            classList={{
+              'is-updated': changesAffectPath(changes, [{ kind: 'index', index: index() }]),
+              'is-search-match': matchesAffectPath(matches, [{ kind: 'index', index: index() }]),
+            }}
           >
             {valueText(item)}
           </span>

@@ -1,20 +1,23 @@
 import { For, Show } from 'solid-js';
 import { IconBrackets } from '@tabler/icons-solidjs';
 import { valueText } from '../../../../trace/value';
-import { changesAffectPath } from '../../../../trace/diff';
+import { changesAffectPath, matchesAffectPath } from '../../../../trace/diff';
 import type { ValueFormat, ValueOf } from '../../contract';
 
 export const setCellsFormat = {
   id: 'cells',
   label: 'Members',
   icon: IconBrackets,
-  render: (value, changes) => (
+  render: (value, changes, matches) => (
     <div class="dg-set">
       <For each={value.items}>
         {(item) => (
           <span
             title={valueText(item)}
-            classList={{ 'is-updated': changesAffectPath(changes, [{ kind: 'member', value: item }]) }}
+            classList={{
+              'is-updated': changesAffectPath(changes, [{ kind: 'member', value: item }]),
+              'is-search-match': matchesAffectPath(matches, [{ kind: 'member', value: item }]),
+            }}
           >
             {valueText(item)}
           </span>

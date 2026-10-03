@@ -141,6 +141,14 @@ export function changesAffectPath(changes: readonly ValueChange[], path: ValuePa
   );
 }
 
+export function matchesAffectPath(matches: readonly ValuePath[], path: ValuePath): boolean {
+  return matches.some((match) =>
+    match
+      .slice(0, Math.min(match.length, path.length))
+      .every((segment, index) => sameSegment(segment, path[index])),
+  );
+}
+
 export function framesWithChangeAt(
   frames: readonly Frame[],
   fieldName: string,

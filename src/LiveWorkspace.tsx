@@ -28,6 +28,8 @@ import { BrandMark } from './design/BrandMark';
 import { createHistoryTable } from './workspace/history/table-adapter';
 import { FormatMenu } from './workspace/history/FormatMenu';
 import { ValueCell } from './workspace/history/ValueCell';
+import { SearchEditor } from './workspace/search/SearchEditor';
+import type { SearchResults } from './search/evaluate';
 function RelationGraph(props: {
   graph: Graph;
   runId: string;
@@ -35,6 +37,7 @@ function RelationGraph(props: {
   select: (seq: Seq) => void;
   canSwitch: boolean;
   switchMode: () => void;
+  search: SearchResults;
 }) {
   const [zoom, setZoom] = createSignal(100);
   let viewport: HTMLDivElement | undefined;
@@ -124,6 +127,12 @@ function RelationGraph(props: {
                     nodes()
                       .get(edge.to)
                       ?.seqs?.includes(props.selectedSeq as Seq),
+                  'is-search-dim':
+                    props.search.active &&
+                    !(nodes().get(edge.to)?.seq && props.search.bySeq.has(nodes().get(edge.to)!.seq!)) &&
+                    !nodes()
+                      .get(edge.to)
+                      ?.seqs?.some((seq) => props.search.bySeq.has(seq)),
                 }}
                 d={edgePath(edge.from, edge.to)}
               />
@@ -138,6 +147,12 @@ function RelationGraph(props: {
                   'is-selected':
                     node.seq === props.selectedSeq || node.seqs?.includes(props.selectedSeq as Seq),
                   'is-actionable': node.seq !== undefined,
+                  'is-search-dim':
+                    props.search.active &&
+                    !(node.seq && props.search.bySeq.has(node.seq)) &&
+                    !node.seqs?.some((seq) => props.search.bySeq.has(seq)),
+                  'is-search-hit':
+                    props.search.active && Boolean(node.seq && props.search.bySeq.has(node.seq)),
                 }}
                 transform={`translate(${node.x} ${node.y})`}
                 role={node.seq !== undefined ? 'button' : undefined}
@@ -194,6 +209,12 @@ export function LiveWorkspace(props: { repository?: RunRepository }) {
     setCollapsed,
     diffOnly,
     setDiffOnly,
+    searchQuery,
+    setSearchQuery,
+    searchText,
+    setSearchText,
+    searchFieldList,
+    searchResults,
     dialogOpen,
     setDialogOpen,
     stage,
@@ -224,6 +245,18 @@ export function LiveWorkspace(props: { repository?: RunRepository }) {
     setFormats,
   } = createWorkspaceController(untrack(() => props.repository));
   const historyTable = createHistoryTable(tree, collapsed);
+  const searchHitSet = createMemo(() => new Set(searchResults().hits));
+  const searchTicks = createMemo(() => {
+    const all = frames();
+    const count = Math.min(all.length, 180);
+    if (!count) return [];
+    const hits = searchHitSet();
+    return Array.from({ length: count }, (_, index) => {
+      const from = Math.floor((index * all.length) / count);
+      const to = Math.max(from + 1, Math.floor(((index + 1) * all.length) / count));
+      return all.slice(from, to).some((frame) => hits.has(frame.seq));
+    });
+  });
   const [wideSizes, setWideSizes] = createSignal([2 / 3, 1 / 3]);
   const [narrowSizes, setNarrowSizes] = createSignal([0.5, 0.5]);
   const [stacked, setStacked] = createSignal(false);
@@ -302,7 +335,11 @@ export function LiveWorkspace(props: { repository?: RunRepository }) {
     ) : (
       <tr
         class="dg-frame-row"
-        classList={{ 'is-selected': selected()?.seq === node.frame.seq }}
+        classList={{
+          'is-selected': selected()?.seq === node.frame.seq,
+          'is-search-dim': searchResults().active && !searchHitSet().has(node.frame.seq),
+          'is-search-hit': searchResults().active && searchHitSet().has(node.frame.seq),
+        }}
         onClick={() => setSelectedSeq(node.frame.seq)}
       >
         <th scope="row">
@@ -317,15 +354,27 @@ export function LiveWorkspace(props: { repository?: RunRepository }) {
         </th>
         <For each={shownColumns()}>
           {(column) => (
-            <td class="dg-value-cell">
+            <td
+              class="dg-value-cell"
+              classList={{
+                'is-search-match': Boolean(
+                  searchResults().bySeq.get(node.frame.seq)?.fields.get(column.name)?.length,
+                ),
+              }}
+            >
               <Show
-                when={!diffOnly() || node.frame.changed.includes(column.name)}
+                when={
+                  !diffOnly() ||
+                  node.frame.changed.includes(column.name) ||
+                  Boolean(searchResults().bySeq.get(node.frame.seq)?.fields.get(column.name)?.length)
+                }
                 fallback={<span class="dg-quiet">—</span>}
               >
                 <ValueCell
                   field={node.frame.values[column.name]}
                   format={activeFormat(column)}
                   changes={node.frame.deltas[column.name]}
+                  matches={searchResults().bySeq.get(node.frame.seq)?.fields.get(column.name)}
                 />
               </Show>
             </td>
@@ -508,6 +557,18 @@ export function LiveWorkspace(props: { repository?: RunRepository }) {
                 </label>
               </Show>
             </div>
+            <Show when={current() && frames().length}>
+              <SearchEditor
+                fields={searchFieldList()}
+                query={searchQuery()}
+                text={searchText()}
+                results={searchResults()}
+                selectedSeq={selected()?.seq}
+                setQuery={setSearchQuery}
+                setText={setSearchText}
+                selectSeq={selectRecord}
+              />
+            </Show>
             <Show
               when={!error()}
               fallback={
@@ -634,6 +695,7 @@ export function LiveWorkspace(props: { repository?: RunRepository }) {
                           switchMode={() =>
                             setGraphPreference(graph().mode === 'transition' ? 'span' : 'from')
                           }
+                          search={searchResults()}
                         />
                       </div>
                     </Resizable.Panel>
@@ -660,16 +722,34 @@ export function LiveWorkspace(props: { repository?: RunRepository }) {
                     <strong>seq {selected()?.seq ?? '—'}</strong>
                     <code>{selected() ? spanText(selected()!.span) : '[]'}</code>
                   </span>
-                  <input
-                    aria-label="Record position"
-                    type="range"
-                    min="0"
-                    max={Math.max(0, frames().length - 1)}
-                    value={Math.max(0, selectedIndex())}
-                    onInput={(event) =>
-                      selectRecord(frames()[Number(event.currentTarget.value)]?.seq ?? null)
-                    }
-                  />
+                  <div class="dg-playback-slider">
+                    <div
+                      class="dg-search-ticks"
+                      aria-hidden="true"
+                      style={{ 'grid-template-columns': `repeat(${searchTicks().length}, minmax(0, 1fr))` }}
+                    >
+                      <For each={searchTicks()}>
+                        {(hit) => (
+                          <i
+                            classList={{
+                              'is-hit': searchResults().active && hit,
+                              'is-dim': searchResults().active && !hit,
+                            }}
+                          />
+                        )}
+                      </For>
+                    </div>
+                    <input
+                      aria-label="Record position"
+                      type="range"
+                      min="0"
+                      max={Math.max(0, frames().length - 1)}
+                      value={Math.max(0, selectedIndex())}
+                      onInput={(event) =>
+                        selectRecord(frames()[Number(event.currentTarget.value)]?.seq ?? null)
+                      }
+                    />
+                  </div>
                   <button class="lv-latest" onClick={() => selectRecord(null)}>
                     Latest
                   </button>

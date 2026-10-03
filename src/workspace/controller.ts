@@ -16,6 +16,8 @@ import {
 import { HttpRunRepository } from '../runs/HttpRunRepository';
 import type { RunRepository } from '../runs/RunRepository';
 import { pollRuns } from '../runs/pollRuns';
+import { emptyQuery, searchFields, type Query } from '../search/model';
+import { evaluateSearch } from '../search/evaluate';
 
 type RunState = {
   selectedSeq: Seq | null;
@@ -24,6 +26,8 @@ type RunState = {
   collapsed: string[];
   graphPreference: GraphPreference;
   diffOnly: boolean;
+  searchQuery: Query;
+  searchText: string;
 };
 
 const initialState = (): RunState => ({
@@ -33,6 +37,8 @@ const initialState = (): RunState => ({
   collapsed: [],
   graphPreference: 'from',
   diffOnly: false,
+  searchQuery: emptyQuery(),
+  searchText: '',
 });
 
 export function createWorkspaceController(repository: RunRepository = new HttpRunRepository()) {
@@ -68,6 +74,9 @@ export function createWorkspaceController(repository: RunRepository = new HttpRu
     updateState((previous) => ({ ...previous, graphPreference: next }));
   const diffOnly = () => state().diffOnly;
   const setDiffOnly = (next: boolean) => updateState((previous) => ({ ...previous, diffOnly: next }));
+  const setSearchQuery = (next: Query) => updateState((previous) => ({ ...previous, searchQuery: next }));
+  const searchText = () => state().searchText;
+  const setSearchText = (next: string) => updateState((previous) => ({ ...previous, searchText: next }));
 
   const model = createMemo(() => materialize(current()?.frames ?? []));
   const frames = createMemo(() => model().frames);
@@ -91,6 +100,15 @@ export function createWorkspaceController(repository: RunRepository = new HttpRu
     return { runId, columns: stable };
   });
   const columns = () => columnModel().columns;
+  const searchFieldList = createMemo(() => searchFields(columns(), frames()));
+  const searchQuery = createMemo<Query>(() => ({
+    ...state().searchQuery,
+    clauses: state().searchQuery.clauses.map((clause) => ({
+      ...clause,
+      field: searchFieldList().find((field) => field.name === clause.field.name) ?? clause.field,
+    })),
+  }));
+  const searchResults = createMemo(() => evaluateSearch(frames(), searchQuery(), searchText()));
   const shownColumns = createMemo(() =>
     columns().filter((column) => visible() === null || visible()!.includes(column.name)),
   );
@@ -205,6 +223,12 @@ export function createWorkspaceController(repository: RunRepository = new HttpRu
     setCollapsed,
     diffOnly,
     setDiffOnly,
+    searchQuery,
+    setSearchQuery,
+    searchText,
+    setSearchText,
+    searchFieldList,
+    searchResults,
     dialogOpen,
     setDialogOpen,
     stage,

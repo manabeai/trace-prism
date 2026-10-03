@@ -1,7 +1,7 @@
 import { For } from 'solid-js';
 import { IconGridDots } from '@tabler/icons-solidjs';
 import { valueText } from '../../../../trace/value';
-import { changesAffectPath } from '../../../../trace/diff';
+import { changesAffectPath, matchesAffectPath } from '../../../../trace/diff';
 import { isMatrix } from '../../../value-shapes';
 import type { ValueFormat, ValueOf } from '../../contract';
 
@@ -10,7 +10,7 @@ export const arrayMatrixFormat = {
   label: 'Matrix',
   icon: IconGridDots,
   isApplicable: isMatrix,
-  render: (value, changes) => (
+  render: (value, changes, matches) => (
     <div class="lv-matrix">
       <For each={value.items}>
         {(row, rowIndex) => (
@@ -20,6 +20,10 @@ export const arrayMatrixFormat = {
                 <span
                   classList={{
                     'is-updated': changesAffectPath(changes, [
+                      { kind: 'index', index: rowIndex() },
+                      { kind: 'index', index: columnIndex() },
+                    ]),
+                    'is-search-match': matchesAffectPath(matches, [
                       { kind: 'index', index: rowIndex() },
                       { kind: 'index', index: columnIndex() },
                     ]),

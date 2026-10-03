@@ -848,6 +848,75 @@
   min-width: 50px;
   accent-color: var(--dg-accent);
 }
+.dg-playback-slider {
+  position: relative;
+  display: flex;
+  flex: 1;
+  min-width: 50px;
+  align-items: center;
+  min-height: 32px;
+}
+.dg-playback-slider input[type='range'] {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  margin: 0;
+  background: transparent;
+}
+.dg-search-ticks {
+  position: absolute;
+  top: 1px;
+  right: 2px;
+  left: 2px;
+  display: grid;
+  gap: 1px;
+  pointer-events: none;
+}
+.dg-search-ticks i {
+  height: 8px;
+  background: #cbd9ce;
+  opacity: 0.65;
+}
+.dg-search-ticks i.is-hit {
+  background: #f3cb5c;
+  opacity: 1;
+}
+.dg-search-ticks i.is-dim {
+  opacity: 0.2;
+}
+.lv-workspace .dg-frame-row.is-search-dim {
+  opacity: 0.36;
+}
+.lv-workspace .dg-frame-row.is-selected.is-search-dim {
+  opacity: 0.72;
+}
+.lv-workspace .dg-frame-row.is-search-hit .dg-seq-dot {
+  background: #ddb84d;
+}
+.lv-workspace .dg-value-cell.is-search-match .dg-value-body {
+  background: #fff2c2;
+  box-shadow: inset 0 0 0 1px #d7bd6a;
+  border-radius: 2px;
+  padding: 2px 4px;
+}
+.lv-workspace .dg-value-cell .is-search-match {
+  background: #f1cf61;
+  box-shadow: inset 0 0 0 1px #d3af4f;
+  color: #55461a;
+}
+.lv-workspace .dg-bars .dg-bar-item.is-search-match {
+  background: #fff2c2;
+}
+.lv-workspace .dg-graph-node.is-search-dim {
+  opacity: 0.24;
+}
+.lv-workspace .dg-graph-edge.is-search-dim {
+  opacity: 0.2;
+}
+.lv-workspace .dg-graph-node.is-search-hit:not(.is-selected) circle {
+  fill: #f3d474;
+  stroke: #be9b3c;
+}
 .dg-graph-layout {
   display: flex;
   flex: 1;
