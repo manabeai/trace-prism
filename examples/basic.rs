@@ -1,5 +1,5 @@
 // ローカルの cargo run では送信し、単体ソースの提出時は依存なしで無効化する。
-#[cfg(feature = "viz")] use algo_vis::record;
+#[cfg(feature = "viz")] use traceprism::record;
 #[cfg(not(feature = "viz"))] macro_rules! record {
     ([$($span:expr),*], from: $from:expr, $($name:ident),+) => {{ let _ = &$from; () }};
     ($($tokens:tt)*) => { () };

@@ -1,6 +1,6 @@
 // AtCoder Beginner Contest 007 C: https://atcoder.jp/contests/abc007/tasks/abc007_3
 #[cfg(feature = "viz")]
-use algo_vis::record;
+use traceprism::record;
 #[cfg(not(feature = "viz"))]
 macro_rules! record { ($($tokens:tt)*) => { () }; }
 

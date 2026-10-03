@@ -8,7 +8,7 @@ import type { Scalar, TraceRecord } from '../../src/trace/types';
 const integer = (v: string) => ({ t: 'int', v }) as const;
 const span = (...values: string[]): Scalar[] => values.map((v) => integer(v));
 const base = (seq: string, id: Scalar[] = []): Pick<TraceRecord, 'format' | 'runId' | 'seq' | 'span'> => ({
-  format: 'algo-vis/2',
+  format: 'viz.trace/v1',
   runId: 'run-1',
   seq,
   span: id,

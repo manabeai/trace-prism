@@ -27,13 +27,13 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-algo-vis = { path = "../../sdk/rust" }
+traceprism = { path = "../../sdk/rust" }
 TOML
 ```
 
 ```sh
 cat > .viz/tutorial/src/main.rs <<'RUST'
-use algo_vis::record;
+use traceprism::record;
 
 fn main() {
     let a = vec![2, 5, 8, 11, 15];

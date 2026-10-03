@@ -26,28 +26,28 @@ cargo run --manifest-path examples/Cargo.toml --bin dfs
 node bin/traceprism.mjs run examples/abc007_c.rs < examples/fixtures/abc007-c-1.in
 ```
 
-`npm link` 後は `traceprism run ...` と `traceprism serve` でも呼び出せます。従来の `algo-vis` コマンドも引き続き使えます。トレースだけ保存するなら `--no-serve` を付けます。記録は `.viz/runs/` にNDJSONとして残り、サーバーの再起動後も実行履歴に表示されます。
+`npm link` 後は `traceprism run ...` と `traceprism serve` でも呼び出せます。トレースだけ保存するなら `--no-serve` を付けます。記録は `.viz/runs/` にNDJSONとして残り、サーバーの再起動後も実行履歴に表示されます。
 
 通常の `cargo run` では、言語共通の受信サーバーを先に `traceprism serve`（または `npm run serve`）で起動します。SDKは値の記録・送信のみを担当し、Webアプリの起動には関与しません。他言語のSDKも同じ受信サーバーを使う設計です。
 
 ## 自分の競プロコードで使う
 
-Cargoプロジェクトにローカルcrateを追加します。既存コードとの互換性のため、Rust SDKのCargoパッケージ名は `algo-vis`、import名は `algo_vis` のままです。
+Cargoプロジェクトにローカルcrateを追加します。Cargoパッケージ名とRustのimport名はいずれも `traceprism` です。
 
 ```toml
 [features]
 default = ["viz"]
-viz = ["dep:algo-vis"]
+viz = ["dep:traceprism"]
 
 [dependencies]
-algo-vis = { path = "/home/mana/programs/algo-visualizer/sdk/rust", optional = true }
+traceprism = { path = "/home/mana/programs/algo-visualizer/sdk/rust", optional = true }
 ```
 
 ソースが単体提出でもコンパイルできるよう、featureがないときだけ空のマクロを定義します。
 
 ```rust
 #[cfg(feature = "viz")]
-use algo_vis::record;
+use traceprism::record;
 #[cfg(not(feature = "viz"))]
 macro_rules! record { ($($tokens:tt)*) => { () }; }
 

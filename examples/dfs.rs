@@ -1,6 +1,6 @@
 // DFS の呼び出し木を頂点IDと from で記録する例。
 #[cfg(feature = "viz")]
-use algo_vis::record;
+use traceprism::record;
 #[cfg(not(feature = "viz"))]
 macro_rules! record { ($($tokens:tt)*) => { () }; }
 

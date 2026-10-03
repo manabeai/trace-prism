@@ -3,21 +3,6 @@
 version = 4
 
 [[package]]
-name = "algo-vis"
-version = "0.1.0"
-dependencies = [
- "serde",
- "serde_json",
-]
-
-[[package]]
-name = "algo-vis-basic-example"
-version = "0.1.0"
-dependencies = [
- "algo-vis",
-]
-
-[[package]]
 name = "itoa"
 version = "1.0.18"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -99,6 +84,21 @@ dependencies = [
  "proc-macro2",
  "quote",
  "unicode-ident",
+]
+
+[[package]]
+name = "traceprism"
+version = "0.1.0"
+dependencies = [
+ "serde",
+ "serde_json",
+]
+
+[[package]]
+name = "traceprism-basic-example"
+version = "0.1.0"
+dependencies = [
+ "traceprism",
 ]
 
 [[package]]

@@ -181,7 +181,7 @@ async function run(source, noServe) {
   const id = `run-${Date.now()}-${process.pid}`;
   const binary = join(binDir, id);
   const deps = join(root, 'sdk/rust/target/debug/deps');
-  const sdk = join(root, 'sdk/rust/target/debug/libalgo_vis.rlib');
+  const sdk = join(root, 'sdk/rust/target/debug/libtraceprism.rlib');
   const compile = spawnSync(
     'rustc',
     [
@@ -189,7 +189,7 @@ async function run(source, noServe) {
       '--cfg',
       'feature="viz"',
       '--extern',
-      `algo_vis=${sdk}`,
+      `traceprism=${sdk}`,
       '-L',
       `dependency=${deps}`,
       absolute,

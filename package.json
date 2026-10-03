@@ -4,8 +4,7 @@
   "private": true,
   "type": "module",
   "bin": {
-    "traceprism": "bin/traceprism.mjs",
-    "algo-vis": "bin/algo-vis.mjs"
+    "traceprism": "bin/traceprism.mjs"
   },
   "scripts": {
     "dev": "vite --host 127.0.0.1 --port 5173 --strictPort",
