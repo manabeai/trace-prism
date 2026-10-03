@@ -1,5 +1,7 @@
 # フロントエンドのリファクタリング設計
 
+本文はリファクタリング時点の設計記録。現在の遷移元ID参照 `fromId` とGraphの表示切替は [v2 Protocol](../protocol/v2/README.md) を参照。
+
 状態: 段階的に実装中。現行の画面、`viz.trace/v2`、Rust SDK、受信サーバーの動作は維持する。旧操作モックと固定データのデザインモックは削除済み。
 
 2026-10-02 の実装では、`trace/` の型・復元・span 階層・関係グラフ、schema に基づく decode、branded な `RunId` / `Seq`、`runs/` の取得ポートと直列ポーリング、実行別状態を持つ workspace controller、値形式と Algo View のレジストリを導入した。履歴行の階層展開には TanStack Table v9 の行モデルを使い、移行した Format Menu のスタイルは CSS Module に置いた。Vitest の単体・コンポーネントテスト、Playwright の操作・axe 検査、ESLint、Prettier、Husky、CI を品質ゲートとして実行する。現行画面の共有スタイルは `workspace.css` に統合した。残る性能計測と CSS Modules の展開は、機能単位で進める。

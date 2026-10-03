@@ -20,6 +20,7 @@ type BaseRecord = {
   seq: string;
   span: Scalar[];
   from?: string | null;
+  fromId?: Scalar[];
   source?: { file: string; line: number; column?: number };
 };
 export type TraceRecord = BaseRecord &
@@ -46,6 +47,7 @@ export type Frame = {
   seq: Seq;
   span: Scalar[];
   from?: Seq;
+  fromId?: Scalar[];
   source: string;
   values: Record<string, Field>;
   changed: string[];
@@ -59,6 +61,7 @@ export type GraphNode = {
   label: string;
   detail: string;
   seq?: Seq;
+  seqs?: Seq[];
   x: number;
   y: number;
 };

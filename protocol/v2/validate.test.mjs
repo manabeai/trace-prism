@@ -23,6 +23,23 @@ test('patches follow seq order even when from points to an older branch', () => 
   assert.deepEqual(result.finalStates.test, { a: int(1), b: int(2) });
 });
 
+test('fromId matches an earlier typed span ID without changing patch order', () => {
+  const result = validateTraceLines(lines([
+    event(0, 'snapshot', { span: [int(0)], values: [{ name: 'n', value: int(0) }] }),
+    event(1, 'patch', { span: [int(1)], fromId: [int(0)], ops: [{ op: 'put', name: 'n', value: int(1) }] }),
+    event(2, 'patch', { span: [int(2)], fromId: [int(0)], ops: [{ op: 'put', name: 'n', value: int(2) }] }),
+  ]));
+  assert.deepEqual(result.finalStates.test.n, int(2));
+  assert.throws(() => validateTraceLines(lines([
+    event(0, 'snapshot', { span: [int(0)], values: [] }),
+    event(1, 'patch', { span: [int(1)], fromId: [{ t: 'string', v: '0' }], ops: [] }),
+  ])), /earlier span ID/);
+  assert.throws(() => validateTraceLines(lines([
+    event(0, 'snapshot', { span: [int(0)], values: [] }),
+    event(1, 'patch', { span: [int(1)], from: '0', fromId: [int(0)], ops: [] }),
+  ])), /only one/);
+});
+
 test('rejects future transitions and gaps in seq', () => {
   const first = event(0, 'snapshot', { values: [] });
   assert.throws(() => validateTraceLines(lines([first, event(1, 'patch', { from: '2', ops: [] })])), /earlier record/);

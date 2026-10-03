@@ -18,7 +18,7 @@ cargo run --manifest-path examples/Cargo.toml --bin abc007-c < examples/fixtures
 cargo run --manifest-path examples/Cargo.toml --bin dfs
 ```
 
-[http://127.0.0.1:4317/](http://127.0.0.1:4317/) を開くと、実行ごとに独立した履歴が表示されます。左上で値の列を選び、列見出しのアイコンで表示形式を変更します。Algo Viewを追加すると必要な値をクリックで割り当てられます。TableとGraphは左右に並び、共通のseq選択に連動します。中央の二本線をドラッグして幅を変え、片側を完全に畳むこともできます。`from` があればその遷移辺、なければspan IDの接頭辞階層をGraphに表示します。[DFSサンプルの見方](docs/local-walkthrough.md#4-dfs-の呼び出し木を確認する)も参照してください。
+[http://127.0.0.1:4317/](http://127.0.0.1:4317/) を開くと、実行ごとに独立した履歴が表示されます。左上で値の列を選び、列見出しのアイコンで表示形式を変更します。Algo Viewを追加すると必要な値をクリックで割り当てられます。TableとGraphは左右に並び、共通のseq選択に連動します。中央の二本線をドラッグして幅を変え、片側を完全に畳むこともできます。`from:` があればGraphは依存関係を初期表示し、**ID tree** ボタンでspan ID階層へ切り替えられます。[DFSサンプルの見方](docs/local-walkthrough.md#4-dfs-の呼び出し木を確認する)も参照してください。
 
 単体の `.rs` ファイルはCLIからも実行できます。サーバー未起動なら自動で立ち上がり、実行後もWeb UIを開ける状態を維持します。
 
@@ -61,7 +61,7 @@ record!([i, j], from: origin, a, left, right);
 
 ## データと画面
 
-SDKは [`viz.trace/v2` のsnapshot/patch](protocol/v2/README.md)を送信します。最初の記録が完全なsnapshot、その後は値が変わった名前だけを `put` するpatchです。同値の場合も空のpatchを残し、観測点を失いません。`span` は型付きIDの配列、`from` は同一実行内の過去のseq参照です。UIはseq順に完全な状態を復元します。古いv1の保存済みtraceも読み取れます。
+SDKは [`viz.trace/v2` のsnapshot/patch](protocol/v2/README.md)を送信します。最初の記録が完全なsnapshot、その後は値が変わった名前だけを `put` するpatchです。同値の場合も空のpatchを残し、観測点を失いません。`span` は型付きIDの配列です。`from: 親ID` は同じ型の `fromId` に変換され、`from: FrameRef` は従来どおり過去のseq参照 `from` になります。UIはseq順に完全な状態を復元します。古いv1の保存済みtraceも読み取れます。
 
 現在のMVPはローカルのRust SDK、受信サーバー、保存、実行履歴、値の履歴表・表示形式、Algo Viewの二分探索・グリッド、関係グラフまで動作します。crateはローカルpath dependencyで、crates.ioには未公開です。
 

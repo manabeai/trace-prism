@@ -88,8 +88,8 @@ cargo run --manifest-path .viz/tutorial/Cargo.toml
 cargo run --manifest-path examples/Cargo.toml --bin dfs
 ```
 
-標準出力は `0 1 3 4 5 2`。`record!([depth, u], from: parent, ...)` の `parent` は親の `record!` が返した `FrameRef` で、Protocolではその記録のseqになる。今回の実行では `0→1`、`1→2`、`1→3`、`3→4`、`0→5` という記録間の辺をGraphに表示する。Tableは `[depth, u]` のspanでグループ化するため、Graphの親子関係とは独立している。
+標準出力は `0 1 3 4 5 2`。各頂点は `record!([v], ...)` で記録し、子の記録に `from: u` を指定する。SDKは親の頂点IDを `fromId: [u]` として送る。Graphの初期表示は、このIDを過去の記録のspan IDと照合した依存グラフになる。**ID tree** ボタンを押すとspan IDの階層へ切り替わり、この例ではrootの下に各頂点IDが深さ1で並ぶ。**From links** で依存グラフへ戻せる。Tableは記録順のまま値を表示する。
 
-`adjacency` は普通の二次元 `Vec` として記録される。右側のGraphは**入力グラフの隣接辺**ではなく、DFSで実際に発生した**記録間の遷移**を描く。例えば入力には `2→5` があるが、頂点5は頂点4から先に訪問済みなので、この実行の遷移Graphにはその辺は出ない。`seen`、`order`、`u` の変化はTableで追える。
+`adjacency` は普通の二次元 `Vec` として記録される。右側のGraphは**入力グラフの隣接辺**ではなく、DFSで実際に発生した**記録間の依存**を描く。例えば入力には `2→5` があるが、頂点5は頂点4から先に訪問済みなので、この実行の依存Graphにはその辺は出ない。`seen`、`order`、`u` の変化はTableで追える。
 
 入力グラフ自体を見るには、左上の **Algo Views** で **Graph** を追加する。必須の `adjacency` に `adjacency`、任意の `visited` に `seen`、任意の `v` に `u` を割り当てる。DFSサンプルではこれらが初期選択される。Tableに追加されるGraph列は各seq時点の入力隣接リストを有向グラフで描き、訪問済み頂点と現在頂点を重ねて表示する。隣接リストは頂点番号を添字とし、各要素は隣接先の頂点番号の整数配列とする。`visited` には頂点ごとのbool配列、または訪問済み頂点番号のSetを指定できる。

@@ -895,6 +895,24 @@
   color: var(--dg-secondary);
   font-size: 10px;
 }
+.dg-graph-mode-switch {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  width: max-content;
+  margin-top: 4px;
+  padding: 4px 7px;
+  border: 1px solid var(--dg-seam);
+  border-radius: 3px;
+  background: var(--fn-sheet);
+  color: var(--dg-accent);
+  font-size: 10px;
+  cursor: pointer;
+}
+.dg-graph-mode-switch:hover {
+  background: var(--fn-soft);
+  border-color: var(--dg-accent);
+}
 .dg-graph-meta label {
   display: flex;
   align-items: center;

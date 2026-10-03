@@ -1,7 +1,7 @@
 import { createMemo, createSignal, onCleanup, onMount } from 'solid-js';
 import type { Column, Run } from '../trace/types';
 import type { RunId, Seq } from '../trace/ids';
-import { deriveGraph } from '../trace/relation-graph';
+import { deriveGraph, hasFromLinks, type GraphPreference } from '../trace/relation-graph';
 import { groupFrames } from '../trace/span-tree';
 import { materialize } from '../trace/materialize';
 import { formatOptions } from '../presentations/values/registry';
@@ -22,6 +22,7 @@ type RunState = {
   visible: string[] | null;
   formats: Record<string, string>;
   collapsed: string[];
+  graphPreference: GraphPreference;
   diffOnly: boolean;
 };
 
@@ -30,6 +31,7 @@ const initialState = (): RunState => ({
   visible: null,
   formats: {},
   collapsed: [],
+  graphPreference: 'from',
   diffOnly: false,
 });
 
@@ -61,6 +63,9 @@ export function createWorkspaceController(repository: RunRepository = new HttpRu
   const collapsed = () => state().collapsed;
   const setCollapsed = (update: (keys: string[]) => string[]) =>
     updateState((previous) => ({ ...previous, collapsed: update(previous.collapsed) }));
+  const graphPreference = () => state().graphPreference;
+  const setGraphPreference = (next: GraphPreference) =>
+    updateState((previous) => ({ ...previous, graphPreference: next }));
   const diffOnly = () => state().diffOnly;
   const setDiffOnly = (next: boolean) => updateState((previous) => ({ ...previous, diffOnly: next }));
 
@@ -97,7 +102,8 @@ export function createWorkspaceController(repository: RunRepository = new HttpRu
   });
   const selected = createMemo(() => frames()[selectedIndex()]);
   const tree = createMemo(() => groupFrames(frames()));
-  const graph = createMemo(() => deriveGraph(frames()));
+  const graph = createMemo(() => deriveGraph(frames(), graphPreference()));
+  const canSwitchGraph = createMemo(() => hasFromLinks(frames()));
   const columnCount = createMemo(() => 1 + shownColumns().length + shownViews().length);
 
   onMount(() => {
@@ -214,6 +220,8 @@ export function createWorkspaceController(repository: RunRepository = new HttpRu
     selected,
     tree,
     graph,
+    canSwitchGraph,
+    setGraphPreference,
     columnCount,
     chooseRun,
     toggleColumn,

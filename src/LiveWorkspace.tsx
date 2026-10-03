@@ -32,13 +32,17 @@ function RelationGraph(props: {
   runId: string;
   selectedSeq: string;
   select: (seq: Seq) => void;
+  canSwitch: boolean;
+  switchMode: () => void;
 }) {
   const [zoom, setZoom] = createSignal(100);
   let viewport: HTMLDivElement | undefined;
   let lastFocus = '';
   const nodes = createMemo(() => new Map(props.graph.nodes.map((node) => [node.id, node])));
   const focusSelected = (behavior: ScrollBehavior, force = false) => {
-    const node = props.graph.nodes.find((item) => item.seq === props.selectedSeq);
+    const node = props.graph.nodes.find(
+      (item) => item.seq === props.selectedSeq || item.seqs?.includes(props.selectedSeq as Seq),
+    );
     const scale = zoom() / 100;
     const focus = node ? `${props.runId}:${node.id}:${node.x}:${node.y}:${scale}` : '';
     if (!node || !viewport || (!force && focus === lastFocus)) return;
@@ -71,8 +75,21 @@ function RelationGraph(props: {
           <span>
             {props.graph.mode === 'transition'
               ? 'Edges follow explicit from references'
-              : 'Parents follow span ID prefixes'}
+              : 'IDs follow span prefixes'}
           </span>
+          <Show when={props.canSwitch}>
+            <button
+              class="dg-graph-mode-switch"
+              type="button"
+              aria-label={props.graph.mode === 'transition' ? 'Show ID hierarchy' : 'Show from links'}
+              onClick={() => props.switchMode()}
+            >
+              <Show when={props.graph.mode === 'transition'} fallback={<IconGitBranch size="15" />}>
+                <IconBinaryTree size="15" />
+              </Show>
+              {props.graph.mode === 'transition' ? 'ID tree' : 'From links'}
+            </button>
+          </Show>
         </div>
         <label>
           Zoom{' '}
@@ -100,7 +117,13 @@ function RelationGraph(props: {
             {(edge) => (
               <path
                 class="dg-graph-edge"
-                classList={{ 'is-selected': edge.to === `seq:${props.selectedSeq}` }}
+                classList={{
+                  'is-selected':
+                    nodes().get(edge.to)?.seq === props.selectedSeq ||
+                    nodes()
+                      .get(edge.to)
+                      ?.seqs?.includes(props.selectedSeq as Seq),
+                }}
                 d={edgePath(edge.from, edge.to)}
               />
             )}
@@ -111,7 +134,8 @@ function RelationGraph(props: {
                 class="dg-graph-node"
                 classList={{
                   'is-span': node.kind === 'span',
-                  'is-selected': node.seq === props.selectedSeq,
+                  'is-selected':
+                    node.seq === props.selectedSeq || node.seqs?.includes(props.selectedSeq as Seq),
                   'is-actionable': node.seq !== undefined,
                 }}
                 transform={`translate(${node.x} ${node.y})`}
@@ -184,6 +208,8 @@ export function LiveWorkspace(props: { repository?: RunRepository }) {
     selected,
     tree,
     graph,
+    canSwitchGraph,
+    setGraphPreference,
     columnCount,
     chooseRun,
     toggleColumn,
@@ -605,6 +631,10 @@ export function LiveWorkspace(props: { repository?: RunRepository }) {
                           runId={current()?.id ?? ''}
                           selectedSeq={selected()?.seq ?? ''}
                           select={selectRecord}
+                          canSwitch={canSwitchGraph()}
+                          switchMode={() =>
+                            setGraphPreference(graph().mode === 'transition' ? 'span' : 'from')
+                          }
                         />
                       </div>
                     </Resizable.Panel>

@@ -1,55 +1,56 @@
 # viz.trace/v2
 
-Status: implemented for the Rust SDK, local `/api/record` receiver, and the main workspace. The receiver persists v2 records as NDJSON; the workspace materializes snapshot/patch state per seq. Previously saved v1 traces are still readable in the workspace.
+Rust SDK、ローカルの `/api/record` 受信サーバー、Web Workspaceで使用するNDJSON形式。1行が1回の `record!` に対応する。[JSON Schema](trace.schema.json)が各行の形を、[`validate.mjs`](validate.mjs)が実行全体の整合性を検証する。既存のv1記録もWorkspaceで読み込める。[v3草案](../v3/DRAFT.md)は未実装であり、この形式の要件ではない。
 
-The [v3 draft](../v3/DRAFT.md) explores characters, collection semantics, and structural trees. It keeps operations out of the wire: the UI may infer candidates from successive observed values. The draft is not an implemented extension to this strict v2 schema.
+## 記録とID
 
-## Record stream
+各行には `format: "viz.trace/v2"`、`runId`、`seq`、`span`、`kind` が必要。`seq` は実行ごとに `"0"` から始まる連続した十進文字列のu64で、状態復元とTable再生の唯一の順序になる。実行は必ず `snapshot` で始まり、以後は `patch` または完全な `snapshot` を送れる。値が変わらなくても空の `ops` を持つ記録を残せる。
 
-A trace is UTF-8 NDJSON: one record per line. A WebSocket message may carry the same JSON object. Transport framing does not change the object. The [JSON Schema](trace.schema.json) checks individual records; [`validate.mjs`](validate.mjs) additionally checks stream invariants.
-
-Every record has `format: "viz.trace/v2"`, a `runId`, a decimal-string `seq`, a `span` array, and a `kind`. `seq` is a contiguous unsigned 64-bit counter starting at `"0"` in each run. It orders both materialization and playback. `runId` isolates state, IDs, and source metadata across executions. A run starts with one `snapshot`; further records may be `patch` or full `snapshot` checkpoints. An empty `ops` array is valid: a `record!` call is still a visible observation even when no value changed.
-
-| Field | Meaning |
+| フィールド | 意味 |
 | --- | --- |
-| `span` | Typed scalar ID path. Exact path equality joins records into one logical group; a prefix is its parent. `[]` is the root. |
-| `from` | Optional `seq` of an earlier record in the same run. It creates an explicit transition edge. Omission makes no transition claim. |
-| `source` | Optional file, one-based line, and optional one-based column. It is metadata, never part of span identity. |
-| `values` | On `snapshot`, the **complete materialized named state** after this observation. |
-| `ops` | On `patch`, changes applied to the immediately preceding materialized state in `seq` order. |
+| `span` | 型付きスカラーのIDパス。完全一致するIDは同じ論理グループ。接頭辞が親。`[]` はroot。 |
+| `fromId` | 任意の親IDパス。以前の記録の `span` と型まで一致させる。同じIDが複数回記録された場合は、対象より前の最新の記録へ結ぶ。 |
+| `from` | 互換用のseq参照。同一実行の以前の記録を直接指定する。SDKの `FrameRef` がこれに対応する。 |
+| `source` | 任意のファイル名、1始まりの行番号・列番号。IDには含めない。 |
+| `values` | `snapshot` 時点の名前付き値の完全な状態。 |
+| `ops` | `patch` の操作。直前のseqの状態へ適用する。 |
 
-`from` never changes the patch base. If seq 3 says `from: "0"`, seq 3's patch still applies to the state after seq 2. To compare endpoints of the edge, materialize seq 0 and seq 3 separately. An explicit transition can branch; it does not imply that a program rolled memory back to the source frame.
+`fromId` と `from` は同じ記録に同時指定できない。どちらもpatchの適用元を変えず、Graphに描く依存辺だけを指定する。例えばseq 3がseq 0を親にしても、seq 3のpatchはseq 2までの状態へ適用する。`fromId` は同じ実行で以前に観測されたIDだけを参照できる。未解決の外部IDを辺として推測しない。
 
-When a run contains any `from`, the default relation graph draws only those explicit record edges; records without `from` are unlinked roots. When a run has no `from`, the default graph creates nodes for each distinct span prefix and attaches each record to its exact span node. This fallback is a hierarchy view, not an inferred execution transition.
+ID比較では型を維持し、数値の表記差は正規化する。例えば `int: "-0"` と `int: "0"`、`float: "1e0"` と `float: "1.0"` はそれぞれ同一IDだが、整数と浮動小数点数は別IDとなる。
 
-## State and value model
+Graphは `fromId` または `from` が一つでもあれば、これらの依存辺を初期表示する。**ID tree** へ切り替えると、span IDを一意なノードにまとめ、接頭辞による木を描く。`span: [v]` の記録だけなら、rootの直下に各 `v` が並ぶ。**From links** で依存辺へ戻せる。Tableは常にseqに従って状態を復元し、同じspan IDの記録は一つのグループへまとめる。Graphの表示切替はtraceを書き換えない。
 
-`snapshot.values` and `patch.ops` use stable variable names. A `put` replaces or creates one complete named value. A `drop` removes it; `null` is a present value and is not a drop. A name occurs at most once in a snapshot or patch. A patch can omit a variable, which means that its previous value remains visible. The first snapshot must contain every value known at seq 0; subsequent checkpoints must likewise contain the entire current state. Nested element patches are deliberately outside v2: a producer may replace an Array or Map value with one `put` and a receiver can still compute typed differences for display.
+## 値と差分
 
-Values are tagged so large integers and non-string Map keys survive language boundaries:
+`snapshot.values` は名前付き値の全量。`patch.ops` の `put` は一つの名前を追加・置換し、`drop` は削除する。`null` は値として存在する状態であり、削除ではない。patchに載らない名前は直前の状態から引き継ぐ。ネストした要素へのwire上のpatchはv2では扱わず、ArrayやMapも一つの `put` で置換できる。表示側は復元後の値から要素単位の差分を計算する。
 
-| Tag | Payload | Notes |
-| --- | --- | --- |
-| `null` | none | Represents a present null value. |
-| `bool` | JSON boolean `v` | |
-| `int` | decimal-string `v` | Arbitrary precision. No JSON number conversion. |
-| `float` | finite decimal-string `v` | Parsed as IEEE-754 binary64 for comparison; NaN and infinity are excluded. |
-| `string` | JSON string `v` | Exact Unicode string; no implicit normalization. |
-| `array` | ordered `items` | Matrix is an Array of Arrays. |
-| `set` | `items` | Order does not matter; structurally duplicate members are invalid. |
-| `map` | `entries` of typed scalar `key` and Value | Key order does not matter; duplicate typed keys are invalid. |
-| `record` | named `fields` | Field order does not matter; duplicate names are invalid. |
+値は型付きタグで表す。
 
-Map keys in v2 are scalars. An Adapter can project a map with composite keys to an Array of key/value Records. `sourceType` is optional metadata such as `Vec<i64>`; renderers bind by protocol shape and variable name, not by a Rust type string. Unknown tags and fields require a new protocol version or an explicit extension, rather than silent interpretation.
+| タグ | 内容 |
+| --- | --- |
+| `null` | null値 |
+| `bool` | JSONの真偽値 `v` |
+| `int` | 十進文字列 `v`。大きな整数の精度を維持する |
+| `float` | 有限数の十進文字列 `v` |
+| `string` | 文字列 `v` |
+| `array` | 順序付きの `items`。Matrixや隣接リストもArrayの組合せ |
+| `set` | 順序に意味のない `items` |
+| `map` | 型付きスカラー `key` と値の `entries` |
+| `record` | 名前付き `fields` |
 
-## SDK and UI boundary
+Mapのキーはスカラーに限定する。複合キーはAdapterでArray等へ射影できる。`sourceType` は `Vec<i64>` のような元言語の型名を残す任意のメタデータであり、Protocolの型判定には使わない。
 
-The user API stays language-specific and minimal, for example `record!([i, j], from: parent, a, mid, ok)` in Rust. The SDK or receiving adapter normalizes this to stable names and typed values. A call can list only the values being observed; the v2 writer maintains prior named state and emits a full snapshot or per-name puts. It must preserve a record even if all observed values equal their previous values. An explicit lifetime-end API would be needed to emit `drop`; the current `record!` API does not infer scope exit.
+## SDKとの対応
 
-The wire contains no `binary_search`, `dfs`, `left` role, display format, color, or widget type. Algo View selection, variable-to-argument bindings, Array bars versus numbers, and table versus relation graph are workspace configuration. They can be changed without rewriting a trace.
+Rustでは `record!([v], from: u, adjacency, seen, v)` の `from: u` を型付きの `fromId: [u]` に変換する。複数セグメントなら `record!([i, j], from: [pi, pj], ...)` と書ける。従来の `let parent = record!(...); record!(..., from: parent, ...)` は `FrameRef` を `from` のseqとして送る。いずれも公開マクロは `record!` だけで、Graphの描き方やアルゴリズム名をコード側へ埋め込まない。他言語SDKも、同じ型付きIDパスへ正規化すればよい。
 
-## v1 migration
+v1形式は観測した値だけを載せる部分更新として読み込む。v2へ変換するときは最初の記録を `snapshot`、以後を名前ごとの `put` を持つ `patch` とし、指定のない値を引き継ぐ。v1に削除情報はないため `drop` を推測しない。
 
-The existing v1 event has `format: "viz.trace/v1"`, `seq`, `span`, optional/null `from`, and an array of observed named `values`. It is a partial observation, even though each listed value is a snapshot. A v1-to-v2 bridge keeps `runId`, `seq`, `span`, and the typed values. It emits a v2 `snapshot` for seq 0, then a `patch` with `put` for every listed name in later events (possibly optimizing equal values to an empty `ops` array). It omits null `from`. Names absent from a v1 event remain in accumulated state. v1 does not carry deletion, so the bridge cannot invent `drop`.
+検証例:
 
-Validate the [example stream](example.ndjson) with `node protocol/v2/validate.mjs`; pass another NDJSON path as its first argument. The validator enforces contiguous seq, an initial snapshot, earlier same-run `from`, unique names and collection keys, finite floats, and valid drops in addition to the JSON Schema.
+```sh
+node protocol/v2/validate.mjs protocol/v2/example.ndjson
+```
+
+validatorはseqの連続性、同一実行の過去の `from`・`fromId`、値名やMapキーの重複、有限のfloat、存在しない値の `drop` を検査する。

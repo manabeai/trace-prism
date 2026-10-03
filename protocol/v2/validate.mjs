@@ -48,12 +48,17 @@ export function createTraceValidator() {
     let run = runs.get(event.runId);
     if (!run) {
       if (event.kind !== 'snapshot' || seq !== 0n) throw new Error(`${label}: a run must start with snapshot seq 0`);
-      run = { nextSeq: 0n, records: new Set(), state: new Map() };
+      run = { nextSeq: 0n, records: new Set(), ids: new Set(), state: new Map() };
       runs.set(event.runId, run);
     }
     if (seq !== run.nextSeq) throw new Error(`${label}: expected seq ${run.nextSeq}, received ${seq}`);
+    if (event.from !== undefined && event.fromId !== undefined) throw new Error(`${label}: use only one of from and fromId`);
     if (event.from !== undefined && (!run.records.has(event.from) || BigInt(event.from) >= seq)) throw new Error(`${label}: from must name an earlier record in the same run`);
     for (const segment of event.span) canonical(segment);
+    if (event.fromId !== undefined) {
+      const parentId = JSON.stringify(event.fromId.map(canonical));
+      if (!run.ids.has(parentId)) throw new Error(`${label}: fromId must match an earlier span ID in the same run`);
+    }
     if (event.kind === 'snapshot') {
       const state = new Map();
       for (const field of event.values) {
@@ -77,6 +82,7 @@ export function createTraceValidator() {
       run.state = state;
     }
     run.records.add(event.seq);
+    run.ids.add(JSON.stringify(event.span.map(canonical)));
     run.nextSeq = seq + 1n;
     count++;
   };

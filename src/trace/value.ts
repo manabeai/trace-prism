@@ -4,7 +4,23 @@ import { spanId } from './ids';
 export const scalarText = (value: Scalar) =>
   value.t === 'string' ? JSON.stringify(value.v) : String(value.v);
 export const spanText = (span: Scalar[]) => `[${span.map(scalarText).join(', ')}]`;
-export const spanKey = (span: Scalar[]) => spanId(JSON.stringify(span));
+const scalarKey = (value: Scalar): string => {
+  switch (value.t) {
+    case 'null':
+      return 'null';
+    case 'bool':
+      return `bool:${value.v}`;
+    case 'int':
+      return `int:${BigInt(value.v)}`;
+    case 'float': {
+      const number = Number(value.v);
+      return `float:${Object.is(number, -0) ? 0 : number}`;
+    }
+    case 'string':
+      return `string:${JSON.stringify(value.v)}`;
+  }
+};
+export const spanKey = (span: Scalar[]) => spanId(JSON.stringify(span.map(scalarKey)));
 
 export function legacyValue(input: unknown): Value {
   if (input === null) return { t: 'null' };

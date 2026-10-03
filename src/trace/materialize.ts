@@ -43,6 +43,7 @@ export function materialize(records: TraceRecord[]): Materialized {
       seq: seqId(record.seq),
       span: record.span,
       from: record.from == null ? undefined : seqId(record.from),
+      fromId: record.fromId,
       source: record.source ? `${record.source.file}:${record.source.line}` : '—',
       values: Object.fromEntries(state),
       changed,

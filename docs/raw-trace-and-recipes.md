@@ -1,6 +1,6 @@
 # Raw Traceの階層と遷移、可視化Recipe
 
-状態: Protocol/APIの設計経緯。Rust SDKのv2 snapshot/patch記録、ローカル受信、Webでの状態復元は実装済み。他言語SDKと汎用Recipeエンジンは未実装。2026-09-30の議論に基づく。
+状態: 2026-09-30時点のProtocol/API設計経緯を残した文書。本文の `from` はFrameRefによるseq参照だけを前提としており、現在はID参照の `fromId` も実装済み。snapshot/patchを含む現行の仕様は [v2 Protocol](../protocol/v2/README.md) を参照。他言語SDKと汎用Recipeエンジンは未実装。
 
 ## 核心
 

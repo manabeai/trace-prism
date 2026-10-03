@@ -48,10 +48,69 @@ test('v2 trace materializes in the live workspace and remains explorable', async
 
   await expect(page.locator('.dg-graph-meta strong')).toHaveText('Transition graph');
   await expect(page.locator('.dg-graph-node')).toHaveCount(4);
+  await page.getByRole('button', { name: 'Show ID hierarchy' }).click();
+  await expect(page.locator('.dg-graph-meta strong')).toHaveText('Span hierarchy');
+  await expect(page.locator('.dg-graph-node')).toHaveCount(4);
+  await page.getByRole('button', { name: 'Show from links' }).click();
+  await expect(page.locator('.dg-graph-meta strong')).toHaveText('Transition graph');
   await page.locator('.dg-run-list button').filter({ hasText: 'without-from' }).click();
   await expect(page.locator('.dg-graph-meta strong')).toHaveText('Span hierarchy');
-  expect(await page.locator('.dg-graph-node').count()).toBeGreaterThan(4);
+  await expect(page.locator('.dg-graph-node')).toHaveCount(4);
+  await expect(page.getByRole('button', { name: 'Show from links' })).toHaveCount(0);
   expect(errors).toEqual([]);
+});
+
+test('fromId relates recorded IDs while the table keeps the record order', async ({ page }) => {
+  const id = (v: number) => [{ t: 'int', v: String(v) }];
+  const run = {
+    ...runs[0],
+    id: 'dfs-ids',
+    frames: [
+      { format: 'viz.trace/v2', kind: 'snapshot', runId: 'dfs-ids', seq: '0', span: id(0), values: [] },
+      {
+        format: 'viz.trace/v2',
+        kind: 'patch',
+        runId: 'dfs-ids',
+        seq: '1',
+        span: id(1),
+        fromId: id(0),
+        ops: [],
+      },
+      {
+        format: 'viz.trace/v2',
+        kind: 'patch',
+        runId: 'dfs-ids',
+        seq: '2',
+        span: id(3),
+        fromId: id(1),
+        ops: [],
+      },
+      {
+        format: 'viz.trace/v2',
+        kind: 'patch',
+        runId: 'dfs-ids',
+        seq: '3',
+        span: id(2),
+        fromId: id(0),
+        ops: [],
+      },
+    ],
+  };
+  await page.route('**/api/runs', (route) => route.fulfill({ json: { runs: [run] } }));
+  await page.goto('/');
+
+  await expect(page.locator('.dg-frame-row th')).toContainText(['0', '1', '2', '3']);
+  await expect(page.locator('.dg-graph-meta strong')).toHaveText('Transition graph');
+  await expect(page.locator('.dg-graph-node text')).toContainText(['0', '1', '3', '2']);
+  await expect(page.locator('.dg-graph-edge')).toHaveCount(3);
+
+  await page.getByRole('button', { name: 'Show ID hierarchy' }).click();
+  await expect(page.locator('.dg-graph-meta strong')).toHaveText('Span hierarchy');
+  await expect(page.locator('.dg-graph-node')).toHaveCount(5);
+  await page.getByRole('button', { name: 'Select record 1' }).click();
+  await expect(page.locator('.dg-graph-node.is-selected')).toHaveAttribute('aria-label', /Record 1/);
+  await page.getByRole('button', { name: 'Show from links' }).click();
+  await expect(page.locator('.dg-graph-meta strong')).toHaveText('Transition graph');
 });
 
 test('Graph Algo View binds an adjacency list with optional visited and current vertex', async ({ page }) => {

@@ -1,53 +1,65 @@
 import type { Frame, Graph, GraphEdge, GraphNode, Scalar } from './types';
 import { scalarText, spanKey, spanText } from './value';
 
-export function deriveGraph(frames: Frame[]): Graph {
-  const mode = frames.some((frame) => frame.from !== undefined) ? 'transition' : 'span';
+export type GraphPreference = 'from' | 'span';
+
+export function hasFromLinks(frames: Frame[]): boolean {
+  return frames.some((frame) => frame.from !== undefined || frame.fromId !== undefined);
+}
+
+export function deriveGraph(frames: Frame[], preference: GraphPreference = 'from'): Graph {
+  const mode = preference === 'from' && hasFromLinks(frames) ? 'transition' : 'span';
   const nodes: Omit<GraphNode, 'x' | 'y'>[] = [];
   const edges: GraphEdge[] = [];
-  const knownSeq = new Set(frames.map((frame) => frame.seq));
+
   if (mode === 'transition') {
+    const knownSeq = new Set(frames.map((frame) => frame.seq));
+    const latestById = new Map<string, string>();
+    const showIds = frames.some((frame) => frame.fromId !== undefined);
     for (const frame of frames) {
+      const id = `seq:${frame.seq}`;
+      const fullLabel = frame.span.length ? scalarText(frame.span.at(-1)!) : frame.seq;
       nodes.push({
-        id: `seq:${frame.seq}`,
+        id,
         kind: 'record',
-        label: frame.seq,
-        detail: spanText(frame.span),
+        label: showIds ? (fullLabel.length > 8 ? `${fullLabel.slice(0, 7)}…` : fullLabel) : frame.seq,
+        detail: `seq ${frame.seq} · ${spanText(frame.span)}`,
         seq: frame.seq,
       });
-      if (frame.from !== undefined && knownSeq.has(frame.from))
-        edges.push({ from: `seq:${frame.from}`, to: `seq:${frame.seq}` });
+      const parent = frame.fromId
+        ? latestById.get(spanKey(frame.fromId))
+        : frame.from !== undefined && knownSeq.has(frame.from)
+          ? `seq:${frame.from}`
+          : undefined;
+      if (parent) edges.push({ from: parent, to: id });
+      latestById.set(spanKey(frame.span), id);
     }
   } else {
-    const spans = new Map<string, Scalar[]>([[spanKey([]), []]]);
-    for (const frame of frames)
+    const spans = new Map<string, { span: Scalar[]; seqs: Frame['seq'][] }>([
+      [spanKey([]), { span: [], seqs: [] }],
+    ]);
+    for (const frame of frames) {
       for (let length = 1; length <= frame.span.length; length++) {
         const prefix = frame.span.slice(0, length);
-        spans.set(spanKey(prefix), prefix);
+        const key = spanKey(prefix);
+        if (!spans.has(key)) spans.set(key, { span: prefix, seqs: [] });
       }
-    for (const span of [...spans.values()].sort(
-      (a, b) => a.length - b.length || spanText(a).localeCompare(spanText(b)),
-    )) {
-      const id = `span:${spanKey(span)}`;
+      spans.get(spanKey(frame.span))!.seqs.push(frame.seq);
+    }
+    for (const [key, { span, seqs }] of spans) {
+      const id = `span:${key}`;
       nodes.push({
         id,
         kind: 'span',
-        label: span.length ? scalarText(span[span.length - 1]) : '∅',
+        label: span.length ? scalarText(span.at(-1)!) : '∅',
         detail: spanText(span),
+        seq: seqs.at(-1),
+        seqs,
       });
       if (span.length) edges.push({ from: `span:${spanKey(span.slice(0, -1))}`, to: id });
     }
-    for (const frame of frames) {
-      nodes.push({
-        id: `seq:${frame.seq}`,
-        kind: 'record',
-        label: frame.seq,
-        detail: spanText(frame.span),
-        seq: frame.seq,
-      });
-      edges.push({ from: `span:${spanKey(frame.span)}`, to: `seq:${frame.seq}` });
-    }
   }
+
   const children = new Map(nodes.map((node) => [node.id, [] as string[]]));
   const parents = new Set<string>();
   for (const edge of edges) {
