@@ -151,7 +151,7 @@ test('table and graph stay side by side and share record focus', async ({ page }
   await expect(page.locator('.dg-playback strong')).toHaveText('seq 1');
 });
 
-test('history divider resizes and can push either pane aside', async ({ page }) => {
+test('history divider can collapse and restore either pane', async ({ page }) => {
   await page.route('**/api/runs', (route) => route.fulfill({ json: { runs: [runs[0]] } }));
   await page.goto('/');
   const tablePanel = page.locator('.dg-history-table-panel');
@@ -159,21 +159,40 @@ test('history divider resizes and can push either pane aside', async ({ page }) 
   const divider = page.getByRole('separator', { name: 'Resize table and graph' });
   const width = (locator: typeof tablePanel) =>
     locator.evaluate((element) => element.getBoundingClientRect().width);
+  const dragDivider = async (targetX: number) => {
+    const bounds = await divider.boundingBox();
+    await page.mouse.move(bounds!.x + bounds!.width / 2, bounds!.y + 70);
+    await page.mouse.down();
+    await page.mouse.move(targetX, bounds!.y + 70, { steps: 8 });
+    await page.mouse.up();
+  };
 
   expect((await width(tablePanel)) / (await width(graphPanel))).toBeCloseTo(2, 0);
-  await page.getByRole('button', { name: 'Expand graph' }).click();
-  await expect.poll(() => width(graphPanel)).toBeGreaterThan(await width(tablePanel));
-  await page.getByRole('button', { name: 'Expand graph' }).click();
-  await expect.poll(() => width(tablePanel)).toBeGreaterThan(await width(graphPanel));
-  await page.getByRole('button', { name: 'Expand table' }).click();
-  expect(await width(tablePanel)).toBeGreaterThan((await width(graphPanel)) * 4);
+  await expect(page.locator('.dg-history-handle-mark')).toBeVisible();
+  await expect(page.getByRole('button', { name: /Expand (table|graph)/ })).toHaveCount(0);
+  await expect(divider).toHaveAttribute('aria-valuemin', '0');
+  await expect(divider).toHaveAttribute('aria-valuemax', '1');
 
-  const bounds = await divider.boundingBox();
-  await page.mouse.move(bounds!.x + bounds!.width / 2, bounds!.y + 70);
-  await page.mouse.down();
-  await page.mouse.move(bounds!.x - 180, bounds!.y + 70, { steps: 5 });
-  await page.mouse.up();
+  const layout = await page.locator('.dg-history-layout').boundingBox();
+  await dragDivider(layout!.x + 1);
+  await expect.poll(() => width(tablePanel)).toBeLessThan(2);
+  await expect(page.locator('.dg-history-handle-mark')).toBeVisible();
+
+  await dragDivider(layout!.x + layout!.width / 2);
+  await expect.poll(() => width(tablePanel)).toBeGreaterThan(200);
+
+  await dragDivider(layout!.x + layout!.width - 1);
+  await expect.poll(() => width(graphPanel)).toBeLessThan(2);
+  await expect(page.locator('.dg-history-handle-mark')).toBeVisible();
+
+  await dragDivider(layout!.x + layout!.width / 2);
   await expect.poll(() => width(graphPanel)).toBeGreaterThan(200);
+
+  await divider.focus();
+  await page.keyboard.press('Home');
+  await expect.poll(() => width(tablePanel)).toBeLessThan(2);
+  await page.keyboard.press('End');
+  await expect.poll(() => width(graphPanel)).toBeLessThan(2);
 });
 
 test('history panes stack with usable graph space on a narrow screen', async ({ page }) => {
@@ -188,6 +207,23 @@ test('history panes stack with usable graph space on a narrow screen', async ({ 
   expect(graph!.height).toBeGreaterThan(350);
   await expect(page.locator('.dg-graph-node.is-selected')).toBeVisible();
   expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBe(620);
+
+  const divider = page.getByRole('separator', { name: 'Resize table and graph' });
+  await divider.scrollIntoViewIfNeeded();
+  const dragDivider = async (targetY: number) => {
+    const bounds = await divider.boundingBox();
+    await page.mouse.move(bounds!.x + bounds!.width / 2, bounds!.y + bounds!.height / 2);
+    await page.mouse.down();
+    await page.mouse.move(bounds!.x + bounds!.width / 2, targetY, { steps: 8 });
+    await page.mouse.up();
+  };
+  const layoutBounds = await layout.boundingBox();
+  const tableHeight = () =>
+    page.locator('.dg-history-table-panel').evaluate((element) => element.getBoundingClientRect().height);
+  await dragDivider(layoutBounds!.y + 1);
+  await expect.poll(tableHeight).toBeLessThan(2);
+  await dragDivider(layoutBounds!.y + layoutBounds!.height / 2);
+  await expect.poll(tableHeight).toBeGreaterThan(200);
 });
 
 test('the seq slider keeps the selected table row in view', async ({ page }) => {

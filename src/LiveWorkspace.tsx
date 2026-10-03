@@ -9,10 +9,6 @@ import {
   IconChevronDown,
   IconChevronLeft,
   IconChevronRight,
-  IconChevronsDown,
-  IconChevronsLeft,
-  IconChevronsRight,
-  IconChevronsUp,
   IconCode,
   IconEye,
   IconGitBranch,
@@ -213,12 +209,6 @@ export function LiveWorkspace(props: { repository?: RunRepository }) {
     media.addEventListener('change', update);
     onCleanup(() => media.removeEventListener('change', update));
   });
-  const pushHistoryDivider = (side: 'table' | 'graph') => {
-    const pushed = side === 'graph' ? historySizes()[0] < 0.2 : historySizes()[1] < 0.2;
-    setHistorySizes(
-      pushed ? (stacked() ? [0.5, 0.5] : [2 / 3, 1 / 3]) : side === 'graph' ? [0.12, 0.88] : [0.88, 0.12],
-    );
-  };
   let tableViewport: HTMLDivElement | undefined;
   const selectRecord = (seq: Seq | null) => {
     const frame = frames().find((item) => item.seq === seq);
@@ -529,7 +519,12 @@ export function LiveWorkspace(props: { repository?: RunRepository }) {
                     sizes={historySizes()}
                     onSizesChange={setHistorySizes}
                   >
-                    <Resizable.Panel minSize={0.12} class="dg-history-table-panel">
+                    <Resizable.Panel
+                      minSize={0.12}
+                      collapsible
+                      collapsedSize={0}
+                      class="dg-history-table-panel"
+                    >
                       <div class="dg-table-scroll" ref={tableViewport}>
                         <table class="dg-history-table">
                           <thead>
@@ -586,34 +581,24 @@ export function LiveWorkspace(props: { repository?: RunRepository }) {
                     </Resizable.Panel>
                     <div class="dg-history-divider">
                       <Resizable.Handle
-                        as="div"
+                        as="button"
+                        type="button"
                         class="dg-history-grip"
                         aria-label="Resize table and graph"
+                        aria-valuemin={0}
+                        aria-valuemax={1}
                       />
-                      <div class="dg-history-actions">
-                        <button
-                          type="button"
-                          aria-label="Expand graph"
-                          title="Expand graph"
-                          onClick={() => pushHistoryDivider('graph')}
-                        >
-                          <Show when={stacked()} fallback={<IconChevronsLeft size="16" />}>
-                            <IconChevronsUp size="16" />
-                          </Show>
-                        </button>
-                        <button
-                          type="button"
-                          aria-label="Expand table"
-                          title="Expand table"
-                          onClick={() => pushHistoryDivider('table')}
-                        >
-                          <Show when={stacked()} fallback={<IconChevronsRight size="16" />}>
-                            <IconChevronsDown size="16" />
-                          </Show>
-                        </button>
-                      </div>
+                      <span class="dg-history-handle-mark" aria-hidden="true">
+                        <i />
+                        <i />
+                      </span>
                     </div>
-                    <Resizable.Panel minSize={0.12} class="dg-history-graph-panel">
+                    <Resizable.Panel
+                      minSize={0.12}
+                      collapsible
+                      collapsedSize={0}
+                      class="dg-history-graph-panel"
+                    >
                       <div class="dg-graph-layout">
                         <RelationGraph
                           graph={graph()}
