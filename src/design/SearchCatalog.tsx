@@ -1,4 +1,5 @@
 import { createMemo, createSignal, For, Show } from 'solid-js';
+import { Dynamic } from 'solid-js/web';
 import {
   IconArrowLeft,
   IconArrowNarrowRight,
@@ -7,8 +8,15 @@ import {
   IconChevronUp,
   IconCircleCheck,
   IconCommand,
+  IconFunction,
+  IconHash,
+  IconLetterCase,
+  IconLogicAnd,
+  IconLogicOr,
+  IconMathSymbols,
   IconSearch,
   IconSparkles,
+  IconTag,
   IconX,
 } from '@tabler/icons-solidjs';
 import { BrandMark } from './BrandMark';
@@ -17,6 +25,7 @@ import {
   applyCandidate,
   candidatesFor,
   effectiveKind,
+  expectedRhsKind,
   frames,
   isComplete,
   matchingFields,
@@ -25,15 +34,17 @@ import {
   stageOf,
   textFields,
   validLiteral,
+  variables,
   type Candidate,
   type Clause,
   type Query,
   type Value,
+  type ValueKind,
 } from './search-prototype';
 import './search-catalog.css';
 
 const emptyQuery = (): Query => ({ clauses: [], connectors: [] });
-const typeLabels = {
+const typeLabels: Record<ValueKind, string> = {
   int: 'int',
   'int-array': 'Vec<int>',
   bool: 'bool',
@@ -41,6 +52,31 @@ const typeLabels = {
   char: 'char',
   'int-set': 'Set<int>',
 };
+
+function candidateIcon(candidate: Candidate, query: Query) {
+  if (candidate.kind === 'variable') return IconTag;
+  if (candidate.kind === 'transform') return IconFunction;
+  if (candidate.kind === 'operator') return IconMathSymbols;
+  if (candidate.kind === 'connector') return candidate.key === 'or' ? IconLogicOr : IconLogicAnd;
+  const clause = query.clauses.at(-1);
+  return clause && ['string', 'char'].includes(effectiveKind(clause)) ? IconLetterCase : IconHash;
+}
+
+function candidateType(candidate: Candidate, query: Query): string | undefined {
+  if (candidate.kind === 'variable') {
+    const variable = variables.find((item) => item.name === candidate.key);
+    return variable ? typeLabels[variable.kind] : undefined;
+  }
+  if (candidate.kind === 'transform') return 'int';
+  if (candidate.kind === 'example') {
+    const clause = query.clauses.at(-1);
+    return candidate.rhsKind
+      ? typeLabels[candidate.rhsKind]
+      : clause
+        ? typeLabels[expectedRhsKind(clause)]
+        : undefined;
+  }
+}
 
 function valueText(value: Value): string {
   if (Array.isArray(value)) return `[${value.join(', ')}]`;
@@ -148,7 +184,7 @@ export default function SearchCatalog() {
     if (stage() === 'variable') return 'Choose a recorded value';
     if (stage() === 'transform-or-operator') return 'Choose a calculation or condition';
     if (stage() === 'operator') return 'Choose a condition';
-    if (stage() === 'value') return `Enter a ${effectiveKind(query().clauses.at(-1)!)} value`;
+    if (stage() === 'value') return `Enter a ${expectedRhsKind(query().clauses.at(-1)!)} value`;
     return 'Add another condition';
   });
 
@@ -164,7 +200,7 @@ export default function SearchCatalog() {
     const text = draft().trim();
     if (!text) return false;
     if (stage() === 'value') {
-      const kind = effectiveKind(query().clauses.at(-1)!);
+      const kind = expectedRhsKind(query().clauses.at(-1)!);
       if (!validLiteral(kind, text)) return false;
       setQuery((current) => appendLiteral(current, text));
       setDraft('');
@@ -362,11 +398,18 @@ export default function SearchCatalog() {
                           onMouseEnter={() => setActiveIndex(index())}
                           onClick={() => choose(option)}
                         >
-                          <span class={`sp-option-key ${option.kind}`}>{option.label}</span>
-                          <span class="sp-option-detail">{option.detail}</span>
-                          <Show when={option.kind === 'variable'}>
-                            <small>{typeLabels[variablesKind(option.key)]}</small>
-                          </Show>
+                          <span class="sp-option-icon" aria-hidden="true">
+                            <Dynamic component={candidateIcon(option, query())} size={16} stroke="1.7" />
+                          </span>
+                          <span class="sp-option-copy">
+                            <span class="sp-option-main">
+                              <span class={`sp-option-key ${option.kind}`}>{option.label}</span>
+                              <Show when={candidateType(option, query())}>
+                                {(type) => <span class="sp-option-type">{type()}</span>}
+                              </Show>
+                            </span>
+                            <span class="sp-option-detail">{option.detail}</span>
+                          </span>
                         </button>
                       )}
                     </For>
@@ -553,10 +596,4 @@ export default function SearchCatalog() {
       </main>
     </div>
   );
-}
-
-function variablesKind(name: string) {
-  return (
-    { a: 'int', A: 'int-array', seen: 'bool', visited: 'int-set', label: 'string', phase: 'char' } as const
-  )[name as 'a'];
 }

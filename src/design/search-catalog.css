@@ -223,7 +223,7 @@
   top: calc(100% + 5px);
   left: 0;
   right: 0;
-  max-height: 346px;
+  max-height: 398px;
   overflow: auto;
   background: var(--fn-sheet);
   border: 1px solid #a8bcb0;
@@ -251,16 +251,16 @@
 }
 .sp-option {
   width: 100%;
-  min-height: 36px;
+  min-height: 54px;
   display: grid;
-  grid-template-columns: minmax(75px, 1fr) 1.8fr auto;
-  align-items: center;
-  gap: 12px;
+  grid-template-columns: 18px minmax(0, 1fr);
+  align-items: start;
+  gap: 10px;
   text-align: left;
   background: transparent;
   border: 0;
   border-bottom: 1px solid #e7ebe4;
-  padding: 6px 13px;
+  padding: 8px 13px;
   color: var(--fn-ink);
 }
 .sp-option:hover,
@@ -270,8 +270,31 @@
 .sp-option:last-of-type {
   border-bottom: 0;
 }
+.sp-option-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 20px;
+  color: var(--fn-muted);
+}
+.sp-option-copy {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  min-width: 0;
+}
+.sp-option-main {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  max-width: 100%;
+  min-height: 20px;
+}
 .sp-option-key {
   font: 600 13px var(--fn-mono);
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 .sp-option-key.operator,
 .sp-option-key.transform {
@@ -279,11 +302,16 @@
 }
 .sp-option-detail {
   color: var(--fn-muted);
-  font-size: 12px;
+  font-size: 11px;
+  line-height: 1.25;
 }
-.sp-option small {
-  font: 11px var(--fn-mono);
-  color: var(--fn-muted);
+.sp-option-type {
+  flex: none;
+  padding: 2px 5px;
+  border-radius: 2px;
+  background: #dfeae1;
+  color: #315e53;
+  font: 500 10px/1.2 var(--fn-mono);
 }
 .sp-no-option {
   padding: 16px;

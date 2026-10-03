@@ -5,9 +5,9 @@ export type Frame = { seq: number; span: string; values: Record<string, Value> }
 
 export const variables: Variable[] = [
   { name: 'a', kind: 'int', description: 'Current value' },
-  { name: 'A', kind: 'int-array', description: 'Numbers · Vec<int>' },
+  { name: 'A', kind: 'int-array', description: 'Numbers' },
   { name: 'seen', kind: 'bool', description: 'Visited flag' },
-  { name: 'visited', kind: 'int-set', description: 'Visited nodes · Set<int>' },
+  { name: 'visited', kind: 'int-set', description: 'Visited nodes' },
   { name: 'label', kind: 'string', description: 'State name' },
   { name: 'phase', kind: 'char', description: 'Phase marker' },
 ];
@@ -37,6 +37,8 @@ export type Operator =
   | 'contains'
   | 'startsWith'
   | 'endsWith'
+  | 'subsetOf'
+  | 'supersetOf'
   | 'changed'
   | 'is true'
   | 'is false';
@@ -49,6 +51,8 @@ export type Candidate = {
   label: string;
   detail: string;
   kind: 'variable' | 'transform' | 'operator' | 'connector' | 'example';
+  rhsKind?: ValueKind;
+  resultKind?: ValueKind;
 };
 
 export function effectiveKind(clause: Clause): ValueKind {
@@ -60,12 +64,22 @@ export function stageOf(query: Query): Stage {
   const clause = query.clauses.at(-1);
   if (!clause) return 'variable';
   if (!clause.operator)
-    return !clause.transform && (clause.variable.kind === 'int-array' || clause.variable.kind === 'int-set')
+    return !clause.transform && transformsFor(clause.variable.kind).length > 0
       ? 'transform-or-operator'
       : 'operator';
   if (clause.operator === 'changed' || clause.operator === 'is true' || clause.operator === 'is false')
     return 'complete';
   return clause.rhs === undefined ? 'value' : 'complete';
+}
+
+export function expectedRhsKind(clause: Clause): ValueKind {
+  if (clause.operator === 'contains') return clause.variable.kind === 'string' ? 'string' : 'int';
+  if (clause.operator === 'subsetOf' || clause.operator === 'supersetOf') return 'int-set';
+  return effectiveKind(clause);
+}
+
+function operator(key: Operator, label: string, detail: string, rhsKind?: ValueKind): Candidate {
+  return { key, label, detail, kind: 'operator', rhsKind };
 }
 
 function operatorsFor(kind: ValueKind): Candidate[] {
@@ -76,32 +90,74 @@ function operatorsFor(kind: ValueKind): Candidate[] {
     kind: 'operator',
   };
   const comparisons: Candidate[] = [
-    { key: '<', label: '<', detail: 'Less than', kind: 'operator' },
-    { key: '<=', label: '<=', detail: 'Less than or equal', kind: 'operator' },
-    { key: '>', label: '>', detail: 'Greater than', kind: 'operator' },
-    { key: '>=', label: '>=', detail: 'Greater than or equal', kind: 'operator' },
-    { key: '==', label: '==', detail: 'Equals', kind: 'operator' },
-    { key: '!=', label: '!=', detail: 'Does not equal', kind: 'operator' },
+    operator('<', '<', 'Less than', 'int'),
+    operator('<=', '<=', 'Less than or equal', 'int'),
+    operator('>', '>', 'Greater than', 'int'),
+    operator('>=', '>=', 'Greater than or equal', 'int'),
+    operator('==', '==', 'Equals', 'int'),
+    operator('!=', '!=', 'Does not equal', 'int'),
   ];
   if (kind === 'int') return [...comparisons, changed];
   if (kind === 'bool')
     return [
-      { key: 'is true', label: 'true', detail: 'Value is true', kind: 'operator' },
-      { key: 'is false', label: 'false', detail: 'Value is false', kind: 'operator' },
+      operator('is true', 'true', 'Value is true'),
+      operator('is false', 'false', 'Value is false'),
+      operator('==', '==', 'Equals', 'bool'),
+      operator('!=', '!=', 'Does not equal', 'bool'),
       changed,
     ];
   if (kind === 'string')
     return [
-      { key: 'contains', label: 'contains', detail: 'Contains text', kind: 'operator' },
-      { key: 'startsWith', label: 'starts with', detail: 'Text prefix', kind: 'operator' },
-      { key: 'endsWith', label: 'ends with', detail: 'Text suffix', kind: 'operator' },
-      ...comparisons.slice(4),
+      operator('contains', 'contains', 'Contains text', 'string'),
+      operator('startsWith', 'starts with', 'Text prefix', 'string'),
+      operator('endsWith', 'ends with', 'Text suffix', 'string'),
+      operator('==', '==', 'Equals', 'string'),
+      operator('!=', '!=', 'Does not equal', 'string'),
       changed,
     ];
-  if (kind === 'char') return [...comparisons.slice(4), changed];
-  if (kind === 'int-array' || kind === 'int-set')
-    return [{ key: 'contains', label: 'contains', detail: 'Contains integer', kind: 'operator' }, changed];
+  if (kind === 'char')
+    return [operator('==', '==', 'Equals', 'char'), operator('!=', '!=', 'Does not equal', 'char'), changed];
+  if (kind === 'int-array')
+    return [
+      operator('contains', 'contains', 'Contains integer', 'int'),
+      operator('<', '<', 'Lexicographically less than', 'int-array'),
+      operator('<=', '<=', 'Lexicographically less than or equal', 'int-array'),
+      operator('>', '>', 'Lexicographically greater than', 'int-array'),
+      operator('>=', '>=', 'Lexicographically greater than or equal', 'int-array'),
+      operator('==', '==', 'Same sequence', 'int-array'),
+      operator('!=', '!=', 'Different sequence', 'int-array'),
+      changed,
+    ];
+  if (kind === 'int-set')
+    return [
+      operator('contains', 'contains', 'Contains integer', 'int'),
+      operator('subsetOf', 'subset of', 'Every element is in the right set', 'int-set'),
+      operator('supersetOf', 'superset of', 'Contains every element in the right set', 'int-set'),
+      operator('==', '==', 'Same members', 'int-set'),
+      operator('!=', '!=', 'Different members', 'int-set'),
+      changed,
+    ];
   return [changed];
+}
+
+function transformsFor(kind: ValueKind): Candidate[] {
+  const transform = (key: Transform, detail: string): Candidate => ({
+    key,
+    label: key,
+    detail,
+    kind: 'transform',
+    resultKind: 'int',
+  });
+  if (kind === 'int-array')
+    return [
+      transform('sum', 'Sum of elements'),
+      transform('size', 'Number of elements'),
+      transform('max', 'Largest element'),
+      transform('min', 'Smallest element'),
+    ];
+  if (kind === 'int-set') return [transform('size', 'Number of members')];
+  if (kind === 'string') return [transform('size', 'Number of characters')];
+  return [];
 }
 
 export function candidatesFor(query: Query, draft: string): Candidate[] {
@@ -116,20 +172,7 @@ export function candidatesFor(query: Query, draft: string): Candidate[] {
       kind: 'variable',
     }));
   } else if (stage === 'transform-or-operator' && clause) {
-    const transforms: Candidate[] = (
-      clause.variable.kind === 'int-array' ? ['sum', 'size', 'max', 'min'] : ['size']
-    ).map((key) => ({
-      key,
-      label: key,
-      detail: {
-        sum: 'Sum of elements',
-        size: 'Number of elements',
-        max: 'Largest element',
-        min: 'Smallest element',
-      }[key]!,
-      kind: 'transform',
-    }));
-    options = [...transforms, ...operatorsFor(clause.variable.kind)];
+    options = [...transformsFor(clause.variable.kind), ...operatorsFor(clause.variable.kind)];
   } else if (stage === 'operator' && clause) {
     options = operatorsFor(effectiveKind(clause));
   } else if (stage === 'complete') {
@@ -138,14 +181,26 @@ export function candidatesFor(query: Query, draft: string): Candidate[] {
       { key: 'or', label: 'OR', detail: 'Either condition may match', kind: 'connector' },
     ];
   } else {
-    const kind = clause ? effectiveKind(clause) : 'int';
+    const kind = clause ? expectedRhsKind(clause) : 'int';
     const examples =
       kind === 'string'
         ? ['exploring', 'settled', 'queued']
         : kind === 'char'
           ? ['A', 'B', 'C']
-          : ['10', '20', '30'];
-    options = examples.map((key) => ({ key, label: key, detail: 'Use as value', kind: 'example' }));
+          : kind === 'bool'
+            ? ['true', 'false']
+            : kind === 'int-array'
+              ? ['[2, 5, 8]', '[2, 7, 8]', '[2, 8, 11]']
+              : kind === 'int-set'
+                ? ['{0, 1, 2}', '{0, 1, 2, 3}', '{1, 2, 4}']
+                : ['10', '20', '30'];
+    options = examples.map((key) => ({
+      key,
+      label: key,
+      detail: 'Use as value',
+      kind: 'example',
+      rhsKind: kind,
+    }));
   }
   const needle = normalize(draft.trim());
   return needle
@@ -160,9 +215,25 @@ export function normalize(value: string): string {
 }
 
 export function validLiteral(kind: ValueKind, text: string): boolean {
-  if (kind === 'int' || kind === 'int-array' || kind === 'int-set') return /^-?\d+$/.test(text);
+  if (kind === 'int') return /^-?\d+$/.test(text);
+  if (kind === 'bool') return /^(true|false)$/i.test(text);
+  if (kind === 'int-array') return /^\[\s*-?\d+(?:\s*,\s*-?\d+)*\s*\]$/.test(text);
+  if (kind === 'int-set') return /^\{\s*-?\d+(?:\s*,\s*-?\d+)*\s*\}$/.test(text);
   if (kind === 'char') return [...text.replace(/^['"]|['"]$/g, '')].length === 1;
   return text.trim().length > 0;
+}
+
+export function parseLiteral(kind: ValueKind, text: string): Value | undefined {
+  const value = text.trim().replace(/^['"]|['"]$/g, '');
+  if (!validLiteral(kind, text)) return undefined;
+  if (kind === 'int') return Number(value);
+  if (kind === 'bool') return value.toLocaleLowerCase() === 'true';
+  if (kind === 'string' || kind === 'char') return value;
+  const values = value
+    .slice(1, -1)
+    .split(',')
+    .map((item) => Number(item.trim()));
+  return kind === 'int-array' ? values : new Set(values);
 }
 
 export function applyCandidate(query: Query, candidate: Candidate, draft = ''): Query {
@@ -222,12 +293,28 @@ export function serializeQuery(query: Query): string {
 function project(clause: Clause, frame: Frame): Value | undefined {
   const value = frame.values[clause.variable.name];
   if (!clause.transform) return value;
+  if (clause.transform === 'size' && typeof value === 'string') return [...value].length;
   if (!(Array.isArray(value) || value instanceof Set)) return undefined;
   const items = value instanceof Set ? [...value] : value;
   if (clause.transform === 'size') return items.length;
   if (clause.transform === 'sum') return items.reduce((total, item) => total + item, 0);
   if (clause.transform === 'max') return items.length ? Math.max(...items) : undefined;
   if (clause.transform === 'min') return items.length ? Math.min(...items) : undefined;
+}
+
+function sameValue(left: Value, right: Value): boolean {
+  if (Array.isArray(left) && Array.isArray(right))
+    return left.length === right.length && left.every((value, index) => value === right[index]);
+  if (left instanceof Set && right instanceof Set)
+    return left.size === right.size && [...left].every((value) => right.has(value));
+  return left === right;
+}
+
+function compareArrays(left: number[], right: number[]): number {
+  for (let index = 0; index < Math.min(left.length, right.length); index++) {
+    if (left[index] !== right[index]) return left[index] < right[index] ? -1 : 1;
+  }
+  return left.length === right.length ? 0 : left.length < right.length ? -1 : 1;
 }
 
 export function matchesClause(clause: Clause, frame: Frame, previous?: Frame): boolean {
@@ -241,20 +328,32 @@ export function matchesClause(clause: Clause, frame: Frame, previous?: Frame): b
   if (clause.operator === 'is true') return value === true;
   if (clause.operator === 'is false') return value === false;
   if (clause.rhs === undefined || value === undefined) return false;
-  const rhs: number | string = ['int', 'int-array', 'int-set'].includes(effectiveKind(clause))
-    ? Number(clause.rhs)
-    : clause.rhs;
+  const expectedKind = expectedRhsKind(clause);
+  const rhs = parseLiteral(expectedKind, clause.rhs);
+  if (rhs === undefined) return false;
   if (clause.operator === 'contains') {
     if (typeof value === 'string') return normalize(value).includes(normalize(String(rhs)));
-    return (Array.isArray(value) || value instanceof Set) && [...value].includes(Number(rhs));
+    return (
+      (Array.isArray(value) || value instanceof Set) && typeof rhs === 'number' && [...value].includes(rhs)
+    );
   }
   if (clause.operator === 'startsWith')
     return typeof value === 'string' && normalize(value).startsWith(normalize(String(rhs)));
   if (clause.operator === 'endsWith')
     return typeof value === 'string' && normalize(value).endsWith(normalize(String(rhs)));
-  if (typeof value !== 'number' && typeof value !== 'string') return false;
-  if (clause.operator === '==') return value === rhs;
-  if (clause.operator === '!=') return value !== rhs;
+  if (clause.operator === '==') return sameValue(value, rhs);
+  if (clause.operator === '!=') return !sameValue(value, rhs);
+  if (clause.operator === 'subsetOf' && value instanceof Set && rhs instanceof Set)
+    return [...value].every((item) => rhs.has(item)) && value.size < rhs.size;
+  if (clause.operator === 'supersetOf' && value instanceof Set && rhs instanceof Set)
+    return [...rhs].every((item) => value.has(item)) && value.size > rhs.size;
+  if (Array.isArray(value) && Array.isArray(rhs)) {
+    const comparison = compareArrays(value, rhs);
+    if (clause.operator === '<') return comparison < 0;
+    if (clause.operator === '<=') return comparison <= 0;
+    if (clause.operator === '>') return comparison > 0;
+    if (clause.operator === '>=') return comparison >= 0;
+  }
   if (typeof value !== 'number' || typeof rhs !== 'number') return false;
   if (clause.operator === '<') return value < rhs;
   if (clause.operator === '<=') return value <= rhs;

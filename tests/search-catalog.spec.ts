@@ -5,10 +5,19 @@ test('search prototype builds a typed query with the mouse and marks matching re
   await page.goto('/catalog/search');
   const search = page.getByRole('combobox', { name: 'Search trace' });
   await search.focus();
-  await expect(page.getByRole('option', { name: /Numbers · Vec<int>/ })).toBeVisible();
-  await page.getByRole('option', { name: /Numbers · Vec<int>/ }).click();
-  await expect(page.getByRole('option', { name: /Sum of elements/ })).toBeVisible();
-  await page.getByRole('option', { name: /Sum of elements/ }).click();
+  const arrayOption = page.getByRole('option', { name: /Numbers/ });
+  await expect(arrayOption).toBeVisible();
+  await expect(arrayOption.locator('.sp-option-icon svg')).toBeVisible();
+  await expect(arrayOption.locator('.sp-option-type')).toHaveText('Vec<int>');
+  await arrayOption.click();
+  const sumOption = page.getByRole('option', { name: /Sum of elements/ });
+  await expect(sumOption).toBeVisible();
+  await expect(sumOption.locator('.sp-option-icon svg')).toBeVisible();
+  await expect(sumOption.locator('.sp-option-type')).toHaveText('int');
+  await sumOption.click();
+  await expect(
+    page.getByRole('option', { name: /Greater than or equal/ }).locator('.sp-option-type'),
+  ).toHaveCount(0);
   await page.getByRole('option', { name: /Greater than or equal/ }).click();
   await search.fill('50');
   await search.press('Space');

@@ -6,7 +6,9 @@
 
 入力欄にフォーカスすると、記録済み変数が候補に出る。選択すると変数がチップになり、値の型に応じて次の候補が変わる。候補のクリック、上下矢印と Enter、文字列を打って Space のいずれでも確定できる。Backspace は末尾のチップを一段ずつ戻す。完成した条件は正規文字列表現を持つ。
 
-現在のデモには `int`、`Vec<int>`、`bool`、`String`、`char`、`Set<int>` を用意した。数値には比較演算子と `changed`、整数配列には `sum` / `size` / `min` / `max` / `contains` / `changed`、集合には `size` / `contains` / `changed` を提示する。`sum` 等の射影を選んだ後は、その結果型である `int` の演算子へ遷移する。文字列は `contains` / `startsWith` / `endsWith` / `==` / `!=` / `changed`、真偽値は `true` / `false` / `changed` を提示する。完成した条件の後には `AND` / `OR` を追加できる。現プロトタイプの複合条件は左結合で評価する。
+現在のデモには `int`、`Vec<int>`、`bool`、`String`、`char`、`Set<int>` を用意した。`int` には比較演算子と `changed`、`String` には `size`（文字数へ射影）、`contains` / `startsWith` / `endsWith` / `==` / `!=` / `changed`、`bool` には `true` / `false` / `==` / `!=` / `changed`、`char` には `==` / `!=` / `changed` を提示する。`Vec<int>` には `sum` / `size` / `min` / `max` と `contains` を提示し、`<` / `<=` / `>` / `>=` / `==` / `!=` は同じ `Vec<int>` を右辺に取って辞書順比較する。`Set<int>` には `size`、`contains`、`subset of`、`superset of`、`==` / `!=`、`changed` を提示する。`sum` 等の射影を選んだ後は、その結果型である `int` の演算子へ遷移する。
+
+右辺を取る候補には期待型を付け、配列は `[2, 7, 8]`、集合は `{0, 1, 2}` のようなリテラル候補を出す。入力でも同じリテラル構文を受け付け、候補のクリックとキーボード入力で同じ AST を生成する。完成した条件の後には `AND` / `OR` を追加できる。現プロトタイプの複合条件は左結合で評価する。
 
 条件が完成すると seq 単位で即時に判定する。ヒットはタイムライン上で黄色、表の該当値と集合・配列の `contains` に該当する要素で黄色にし、非ヒット行とグラフノードを薄くする。件数表示と前後移動は同じ seq 集合を参照する。条件が未完成の間は絞り込まない。
 
@@ -20,7 +22,7 @@
 2. **文法・候補**: `FieldRef → Projection? → Predicate → Literal?` を型付き AST として扱う。候補は現在の期待型に対する registry から取得する。入力文字列の parser と候補クリックの reducer は同じ AST を生成する。チップは AST のレンダリングに徹する。
 3. **評価**: 追跡データ上の純粋関数として条件を評価し、`{ seq, matchedPaths }` を返す。`changed` は表示形式でなく、既存の差分情報を使い、前回観測のない最初の記録では false とする。集計対象が空の場合の `min` / `max` は未定義であり、その比較は false とする。
 4. **表示**: 表、グラフ、seq bar、前後移動が共有する `SearchResult` を参照する。可視列やスクロール位置は検索意味論へ逆流させない。Graph の辺・配置ロジックにも検索条件を混ぜない。
-5. **拡張**: Map には `size` / `hasKey` / `valueAt(key)`、Matrix には `rows` / `cols` / `at(i,j)`、文字列には `length`、配列には `any` / `all` を候補として追加できる。これらは `ProjectionSpec` と `PredicateSpec` の組み合わせで追加し、構文ごとの UI 分岐を増やさない。
+5. **拡張**: Map には `size` / `hasKey` / `valueAt(key)`、Matrix には `rows` / `cols` / `at(i,j)`、配列には `any` / `all` を候補として追加できる。これらは `ProjectionSpec` と `PredicateSpec` の組み合わせで追加し、構文ごとの UI 分岐を増やさない。
 
 ## UI ライブラリの判断
 
