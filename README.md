@@ -2,7 +2,18 @@
 
 Rustコードの任意の箇所に `record!` を置き、実行後に値の履歴をWeb UIで追うローカルVisualizerです。通常の配列・整数・Set・Mapなどをそのまま記録します。アルゴリズム固有の意味はコードから送らず、Algo Viewを画面側で選んで記録済み変数に割り当てます。
 
-## すぐに試す
+現在公開しているのは `0.1.0-preview.1` です。Rust SDK とローカル受信サーバーを試すためのプレリリースで、API・保存形式・操作方法は今後変更される可能性があります。
+
+## 公開版を使う
+
+```sh
+npm install --global traceprism@preview
+traceprism serve
+```
+
+別のターミナルで、Rust プロジェクトの `Cargo.toml` に `traceprism = "=0.1.0-preview.1"` を追加し、`record!` を使うプログラムを実行します。ビューワは [http://127.0.0.1:4317/](http://127.0.0.1:4317/) で開けます。npm パッケージには Web ビルドと Rust SDK のソースが含まれ、`traceprism run main.rs` で単体の Rust ファイルも実行できます。実行履歴と一時的なバイナリはコマンドを実行したディレクトリの `.viz/` に保存されます。
+
+## リポジトリから試す
 
 ```sh
 npm install
@@ -32,7 +43,7 @@ node bin/traceprism.mjs run examples/abc007_c.rs < examples/fixtures/abc007-c-1.
 
 ## 自分の競プロコードで使う
 
-Cargoプロジェクトにローカルcrateを追加します。Cargoパッケージ名とRustのimport名はいずれも `traceprism` です。
+Cargoプロジェクトにcrateを追加します。Cargoパッケージ名とRustのimport名はいずれも `traceprism` です。リポジトリ内で開発する場合は `version` を `path = "/home/mana/programs/algo-visualizer/sdk/rust"` に置き換えられます。
 
 ```toml
 [features]
@@ -40,7 +51,7 @@ default = ["viz"]
 viz = ["dep:traceprism"]
 
 [dependencies]
-traceprism = { path = "/home/mana/programs/algo-visualizer/sdk/rust", optional = true }
+traceprism = { version = "=0.1.0-preview.1", optional = true }
 ```
 
 ソースが単体提出でもコンパイルできるよう、featureがないときだけ空のマクロを定義します。
@@ -57,13 +68,13 @@ record!([i, j], from: origin, a, left, right);
 
 `record!` は可視化用の引数をfeatureなしでは評価しません。通常の `cargo run` はサーバーへ送信し、サーバーがなければ記録だけ無効になってプログラム本体は続きます。標準出力は変更しません。[Rust crateの説明](sdk/rust/README.md)と[実際のサンプル](examples/abc007_c.rs)も参照してください。
 
-`../AtCoder/contest/abc001/a/main.rs` に導入済みです。そのコンテストのCargo設定からは `../../../algo-visualizer/sdk/rust` をpath dependencyとして参照します。標準入力例で `cargo run --manifest-path ../AtCoder/contest/abc001/Cargo.toml --bin a` と、提出用のfeatureなし `rustc` 実行を確認しています。
+`../AtCoder/contest/abc001/a/main.rs` に導入済みです。そのコンテストのCargo設定では公開済みの `traceprism = "=0.1.0-preview.1"` を使用します。`cargo run --manifest-path ../AtCoder/contest/abc001/Cargo.toml --bin a < ../AtCoder/contest/abc001/a/tests/sample-1.in` でサンプル入力を与えられます。提出用のfeatureなし `rustc` 実行も確認しています。
 
 ## データと画面
 
 SDKは [`viz.trace/v2` のsnapshot/patch](protocol/v2/README.md)を送信します。最初の記録が完全なsnapshot、その後は値が変わった名前だけを `put` するpatchです。同値の場合も空のpatchを残し、観測点を失いません。`span` は型付きIDの配列です。`from: 親ID` は同じ型の `fromId` に変換され、`from: FrameRef` は従来どおり過去のseq参照 `from` になります。UIはseq順に完全な状態を復元します。古いv1の保存済みtraceも読み取れます。
 
-現在のMVPはローカルのRust SDK、受信サーバー、保存、実行履歴、値の履歴表・表示形式、Algo Viewの二分探索・グリッド、関係グラフまで動作します。crateはローカルpath dependencyで、crates.ioには未公開です。
+現在のMVPはRust SDK、受信サーバー、保存、実行履歴、値の履歴表・表示形式、Algo Viewの二分探索・グリッド、関係グラフまで動作します。
 
 ## 開発と品質チェック
 

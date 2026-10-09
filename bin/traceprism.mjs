@@ -8,8 +8,10 @@ import { fileURLToPath } from 'node:url';
 import { createTraceValidator } from '../protocol/v2/validate.mjs';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
-const runDir = join(root, '.viz', 'runs');
-const binDir = join(root, '.viz', 'bin');
+const dataDir = join(process.cwd(), '.viz');
+const runDir = join(dataDir, 'runs');
+const binDir = join(dataDir, 'bin');
+const sdkTargetDir = join(dataDir, 'sdk-target');
 const distDir = join(root, 'dist');
 const port = Number(process.env.VIZ_PORT || 4317);
 const mime = {
@@ -172,16 +174,15 @@ async function run(source, noServe) {
   if (!existsSync(absolute)) throw new Error(`Source not found: ${source}`);
   await mkdir(runDir, { recursive: true });
   await mkdir(binDir, { recursive: true });
-  const cargo = spawnSync(
-    'cargo',
-    ['build', '--offline', '--manifest-path', join(root, 'sdk/rust/Cargo.toml')],
-    { stdio: 'inherit' },
-  );
+  const cargo = spawnSync('cargo', ['build', '--manifest-path', join(root, 'sdk/rust/Cargo.toml')], {
+    stdio: 'inherit',
+    env: { ...process.env, CARGO_TARGET_DIR: sdkTargetDir },
+  });
   if (cargo.status !== 0) process.exit(cargo.status || 1);
   const id = `run-${Date.now()}-${process.pid}`;
   const binary = join(binDir, id);
-  const deps = join(root, 'sdk/rust/target/debug/deps');
-  const sdk = join(root, 'sdk/rust/target/debug/libtraceprism.rlib');
+  const deps = join(sdkTargetDir, 'debug/deps');
+  const sdk = join(sdkTargetDir, 'debug/libtraceprism.rlib');
   const compile = spawnSync(
     'rustc',
     [
