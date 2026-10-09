@@ -45,9 +45,12 @@ traceprism = { version = "=0.1.0-preview.3", optional = true }
 cargo run --manifest-path examples/Cargo.toml --bin binary-search
 cargo run --manifest-path examples/Cargo.toml --bin abc007-c < examples/fixtures/abc007-c-1.in
 cargo run --manifest-path examples/Cargo.toml --bin dfs
+cargo run --manifest-path examples/Cargo.toml --bin serde-struct
 ```
 
 実行ごとに独立した履歴がアプリに表示されます。左上で値の列を選び、列見出しのアイコンで表示形式を変更します。Algo Viewを追加すると必要な値をクリックで割り当てられます。TableとGraphは左右に並び、共通のseq選択に連動します。中央の二本線をドラッグして幅を変え、片側を完全に畳むこともできます。`from:` があればGraphは依存関係を初期表示し、**ID tree** ボタンでspan ID階層へ切り替えられます。[DFSサンプルの見方](docs/local-walkthrough.md#4-dfs-の呼び出し木を確認する)も参照してください。
+
+[`serde-struct`](examples/serde_struct.rs) は `Serialize` を実装した遅延セグ木の構造体を記録する例です。`len`、`sum`、`lazy` が一つの `record` 値のフィールドとして表示されます。専用のセグ木 View はまだありません。`Serialize` の derive は `viz` feature のときだけ有効なので、featureなしのビルドや単体ソースのコンパイルでは serde に依存しません。
 
 ## 自分の競プロコードで使う
 
