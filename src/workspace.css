@@ -245,23 +245,60 @@
   border-color: var(--dg-accent);
 }
 .dg-add-view {
-  display: flex;
+  display: inline-flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-  width: 100%;
+  gap: 10px;
+  width: max-content;
+  max-width: 100%;
+  height: 32px;
   margin-top: 12px;
-  padding: 9px 11px;
-  border: 1px solid var(--dg-seam);
-  border-radius: 3px;
-  background: var(--fn-sheet);
+  padding: 0;
+  border: 0;
+  background: transparent;
   color: var(--dg-accent);
   font-size: 12px;
   font-weight: 600;
+  cursor: pointer;
 }
-.dg-add-view:hover:not(:disabled) {
+.dg-add-view-icon {
+  display: grid;
+  flex: 0 0 30px;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border: 1px solid var(--dg-seam);
+  border-radius: 7px;
+  transition:
+    transform 240ms ease,
+    border-color 240ms ease;
+}
+.dg-add-view-label {
+  opacity: 0;
+  transform: translateX(8px);
+  transition:
+    opacity 220ms ease,
+    transform 260ms ease;
+}
+.dg-add-view:hover:not(:disabled) .dg-add-view-icon,
+.dg-add-view:focus-visible .dg-add-view-icon {
+  transform: translateX(3px);
   border-color: var(--dg-accent);
-  background: var(--fn-soft);
+}
+.dg-add-view:hover:not(:disabled) .dg-add-view-label,
+.dg-add-view:focus-visible .dg-add-view-label {
+  opacity: 1;
+  transform: translateX(0);
+}
+.dg-add-view:focus-visible {
+  outline: none;
+}
+.dg-add-view:focus-visible .dg-add-view-icon {
+  outline: 2px solid var(--dg-accent);
+  outline-offset: 2px;
+}
+.dg-add-view:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 .dg-view-list {
   display: grid;
@@ -1802,6 +1839,10 @@
   }
 }
 @media (prefers-reduced-motion: reduce) {
+  .dg-add-view-icon,
+  .dg-add-view-label {
+    transition: none;
+  }
   .dg-stage-choose .dg-template-list,
   .dg-stage-choose .dg-template-preview,
   .dg-stage-bind {

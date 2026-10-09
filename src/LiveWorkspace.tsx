@@ -504,9 +504,18 @@ export function LiveWorkspace(props: { repository?: RunRepository }) {
                     </For>
                   </div>
                 </Show>
-                <button class="dg-add-view" disabled={!frames().length} onClick={openAddView}>
-                  Add View
-                  <IconPlus size="16" stroke="1.8" />
+                <button
+                  class="dg-add-view"
+                  aria-label="Add View"
+                  disabled={!frames().length}
+                  onClick={openAddView}
+                >
+                  <span class="dg-add-view-icon" aria-hidden="true">
+                    <IconPlus size="16" stroke="1.8" />
+                  </span>
+                  <span class="dg-add-view-label" aria-hidden="true">
+                    Add View
+                  </span>
                 </button>
                 <div class="dg-view-list">
                   <For each={views()}>
