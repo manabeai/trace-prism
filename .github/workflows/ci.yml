@@ -39,16 +39,17 @@ jobs:
       contents: write
     strategy:
       fail-fast: false
+      max-parallel: ${{ startsWith(github.ref, 'refs/tags/v') && 1 || 4 }}
       matrix:
         include:
           - os: ubuntu-latest
             args: --bundles deb,appimage --ci
             targets: ''
           - os: macos-latest
-            args: --bundles dmg --ci --target aarch64-apple-darwin
+            args: --bundles app,dmg --ci --target aarch64-apple-darwin
             targets: aarch64-apple-darwin,x86_64-apple-darwin
           - os: macos-latest
-            args: --bundles dmg --ci --target x86_64-apple-darwin
+            args: --bundles app,dmg --ci --target x86_64-apple-darwin
             targets: aarch64-apple-darwin,x86_64-apple-darwin
           - os: windows-latest
             args: --bundles nsis --ci
@@ -125,10 +126,16 @@ jobs:
         run: |
           mkdir -p "$RUNNER_TEMP/traceprism-updates"
           gh release download "$GITHUB_REF_NAME" --pattern latest.json --dir "$RUNNER_TEMP/traceprism-updates"
+          gh release view "$GITHUB_REF_NAME" --json assets > "$RUNNER_TEMP/traceprism-updates/assets.json"
+          node .github/scripts/normalize-updater-manifest.mjs \
+            "$RUNNER_TEMP/traceprism-updates/latest.json" \
+            "$RUNNER_TEMP/traceprism-updates/assets.json" \
+            "$GITHUB_REF_NAME"
           node .github/scripts/validate-updater-manifest.mjs \
             "$RUNNER_TEMP/traceprism-updates/latest.json" \
             "$(node -p 'JSON.parse(require("fs").readFileSync("package.json")).version')" \
             "$GITHUB_REF_NAME"
+          gh release upload "$GITHUB_REF_NAME" "$RUNNER_TEMP/traceprism-updates/latest.json" --clobber
       - name: Publish preview release
         env:
           GH_TOKEN: ${{ github.token }}
