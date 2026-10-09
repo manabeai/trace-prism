@@ -13,6 +13,7 @@ import {
   IconExternalLink,
   IconInfoCircle,
   IconPlayerPlay,
+  IconPlus,
   IconSearch,
   IconTable,
   IconX,
@@ -228,7 +229,7 @@ export default function DesignCatalog() {
             >
               <div class="ct-control-row">
                 <button class="ct-button ct-button-primary" type="button" onClick={() => setDialogOpen(true)}>
-                  <IconPlayerPlay size="16" stroke="1.8" /> Add Algo View
+                  <IconPlus size="16" stroke="1.8" /> Add View
                 </button>
                 <button class="ct-button" type="button" onClick={() => chooseSeq(7)}>
                   Jump to latest
@@ -594,7 +595,7 @@ export default function DesignCatalog() {
           <div class="ct-dialog-positioner">
             <Dialog.Content class="ct-dialog">
               <div class="ct-dialog-head">
-                <Dialog.Title>Add an Algo View</Dialog.Title>
+                <Dialog.Title>Add View</Dialog.Title>
                 <Dialog.CloseButton class="ct-icon-button" aria-label="Close dialog">
                   <IconX size="18" stroke="1.8" />
                 </Dialog.CloseButton>
@@ -603,7 +604,7 @@ export default function DesignCatalog() {
                 Bind recorded values to a visualization. This catalog shows the configuration surface only.
               </Dialog.Description>
               <div class="ct-binding">
-                <strong>Binary search</strong>
+                <strong>Range &amp; marker</strong>
                 <span>
                   Map <code>left</code>, <code>mid</code>, and <code>right</code> to recorded values.
                 </span>

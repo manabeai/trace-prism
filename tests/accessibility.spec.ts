@@ -24,4 +24,19 @@ test('the trace workspace has no detectable accessibility violations', async ({ 
   await expect(page.locator('.dg-frame-row')).toHaveCount(4);
   const { violations } = await new AxeBuilder({ page }).analyze();
   expect(violations.map(({ id, nodes }) => ({ id, targets: nodes.map((node) => node.target) }))).toEqual([]);
+
+  await page.getByRole('button', { name: 'Add View' }).click();
+  const chooser = await new AxeBuilder({ page }).analyze();
+  expect(
+    chooser.violations.map(({ id, nodes }) => ({ id, targets: nodes.map((node) => node.target) })),
+  ).toEqual([]);
+
+  await page
+    .getByRole('dialog')
+    .getByRole('button', { name: /Range & marker/ })
+    .click();
+  const bindings = await new AxeBuilder({ page }).analyze();
+  expect(
+    bindings.violations.map(({ id, nodes }) => ({ id, targets: nodes.map((node) => node.target) })),
+  ).toEqual([]);
 });

@@ -22,7 +22,7 @@ const graphView: AlgoView = {
 };
 
 const meta = {
-  title: 'Algo Views/Recorded frame',
+  title: 'Views/Recorded frame',
   component: AlgoCell,
   tags: ['autodocs'],
   render: (args) => (

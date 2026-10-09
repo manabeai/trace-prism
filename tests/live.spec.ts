@@ -34,6 +34,11 @@ test('v2 trace materializes in the live workspace and remains explorable', async
   await mockRuns(page, runs);
   await page.goto('/');
 
+  const history = page.locator('.dg-run-list');
+  await expect(history).not.toContainText(/Run|Select to load|with-from|without-from|completed/);
+  await expect(history.locator('time').first()).toHaveText('18:00:00');
+  await expect(history.locator('.dg-run-completed')).toHaveCount(2);
+
   await expect(page.locator('.dg-frame-row')).toHaveCount(4);
   await expect(page.locator('.dg-frame-row.is-selected .dg-value-cell').nth(1)).toContainText('2');
   await expect(page.locator('.dg-frame-row.is-selected .dg-value-cell').nth(3)).toContainText('3');
@@ -41,10 +46,14 @@ test('v2 trace materializes in the live workspace and remains explorable', async
   await page.getByRole('button', { name: 'Bars' }).click();
   await expect(page.locator('.dg-table-scroll .dg-bars')).toHaveCount(4);
 
-  await page.getByRole('button', { name: 'Add Algo View' }).click();
-  await page.locator('.dg-template-grid button').filter({ hasText: 'Binary search' }).click();
+  await expect(page.getByRole('heading', { name: 'Algo Views' })).toHaveCount(0);
+  await page.getByRole('button', { name: 'Add View' }).click();
+  await expect(page.locator('.dg-stage-choose .dg-template-preview .dg-binary-view')).toBeVisible();
+  await page.locator('.dg-template-list button').filter({ hasText: 'Grid & position' }).hover();
+  await expect(page.locator('.dg-stage-choose .dg-template-preview .dg-mini-grid')).toBeVisible();
+  await page.locator('.dg-template-list button').filter({ hasText: 'Range & marker' }).click();
   await expect(page.locator('.dg-binding-current')).toContainText(['left', 'right', 'mid', 'ok']);
-  await page.getByRole('button', { name: 'Add column' }).click();
+  await page.getByRole('dialog').getByRole('button', { name: 'Add view' }).click();
   await expect(page.locator('.dg-algo-cell')).toHaveCount(4);
 
   await expect(page.locator('.dg-graph-meta strong')).toHaveText('Transition graph');
@@ -54,11 +63,44 @@ test('v2 trace materializes in the live workspace and remains explorable', async
   await expect(page.locator('.dg-graph-node')).toHaveCount(4);
   await page.getByRole('button', { name: 'Show from links' }).click();
   await expect(page.locator('.dg-graph-meta strong')).toHaveText('Transition graph');
-  await page.locator('.dg-run-list button').filter({ hasText: 'without-from' }).click();
+  await page.locator('.dg-run-list button[data-run-id="without-from"]').click();
   await expect(page.locator('.dg-graph-meta strong')).toHaveText('Span hierarchy');
   await expect(page.locator('.dg-graph-node')).toHaveCount(4);
   await expect(page.getByRole('button', { name: 'Show from links' })).toHaveCount(0);
   expect(errors).toEqual([]);
+});
+
+test('view layout and value assignment slide within a stable dialog', async ({ page }) => {
+  await mockRuns(page, [runs[0]]);
+  await page.goto('/');
+  await page.getByRole('button', { name: 'Add View' }).click();
+
+  const dialog = page.getByRole('dialog');
+  const before = await dialog.boundingBox();
+  await dialog.getByRole('button', { name: /Range & marker/ }).click();
+  await expect(page.locator('.dg-stage-track')).toHaveClass(/is-binding/);
+  await expect(page.locator('.dg-bind-intro h3')).toBeFocused();
+  await expect(dialog.getByRole('button', { name: 'Back' })).toBeVisible();
+  const preview = page.locator('.dg-stage-bind .dg-bind-preview');
+  await expect(preview.locator('.dg-binary-view')).toBeVisible();
+  for (const role of ['left', 'right', 'mid', 'predicate']) {
+    await page.locator(`.dg-binding-row[data-role="${role}"]`).hover();
+    await expect(preview).toHaveAttribute('data-active-role', role);
+    await expect(preview.locator(`[data-view-role~="${role}"]`).first()).toBeVisible();
+  }
+  await page.locator('.dg-binding-row[data-role="mid"] button').first().focus();
+  await expect(preview).toHaveAttribute('data-active-role', 'mid');
+  await expect(preview).toContainText('Moves the marker.');
+  const assigned = await dialog.boundingBox();
+  expect(assigned?.width).toBe(before?.width);
+  expect(assigned?.height).toBe(before?.height);
+
+  await dialog.getByRole('button', { name: 'Back' }).click();
+  await expect(page.locator('.dg-stage-track')).not.toHaveClass(/is-binding/);
+  await expect(dialog.getByRole('button', { name: /Range & marker/ })).toBeFocused();
+  const returned = await dialog.boundingBox();
+  expect(returned?.width).toBe(before?.width);
+  expect(returned?.height).toBe(before?.height);
 });
 
 test('fromId relates recorded IDs while the table keeps the record order', async ({ page }) => {
@@ -114,7 +156,7 @@ test('fromId relates recorded IDs while the table keeps the record order', async
   await expect(page.locator('.dg-graph-meta strong')).toHaveText('Transition graph');
 });
 
-test('Graph Algo View binds an adjacency list with optional visited and current vertex', async ({ page }) => {
+test('node-link view binds an adjacency list with optional visited and current vertex', async ({ page }) => {
   const adjacency = {
     t: 'array',
     items: [[1, 2], [2], []].map((row) => ({
@@ -142,10 +184,22 @@ test('Graph Algo View binds an adjacency list with optional visited and current 
   };
   await mockRuns(page, [run]);
   await page.goto('/');
-  await page.getByRole('button', { name: 'Add Algo View' }).click();
-  await page.locator('.dg-template-grid button').filter({ hasText: 'Graph' }).click();
+  await page.getByRole('button', { name: 'Add View' }).click();
+  await page.locator('.dg-template-list button').filter({ hasText: 'Node-link graph' }).hover();
+  await expect(page.locator('.dg-stage-choose .dg-template-preview svg[role="img"]')).toHaveAttribute(
+    'aria-label',
+    /4 vertices/,
+  );
+  await page.locator('.dg-template-list button').filter({ hasText: 'Node-link graph' }).click();
   await expect(page.locator('.dg-binding-current')).toContainText(['adjacency', 'seen', 'u']);
-  await page.getByRole('button', { name: 'Add column' }).click();
+  for (const role of ['adjacency', 'visited', 'v']) {
+    await page.locator(`.dg-binding-row[data-role="${role}"]`).hover();
+    await expect(page.locator('.dg-stage-bind .dg-bind-preview')).toHaveAttribute('data-active-role', role);
+    await expect(
+      page.locator(`.dg-stage-bind .dg-bind-preview [data-view-role~="${role}"]`).first(),
+    ).toBeVisible();
+  }
+  await page.getByRole('dialog').getByRole('button', { name: 'Add view' }).click();
 
   await expect(page.locator('.dg-algo-cell svg[role="img"]')).toHaveAttribute(
     'aria-label',
@@ -154,7 +208,7 @@ test('Graph Algo View binds an adjacency list with optional visited and current 
   await expect(page.locator('.dg-algo-cell svg line')).toHaveCount(3);
   await expect(page.locator('.dg-algo-cell [aria-label="Vertex 0, visited, current"]')).toHaveCount(1);
 
-  await page.locator('.dg-view-list').getByRole('button', { name: 'Edit Graph bindings' }).click();
+  await page.locator('.dg-view-list').getByRole('button', { name: 'Edit Node-link graph bindings' }).click();
   await page.locator('.dg-binding-row').nth(1).getByRole('button', { name: 'None' }).click();
   await page.locator('.dg-binding-row').nth(2).getByRole('button', { name: 'None' }).click();
   await page.getByRole('button', { name: 'Save bindings' }).click();
@@ -369,7 +423,7 @@ test('format popover stays open across run polling while moving into its options
   await expect(page.locator('.dg-table-scroll .dg-bars')).toHaveCount(4);
 });
 
-test('grid Algo View binds recorded matrix and position values', async ({ page }) => {
+test('grid view binds recorded matrix and position values', async ({ page }) => {
   const integer = (value: number) => ({ t: 'int', v: String(value) });
   const array = (items: unknown[]) => ({ t: 'array', items });
   const board = array([array([integer(0), integer(1)]), array([integer(0), integer(0)])]);
@@ -405,10 +459,17 @@ test('grid Algo View binds recorded matrix and position values', async ({ page }
   await mockRuns(page, [gridRun]);
   await page.goto('/');
   await expect(page.locator('.dg-table-scroll .lv-matrix')).toHaveCount(2);
-  await page.getByRole('button', { name: 'Add Algo View' }).click();
-  await page.locator('.dg-template-grid button').filter({ hasText: 'Grid traversal' }).click();
+  await page.getByRole('button', { name: 'Add View' }).click();
+  await page.locator('.dg-template-list button').filter({ hasText: 'Grid & position' }).click();
   await expect(page.locator('.dg-binding-current')).toContainText(['board', 'pos']);
-  await page.getByRole('button', { name: 'Add column' }).click();
+  for (const role of ['board', 'position']) {
+    await page.locator(`.dg-binding-row[data-role="${role}"]`).hover();
+    await expect(page.locator('.dg-stage-bind .dg-bind-preview')).toHaveAttribute('data-active-role', role);
+    await expect(
+      page.locator(`.dg-stage-bind .dg-bind-preview [data-view-role~="${role}"]`).first(),
+    ).toBeVisible();
+  }
+  await page.getByRole('dialog').getByRole('button', { name: 'Add view' }).click();
   await expect(page.locator('.dg-table-scroll .dg-grid-view')).toHaveCount(2);
   await expect(page.locator('.dg-table-scroll .dg-grid-view .current')).toHaveCount(2);
 });
@@ -420,10 +481,10 @@ test('selection and display settings are retained separately for each run', asyn
   await page.getByRole('button', { name: 'Select record 1' }).click();
   await page.getByRole('button', { name: 'Change a display format' }).click();
   await page.getByRole('button', { name: 'Bars' }).click();
-  await page.locator('.dg-run-list button').filter({ hasText: 'without-from' }).click();
+  await page.locator('.dg-run-list button[data-run-id="without-from"]').click();
   await expect(page.locator('.dg-table-scroll .dg-bars')).toHaveCount(0);
   await page.getByRole('button', { name: 'Select record 2' }).click();
-  await page.locator('.dg-run-list button').filter({ hasText: 'with-from' }).first().click();
+  await page.locator('.dg-run-list button[data-run-id="with-from"]').click();
   await expect(page.locator('.dg-frame-row.is-selected')).toContainText('1');
   await expect(page.locator('.dg-table-scroll .dg-bars')).toHaveCount(4);
 });

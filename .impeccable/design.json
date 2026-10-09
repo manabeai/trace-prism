@@ -1,7 +1,7 @@
 {
   "schemaVersion": 2,
-  "generatedAt": "2026-10-02T21:49:59Z",
-  "title": "algo-vis Field Notes のデザインシステム",
+  "generatedAt": "2026-10-09T10:46:56Z",
+  "title": "TracePrism Field Notes のデザインシステム",
   "extensions": {
     "colorMeta": {
       "canvas": {
@@ -131,9 +131,9 @@
     {
       "name": "実行履歴項目",
       "kind": "nav",
-      "description": "選択中の実行は淡い緑の面と左端の緑線で示す。",
-      "html": "<button class=\"ds-run-item\"><strong>binary-search.rs</strong><small>41 records · completed</small></button>",
-      "css": ".ds-run-item{position:relative;display:grid;gap:5px;width:220px;padding:10px 8px;background:var(--fn-soft);color:var(--fn-ink);border:0;border-bottom:1px solid var(--fn-rule);font:12px \"IBM Plex Sans Variable\",sans-serif;text-align:left;cursor:pointer}.ds-run-item::before{content:\"\";position:absolute;left:0;top:0;bottom:0;width:2px;background:var(--fn-action)}.ds-run-item strong{font:700 12px \"IBM Plex Mono\",monospace}.ds-run-item small{color:var(--fn-muted);font-size:10px}.ds-run-item:hover{background:var(--fn-sidebar)}.ds-run-item:focus-visible{outline:2px solid var(--fn-action);outline-offset:2px}"
+      "description": "選択中の実行は淡い緑の面と左端の緑線で示す。日本時間の時刻と記録数を表示し、完了は緑のチェックで示す。",
+      "html": "<button class=\"ds-run-item\"><span class=\"ds-run-line\"><time datetime=\"2026-10-09T09:00:00Z\">18:00:00</time><span class=\"ds-run-completed\" role=\"img\" aria-label=\"Completed\"><svg viewBox=\"0 0 24 24\" width=\"14\" height=\"14\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2.5\" aria-hidden=\"true\"><path d=\"m5 12 4 4L19 6\"/></svg></span></span><span class=\"ds-run-count\">41 records</span></button>",
+      "css": ".ds-run-item{position:relative;display:grid;gap:5px;width:220px;padding:10px 8px;background:var(--fn-soft);color:var(--fn-ink);border:0;border-bottom:1px solid var(--fn-rule);font:12px \"IBM Plex Sans Variable\",sans-serif;text-align:left;cursor:pointer}.ds-run-item::before{content:\"\";position:absolute;left:0;top:0;bottom:0;width:2px;background:var(--fn-action)}.ds-run-line{display:flex;align-items:center;justify-content:space-between;gap:6px}.ds-run-line time{font:11px \"IBM Plex Mono\",monospace;font-variant-numeric:tabular-nums}.ds-run-completed{display:inline-flex;align-items:center;color:var(--fn-action)}.ds-run-count{color:var(--fn-muted);font-size:10px}.ds-run-item:hover{background:var(--fn-sidebar)}.ds-run-item:focus-visible{outline:2px solid var(--fn-action);outline-offset:2px}"
     },
     {
       "name": "値セル",
@@ -152,7 +152,7 @@
   ],
   "narrative": {
     "northStar": "Field Notes",
-    "overview": "競技プログラミングの実行を読み返せる観察記録として扱う。紙に近い面、細い罫線、控えめな緑を基調にし、seq と値の変化を読むことに視線を集中させる。アプリ、カタログ、Storybook は色と書体のトークンを共有する。",
+    "overview": "競技プログラミングの実行を「読み返せる観察記録」として扱う。紙に近い面、細い罫線、控えめな緑を基調にし、seq と値の変化を読むことに視線を集中させる。装飾的なカードの積み重ねではなく、実行単位・span・値列という情報構造そのものを画面の階層にする。\n\nアプリと `/catalog` と Storybook は Field Notes の色・書体トークンを共有する。角丸や余白はコンポーネントと文脈に応じて調整する。比較用の `/flavors` は独立した検討資料であり、現行画面の規範ではない。",
     "keyCharacteristics": [
       "紙面とサイドバーの穏やかな面差、細い罫線。",
       "見出しは Newsreader、操作文は IBM Plex Sans、seq と値は IBM Plex Mono。",
@@ -166,7 +166,7 @@
       },
       {
         "name": "The Three Voice Rule",
-        "body": "見出し・操作・データの三つの声を混ぜない。",
+        "body": "見出し・操作・データの三つの声を混ぜない。同一セル内で複数書体が必要なら、役割の違いが読解に必要な場合に限る。",
         "section": "typography"
       }
     ],

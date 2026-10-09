@@ -22,7 +22,14 @@ import type { Graph, GraphNode, HistoryNode } from './trace/types';
 import type { Seq } from './trace/ids';
 import type { RunRepository } from './runs/RunRepository';
 import { formatOptions } from './presentations/values/registry';
-import { AlgoCell, templates, validBindings, type Template } from './presentations/algo/registry';
+import {
+  AlgoCell,
+  templates,
+  validBindings,
+  type AlgoView,
+  type Template,
+} from './presentations/algo/registry';
+import { previewFrame, previewViews } from './presentations/algo/preview';
 import { createWorkspaceController } from './workspace/controller';
 import { BrandMark } from './design/BrandMark';
 import { createHistoryTable } from './workspace/history/table-adapter';
@@ -31,6 +38,33 @@ import { ValueCell } from './workspace/history/ValueCell';
 import { SearchEditor } from './workspace/search/SearchEditor';
 import type { SearchResults } from './search/evaluate';
 import { UpdateControl } from './updater/UpdateControl';
+
+const runTimeFormatter = new Intl.DateTimeFormat('ja-JP', {
+  timeZone: 'Asia/Tokyo',
+  hour: '2-digit',
+  minute: '2-digit',
+  second: '2-digit',
+  hourCycle: 'h23',
+});
+
+function ViewPreview(props: { template: Template; activeRole?: string }) {
+  const hint = () =>
+    templates[props.template].roles.find((role) => role.name === props.activeRole)?.previewHint ??
+    templates[props.template].description;
+  return (
+    <div class="dg-template-preview dg-bind-preview" data-active-role={props.activeRole || undefined}>
+      <div class="dg-preview-heading">
+        <span>Example preview</span>
+        <strong>{templates[props.template].name}</strong>
+      </div>
+      <div class="dg-preview-canvas">
+        <AlgoCell view={previewViews[props.template]} frame={previewFrame} />
+      </div>
+      <p>{hint()}</p>
+    </div>
+  );
+}
+
 function RelationGraph(props: {
   graph: Graph;
   runId: string;
@@ -261,6 +295,33 @@ export function LiveWorkspace(props: { repository?: RunRepository }) {
   const [wideSizes, setWideSizes] = createSignal([2 / 3, 1 / 3]);
   const [narrowSizes, setNarrowSizes] = createSignal([0.5, 0.5]);
   const [stacked, setStacked] = createSignal(false);
+  const [previewTemplate, setPreviewTemplate] = createSignal<Template>('binary');
+  const [highlightedRole, setHighlightedRole] = createSignal<string | null>(null);
+  let choosePanel: HTMLDivElement | undefined;
+  let bindHeading: HTMLHeadingElement | undefined;
+  const openAddView = () => {
+    setPreviewTemplate('binary');
+    setHighlightedRole(null);
+    openDialog();
+  };
+  const openViewEditor = (view: AlgoView) => {
+    setHighlightedRole(null);
+    openDialog(view);
+  };
+  const selectViewLayout = (next: Template) => {
+    setHighlightedRole(null);
+    chooseTemplate(next);
+    queueMicrotask(() => bindHeading?.focus({ preventScroll: true }));
+  };
+  const returnToLayouts = () => {
+    setHighlightedRole(null);
+    setStage('choose');
+    queueMicrotask(() =>
+      choosePanel
+        ?.querySelector<HTMLButtonElement>(`[data-template="${template()}"]`)
+        ?.focus({ preventScroll: true }),
+    );
+  };
   const historySizes = () => (stacked() ? narrowSizes() : wideSizes());
   const setHistorySizes = (sizes: number[]) => (stacked() ? setNarrowSizes(sizes) : setWideSizes(sizes));
   onMount(() => {
@@ -411,7 +472,7 @@ export function LiveWorkspace(props: { repository?: RunRepository }) {
         <Resizable.Panel minSize={0.13} maxSize={0.3} class="dg-side-panel">
           <Resizable orientation="vertical" class="dg-vertical" initialSizes={[0.66, 0.34]}>
             <Resizable.Panel minSize={0.4} class="dg-top-panel">
-              <aside class="dg-config" aria-label="Visible columns and Algo Views">
+              <aside class="dg-config" aria-label="Values and views">
                 <div class="dg-section-title">
                   <h2>
                     <IconEye size="16" stroke="1.8" />
@@ -444,20 +505,10 @@ export function LiveWorkspace(props: { repository?: RunRepository }) {
                     </For>
                   </div>
                 </Show>
-                <div class="dg-algo-heading">
-                  <h2>
-                    <IconBinaryTree size="16" stroke="1.8" />
-                    Algo Views
-                  </h2>
-                  <button
-                    class="dg-add-view"
-                    aria-label="Add Algo View"
-                    disabled={!frames().length}
-                    onClick={() => openDialog()}
-                  >
-                    <IconPlus size="16" stroke="1.8" />
-                  </button>
-                </div>
+                <button class="dg-add-view" disabled={!frames().length} onClick={openAddView}>
+                  Add View
+                  <IconPlus size="16" stroke="1.8" />
+                </button>
                 <div class="dg-view-list">
                   <For each={views()}>
                     {(view) => (
@@ -483,7 +534,7 @@ export function LiveWorkspace(props: { repository?: RunRepository }) {
                         </label>
                         <button
                           aria-label={`Edit ${templates[view.template].name} bindings`}
-                          onClick={() => openDialog(view)}
+                          onClick={() => openViewEditor(view)}
                         >
                           <IconSettings size="15" />
                         </button>
@@ -523,18 +574,26 @@ export function LiveWorkspace(props: { repository?: RunRepository }) {
                     <For each={runs()}>
                       {(run) => (
                         <button
+                          data-run-id={run.id}
                           classList={{ active: current()?.id === run.id }}
                           onClick={() => chooseRun(run.id)}
                         >
                           <span class="dg-run-line">
-                            <strong>Run</strong>
-                            <time>{new Date(run.startedAt).toLocaleTimeString('en-US')}</time>
+                            <time dateTime={run.startedAt}>
+                              {runTimeFormatter.format(new Date(run.startedAt))}
+                            </time>
+                            <Show
+                              when={run.status === 'completed'}
+                              fallback={<span class="dg-run-status">{run.status}</span>}
+                            >
+                              <span class="dg-run-status dg-run-completed" role="img" aria-label="Completed">
+                                <IconCheck size="14" stroke="2.5" />
+                              </span>
+                            </Show>
                           </span>
-                          <code>{run.id}</code>
-                          <span class="dg-run-sub">
-                            {run.loaded === false ? 'Select to load' : `${run.frames.length} records`}
-                            <span>{run.status}</span>
-                          </span>
+                          <Show when={run.loaded}>
+                            <span class="dg-run-sub">{run.frames.length} records</span>
+                          </Show>
                         </button>
                       )}
                     </For>
@@ -649,12 +708,12 @@ export function LiveWorkspace(props: { repository?: RunRepository }) {
                                     <div class="dg-column-head">
                                       <span>
                                         <code>{templates[view.template].name}</code>
-                                        <small>Algo View</small>
+                                        <small>View</small>
                                       </span>
                                       <button
                                         class="dg-algo-head-action"
                                         aria-label={`Edit ${templates[view.template].name} bindings`}
-                                        onClick={() => openDialog(view)}
+                                        onClick={() => openViewEditor(view)}
                                       >
                                         <IconSettings size="17" />
                                       </button>
@@ -770,83 +829,135 @@ export function LiveWorkspace(props: { repository?: RunRepository }) {
         <Dialog.Portal>
           <Dialog.Overlay class="dg-dialog-overlay" />
           <div class="dg-dialog-positioner">
-            <Dialog.Content class="dg-dialog workspace-theme">
+            <Dialog.Content class="dg-dialog dg-dialog-picker workspace-theme">
               <div class="dg-dialog-header">
                 <Dialog.Title>
-                  {editingId() !== null
-                    ? `Edit ${templates[template()].name}`
-                    : stage() === 'choose'
-                      ? 'Add an Algo View'
-                      : `Configure ${templates[template()].name}`}
+                  {editingId() !== null ? `Edit ${templates[template()].name}` : 'Add View'}
                 </Dialog.Title>
                 <Dialog.CloseButton aria-label="Close dialog">
                   <IconX size="18" />
                 </Dialog.CloseButton>
               </div>
               <Dialog.Description>
-                {stage() === 'choose'
-                  ? 'Choose a visualizer. Then bind its inputs to recorded values.'
-                  : templates[template()].description}
+                {editingId() !== null
+                  ? templates[template()].description
+                  : 'Combine recorded values into a view. Choose a layout, then assign its inputs.'}
               </Dialog.Description>
-              <Show
-                when={stage() === 'choose'}
-                fallback={
-                  <>
-                    <div class="dg-binding-list">
-                      <For each={templates[template()].roles}>
-                        {(role) => (
-                          <div class="dg-binding-row">
-                            <div class="dg-binding-heading">
-                              <strong>{role.name}</strong>
-                              <small>
-                                {role.shape === 'visited' ? 'bool[] or set<int>' : role.shape}
-                                {role.optional ? ' · optional' : ''}
-                              </small>
-                            </div>
-                            <div class="dg-binding-current">
-                              <IconCode size="15" />
-                              <code>{draft()[role.name] || 'Not assigned'}</code>
-                            </div>
-                            <div class="dg-binding-choices">
-                              <Show when={role.optional}>
-                                <button
-                                  classList={{ active: !draft()[role.name] }}
-                                  onClick={() => setDraft((current) => ({ ...current, [role.name]: '' }))}
-                                >
-                                  None
-                                  <Show when={!draft()[role.name]}>
-                                    <IconCheck size="14" />
-                                  </Show>
-                                </button>
-                              </Show>
-                              <For
-                                each={candidates(role)}
-                                fallback={
-                                  role.optional ? null : (
-                                    <span class="lv-no-candidates">No compatible value</span>
-                                  )
-                                }
+              <div class="dg-stage-viewport">
+                <div class="dg-stage-track" classList={{ 'is-binding': stage() === 'bind' }}>
+                  <div
+                    ref={choosePanel}
+                    class="dg-stage dg-stage-choose"
+                    aria-hidden={stage() !== 'choose'}
+                    inert={stage() !== 'choose'}
+                  >
+                    <div class="dg-view-picker">
+                      <div class="dg-template-list" aria-label="View layouts">
+                        <For each={Object.values(templates)}>
+                          {(definition) => (
+                            <button
+                              data-template={definition.id}
+                              classList={{ active: previewTemplate() === definition.id }}
+                              onMouseEnter={() => setPreviewTemplate(definition.id as Template)}
+                              onFocus={() => setPreviewTemplate(definition.id as Template)}
+                              onClick={() => selectViewLayout(definition.id as Template)}
+                            >
+                              <Dynamic component={definition.icon} size="21" stroke="1.7" />
+                              <span>
+                                <strong>{definition.name}</strong>
+                                <small>{definition.summary}</small>
+                              </span>
+                              <IconChevronRight size="15" stroke="1.8" />
+                            </button>
+                          )}
+                        </For>
+                      </div>
+                      <ViewPreview template={previewTemplate()} />
+                    </div>
+                  </div>
+                  <div
+                    class="dg-stage dg-stage-bind"
+                    aria-hidden={stage() !== 'bind'}
+                    inert={stage() !== 'bind'}
+                  >
+                    <div class="dg-bind-layout">
+                      <div class="dg-bind-fields">
+                        <div class="dg-bind-intro">
+                          <h3 ref={bindHeading} tabIndex={-1}>
+                            {templates[template()].name}
+                          </h3>
+                          <p>{templates[template()].description}</p>
+                        </div>
+                        <div class="dg-binding-list">
+                          <For each={templates[template()].roles}>
+                            {(role) => (
+                              <div
+                                class="dg-binding-row"
+                                data-role={role.name}
+                                onMouseEnter={() => setHighlightedRole(role.name)}
+                                onMouseLeave={() => setHighlightedRole(null)}
+                                onFocusIn={() => setHighlightedRole(role.name)}
+                                onFocusOut={(event) => {
+                                  if (!event.currentTarget.contains(event.relatedTarget as Node))
+                                    setHighlightedRole(null);
+                                }}
                               >
-                                {(name) => (
-                                  <button
-                                    classList={{ active: draft()[role.name] === name }}
-                                    onClick={() => setDraft((current) => ({ ...current, [role.name]: name }))}
+                                <div class="dg-binding-heading">
+                                  <strong>{role.name}</strong>
+                                  <small>
+                                    {role.shape === 'visited' ? 'bool[] or set<int>' : role.shape}
+                                    {role.optional ? ' · optional' : ''}
+                                  </small>
+                                </div>
+                                <div class="dg-binding-current">
+                                  <IconCode size="15" />
+                                  <code>{draft()[role.name] || 'Not assigned'}</code>
+                                </div>
+                                <div class="dg-binding-choices">
+                                  <Show when={role.optional}>
+                                    <button
+                                      classList={{ active: !draft()[role.name] }}
+                                      onClick={() => setDraft((current) => ({ ...current, [role.name]: '' }))}
+                                    >
+                                      None
+                                      <Show when={!draft()[role.name]}>
+                                        <IconCheck size="14" />
+                                      </Show>
+                                    </button>
+                                  </Show>
+                                  <For
+                                    each={candidates(role)}
+                                    fallback={
+                                      role.optional ? null : (
+                                        <span class="lv-no-candidates">No compatible value</span>
+                                      )
+                                    }
                                   >
-                                    <code>{name}</code>
-                                    <Show when={draft()[role.name] === name}>
-                                      <IconCheck size="14" />
-                                    </Show>
-                                  </button>
-                                )}
-                              </For>
-                            </div>
-                          </div>
-                        )}
-                      </For>
+                                    {(name) => (
+                                      <button
+                                        classList={{ active: draft()[role.name] === name }}
+                                        onClick={() =>
+                                          setDraft((current) => ({ ...current, [role.name]: name }))
+                                        }
+                                      >
+                                        <code>{name}</code>
+                                        <Show when={draft()[role.name] === name}>
+                                          <IconCheck size="14" />
+                                        </Show>
+                                      </button>
+                                    )}
+                                  </For>
+                                </div>
+                              </div>
+                            )}
+                          </For>
+                        </div>
+                      </div>
+                      <ViewPreview template={template()} activeRole={highlightedRole() ?? undefined} />
                     </div>
                     <div class="dg-dialog-actions">
                       <Show when={editingId() === null}>
-                        <button class="dg-back-action" onClick={() => setStage('choose')}>
+                        <button class="dg-back-action" onClick={returnToLayouts}>
                           <IconChevronLeft size="16" />
                           Back
                         </button>
@@ -857,24 +968,12 @@ export function LiveWorkspace(props: { repository?: RunRepository }) {
                         onClick={saveView}
                       >
                         <IconCheck size="16" />
-                        {editingId() === null ? 'Add column' : 'Save bindings'}
+                        {editingId() === null ? 'Add view' : 'Save bindings'}
                       </button>
                     </div>
-                  </>
-                }
-              >
-                <div class="dg-template-grid">
-                  <For each={Object.values(templates)}>
-                    {(definition) => (
-                      <button onClick={() => chooseTemplate(definition.id as Template)}>
-                        <Dynamic component={definition.icon} size="28" stroke="1.5" />
-                        <strong>{definition.name}</strong>
-                        <span>{definition.summary}</span>
-                      </button>
-                    )}
-                  </For>
+                  </div>
                 </div>
-              </Show>
+              </div>
             </Dialog.Content>
           </div>
         </Dialog.Portal>

@@ -38,14 +38,31 @@ function point(index: number, count: number): Point {
 
 export const adjacencyGraph: AlgoViewDefinition = {
   id: 'graph',
-  name: 'Graph',
+  name: 'Node-link graph',
   description:
-    'Draw an adjacency list; optionally mark visited vertices from a bool array or set, and the current vertex.',
-  summary: 'Adjacency list with optional visited and current vertex',
+    'Draw an adjacency list; optionally highlight vertices from a bool array or set and one current vertex.',
+  summary: 'Adjacency list + optional highlights',
   roles: [
-    { name: 'adjacency', shape: 'array', preferredNames: ['graph', 'g'] },
-    { name: 'visited', shape: 'visited', optional: true, preferredNames: ['seen'] },
-    { name: 'v', shape: 'int', optional: true, preferredNames: ['u', 'current'] },
+    {
+      name: 'adjacency',
+      shape: 'array',
+      previewHint: 'Changes the vertices and links.',
+      preferredNames: ['graph', 'g'],
+    },
+    {
+      name: 'visited',
+      shape: 'visited',
+      previewHint: 'Highlights visited vertices.',
+      optional: true,
+      preferredNames: ['seen'],
+    },
+    {
+      name: 'v',
+      shape: 'int',
+      previewHint: 'Highlights the current vertex.',
+      optional: true,
+      preferredNames: ['u', 'current'],
+    },
   ],
   icon: IconSitemap,
   component: (props) => {
@@ -87,6 +104,7 @@ export const adjacencyGraph: AlgoViewDefinition = {
         <div class={styles.root}>
           <svg
             class={styles.canvas}
+            data-view-role="adjacency"
             viewBox="0 0 256 188"
             role="img"
             aria-label={`Input graph: ${adjacency()?.length ?? 0} vertices, ${edgeCount()} directed edges${current() !== undefined ? `, current vertex ${current()}` : ''}`}
@@ -139,6 +157,11 @@ export const adjacencyGraph: AlgoViewDefinition = {
                 return (
                   <g
                     class={styles.vertex}
+                    data-view-role={
+                      [visited().has(index) && 'visited', current() === index && 'v']
+                        .filter(Boolean)
+                        .join(' ') || undefined
+                    }
                     classList={{
                       [styles.visited]: visited().has(index),
                       [styles.current]: current() === index,

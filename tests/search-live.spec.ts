@@ -54,9 +54,9 @@ test('collection match highlights an element and search state belongs to the run
   await expect(page.locator('.dg-array span.is-search-match')).toHaveCount(4);
   await expect(page.locator('.dg-array span.is-search-match').first()).toHaveText('5');
 
-  await page.locator('.dg-run-list button').filter({ hasText: 'search-two' }).click();
+  await page.locator('.dg-run-list button[data-run-id="search-two"]').click();
   await expect(page.locator('.ws-search-chip.field')).toHaveCount(0);
-  await page.locator('.dg-run-list button').filter({ hasText: 'search-one' }).click();
+  await page.locator('.dg-run-list button[data-run-id="search-one"]').click();
   await expect(page.locator('.ws-search-chip.field')).toHaveText('a');
   await expect(page.locator('.ws-search-navigation')).toContainText('4 hits');
 });

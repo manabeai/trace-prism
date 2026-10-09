@@ -180,8 +180,7 @@
   overflow: auto;
   padding: 17px 15px;
 }
-.dg-section-title,
-.dg-algo-heading {
+.dg-section-title {
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -190,8 +189,7 @@
 .dg-section-title {
   margin-bottom: 10px;
 }
-.dg-section-title h2,
-.dg-algo-heading h2 {
+.dg-section-title h2 {
   font-size: 14px;
   font-weight: 700;
 }
@@ -262,25 +260,24 @@
 .dg-column select:hover {
   border-color: var(--dg-accent);
 }
-.dg-algo-heading {
-  margin-top: 18px;
-  padding-top: 15px;
-  border-top: 1px solid var(--dg-seam);
-}
 .dg-add-view {
   display: flex;
   align-items: center;
-  gap: 5px;
-  padding: 5px 8px;
+  justify-content: space-between;
+  gap: 8px;
+  width: 100%;
+  margin-top: 12px;
+  padding: 9px 11px;
   border: 1px solid var(--dg-seam);
   border-radius: 3px;
-  color: var(--dg-accent) !important;
-  font-size: 11px;
-  font-weight: 700;
+  background: var(--fn-sheet);
+  color: var(--dg-accent);
+  font-size: 12px;
+  font-weight: 600;
 }
-.dg-add-view span {
-  font-size: 16px;
-  line-height: 12px;
+.dg-add-view:hover:not(:disabled) {
+  border-color: var(--dg-accent);
+  background: var(--fn-soft);
 }
 .dg-view-list {
   display: grid;
@@ -372,32 +369,30 @@
   width: 2px;
   background: var(--dg-accent);
 }
-.dg-run-line,
-.dg-run-sub {
+.dg-run-line {
   display: flex;
+  align-items: center;
   justify-content: space-between;
   gap: 6px;
 }
-.dg-run-line strong {
-  font: 700 11px var(--font-code);
-}
 .dg-run-line time {
-  color: var(--dg-secondary);
-  font: 10px var(--font-code);
+  color: var(--dg-ink);
+  font: 11px var(--font-code);
+  font-variant-numeric: tabular-nums;
 }
-.dg-run-list code {
-  font-size: 11px;
+.dg-run-status {
+  color: var(--dg-secondary);
+  font-size: 10px;
+  white-space: nowrap;
+}
+.dg-run-completed {
+  display: inline-flex;
+  align-items: center;
+  color: var(--fn-action);
 }
 .dg-run-sub {
   color: var(--dg-secondary);
   font-size: 10px;
-}
-.dg-run-sub span {
-  white-space: nowrap;
-}
-.dg-run-list small {
-  color: var(--dg-algo);
-  font: 9px var(--font-code);
 }
 .dg-main-panel {
   background: var(--dg-bg);
@@ -1108,6 +1103,7 @@
   top: 50%;
   z-index: 91;
   transform: translate(-50%, -50%);
+  box-sizing: border-box;
   width: min(450px, calc(100vw - 32px));
   max-height: calc(100dvh - 32px);
   overflow: auto;
@@ -1283,15 +1279,13 @@
 .dg-runs {
   padding: 16px 12px;
 }
-.dg-section-title h2,
-.dg-algo-heading h2 {
+.dg-section-title h2 {
   display: flex;
   align-items: center;
   gap: 7px;
   font: 500 18px/1 var(--fn-display);
 }
-.dg-section-title h2 svg,
-.dg-algo-heading h2 svg {
+.dg-section-title h2 svg {
   color: var(--dg-accent);
 }
 .dg-column-list {
@@ -1315,16 +1309,6 @@
 }
 .dg-column select {
   display: none;
-}
-.dg-algo-heading {
-  margin-top: 18px;
-}
-.dg-add-view {
-  display: grid;
-  place-items: center;
-  width: 28px;
-  height: 27px;
-  padding: 0;
 }
 .dg-view-list {
   margin-top: 10px;
@@ -1353,30 +1337,6 @@
 }
 .dg-run-list button {
   padding: 10px 8px;
-}
-.dg-run-line {
-  display: grid;
-  gap: 2px;
-}
-.dg-run-line strong {
-  font-size: 12px;
-}
-.dg-run-line time {
-  font-size: 9px;
-}
-.dg-run-sub {
-  display: block;
-  font-size: 10px;
-}
-.dg-run-sub span {
-  display: block;
-  margin-top: 2px;
-}
-.dg-run-list code {
-  font-size: 10px;
-}
-.dg-run-list small {
-  font-size: 9px;
 }
 .dg-history-table {
   font-size: 12px;
@@ -1472,6 +1432,13 @@
   pointer-events: auto;
   font-family: var(--fn-sans);
 }
+.dg-dialog-picker {
+  display: flex;
+  flex-direction: column;
+  width: min(780px, 100%);
+  height: min(650px, calc(100dvh - 32px));
+  overflow: hidden;
+}
 .dg-dialog-header {
   display: flex;
   align-items: center;
@@ -1498,39 +1465,213 @@
 .dg-dialog p {
   font-size: 12px;
 }
-.dg-template-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 10px;
+.dg-stage-viewport {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
 }
-.dg-template-grid button {
+.dg-stage-track {
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
+.dg-stage {
+  position: absolute;
+  inset: 0;
+  min-width: 0;
+  overflow-y: auto;
+  scrollbar-color: var(--fn-rule) transparent;
+}
+.dg-stage-choose {
+  overflow-x: hidden;
+}
+.dg-stage-choose .dg-template-list,
+.dg-stage-choose .dg-template-preview {
+  transition:
+    transform 520ms cubic-bezier(0.65, 0, 0.35, 1) 80ms,
+    opacity 450ms ease-in-out 80ms;
+}
+.dg-stage-track.is-binding .dg-template-list {
+  transform: translateX(calc(-100% - 32px));
+  opacity: 0;
+  transition-delay: 0ms;
+}
+.dg-stage-track.is-binding .dg-stage-choose .dg-template-preview {
+  transform: translateX(calc(100% + 32px));
+  opacity: 0;
+  transition-delay: 0ms;
+}
+.dg-stage-bind {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  transform: translateY(105%);
+  opacity: 0;
+  transition:
+    transform 520ms cubic-bezier(0.65, 0, 0.35, 1),
+    opacity 450ms ease-in-out;
+}
+.dg-stage-track.is-binding .dg-stage-bind {
+  transform: translateY(0);
+  opacity: 1;
+  transition-delay: 80ms;
+}
+.dg-bind-layout {
   display: grid;
-  justify-items: start;
-  gap: 9px;
-  min-height: 142px;
-  padding: 19px;
+  grid-template-columns: minmax(0, 1.15fr) minmax(265px, 0.85fr);
+  gap: 20px;
+  flex: 1;
+  min-height: 0;
+}
+.dg-bind-fields {
+  min-width: 0;
+  min-height: 0;
+  overflow-y: auto;
+  scrollbar-color: var(--fn-rule) transparent;
+}
+.dg-bind-intro h3 {
+  margin: 2px 0 5px;
+  font: 500 24px/1.1 var(--fn-display);
+}
+.dg-bind-intro h3:focus {
+  outline: none;
+}
+.dg-bind-intro p {
+  margin: 0;
+  color: var(--dg-secondary);
+}
+.dg-bind-fields .dg-binding-row {
+  grid-template-columns: 110px minmax(0, 1fr);
+}
+.dg-bind-fields .dg-binding-choices {
+  grid-column: 1 / -1;
+}
+.dg-bind-layout .dg-template-preview {
+  align-self: start;
+  min-height: 300px;
+  padding: 14px;
   border: 1px solid var(--dg-seam);
-  border-radius: 2px;
-  background: var(--fn-sheet);
+  background: var(--fn-sidebar);
+}
+.dg-bind-layout .dg-preview-canvas {
+  min-height: 205px;
+  padding: 10px;
+}
+.dg-bind-preview[data-active-role] [data-view-role] {
+  transition:
+    outline-color 160ms ease-out,
+    box-shadow 160ms ease-out;
+}
+.dg-bind-preview[data-active-role='left'] [data-view-role~='left'],
+.dg-bind-preview[data-active-role='right'] [data-view-role~='right'],
+.dg-bind-preview[data-active-role='mid'] [data-view-role~='mid'],
+.dg-bind-preview[data-active-role='predicate'] [data-view-role~='predicate'],
+.dg-bind-preview[data-active-role='board'] [data-view-role~='board'],
+.dg-bind-preview[data-active-role='position'] [data-view-role~='position'],
+.dg-bind-preview[data-active-role='adjacency'] [data-view-role~='adjacency'] {
+  outline: 2px solid var(--fn-copper);
+  outline-offset: 3px;
+}
+.dg-bind-preview[data-active-role='visited'] [data-view-role~='visited'] circle,
+.dg-bind-preview[data-active-role='v'] [data-view-role~='v'] circle {
+  stroke: var(--fn-copper);
+  stroke-width: 3;
+}
+.dg-stage-bind .dg-dialog-actions {
+  margin-top: auto;
+  padding-top: 22px;
+}
+.dg-view-picker {
+  display: grid;
+  grid-template-columns: minmax(205px, 0.85fr) minmax(0, 1.4fr);
+  gap: 0;
+  min-height: 300px;
+  border: 1px solid var(--dg-seam);
+}
+.dg-template-list {
+  border-right: 1px solid var(--dg-seam);
+  background: var(--fn-sidebar);
+}
+.dg-template-list button {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  min-height: 74px;
+  padding: 13px 14px;
+  border: 0;
+  border-bottom: 1px solid var(--dg-seam);
+  background: transparent;
   color: var(--dg-ink);
   text-align: left;
   cursor: pointer;
 }
-.dg-template-grid button:hover,
-.dg-template-grid button:focus-visible {
-  border-color: var(--dg-accent);
+.dg-template-list button:hover,
+.dg-template-list button.active {
   background: var(--fn-soft);
 }
-.dg-template-grid button > svg {
+.dg-template-list button.active {
+  box-shadow: inset 2px 0 var(--dg-accent);
+}
+.dg-template-list button > svg:first-child {
+  flex: none;
   color: var(--dg-algo);
 }
-.dg-template-grid strong {
-  font-size: 14px;
+.dg-template-list button > svg:last-child {
+  flex: none;
+  margin-left: auto;
+  color: var(--dg-secondary);
+}
+.dg-template-list button span {
+  min-width: 0;
+}
+.dg-template-list strong,
+.dg-template-list small {
+  display: block;
+}
+.dg-template-list strong {
+  font-size: 13px;
   font-weight: 650;
 }
-.dg-template-grid span {
+.dg-template-list small {
+  margin-top: 4px;
+  color: var(--dg-secondary);
+  font-size: 10px;
+}
+.dg-template-preview {
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+  gap: 18px;
+  min-width: 0;
+  padding: 20px 24px;
+}
+.dg-preview-heading {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+}
+.dg-preview-heading span {
   color: var(--dg-secondary);
   font-size: 11px;
+}
+.dg-preview-heading strong {
+  font: 500 21px/1.1 var(--fn-display);
+}
+.dg-preview-canvas {
+  display: grid;
+  place-items: center;
+  min-height: 190px;
+  padding: 18px;
+  overflow: hidden;
+  border: 1px solid var(--dg-seam);
+  background: var(--fn-canvas);
+}
+.dg-template-preview p {
+  margin: 0;
+  color: var(--dg-secondary);
+  line-height: 1.5;
 }
 .dg-binding-list {
   display: grid;
@@ -1642,14 +1783,44 @@
   .dg-binding-choices {
     grid-column: 1/-1;
   }
-  .dg-template-grid {
+  .dg-view-picker {
     grid-template-columns: 1fr;
   }
-  .dg-template-grid button {
-    min-height: 110px;
+  .dg-template-list {
+    border-right: 0;
+    border-bottom: 1px solid var(--dg-seam);
+  }
+  .dg-template-list button {
+    min-height: 62px;
+  }
+  .dg-template-preview {
+    padding: 16px;
+  }
+  .dg-bind-layout {
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+  }
+  .dg-bind-layout .dg-template-preview {
+    order: -1;
+    min-height: 0;
+    flex: none;
+  }
+  .dg-bind-layout .dg-preview-canvas {
+    min-height: 150px;
+  }
+  .dg-preview-canvas {
+    min-height: 160px;
   }
   .dg-dialog {
     padding: 18px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .dg-stage-choose .dg-template-list,
+  .dg-stage-choose .dg-template-preview,
+  .dg-stage-bind {
+    transition: none;
   }
 }
 body {
@@ -1662,11 +1833,6 @@ body {
 .lv-workspace .dg-brand strong {
   font-size: 26px;
   letter-spacing: -0.02em;
-}
-.lv-workspace .dg-run-list button code {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
 }
 .lv-workspace .dg-history-table {
   min-width: 760px;

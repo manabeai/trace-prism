@@ -6,6 +6,7 @@ export type RoleShape = 'int' | 'bool' | 'array' | 'visited' | 'matrix' | 'posit
 export type Role = {
   name: string;
   shape: RoleShape;
+  previewHint: string;
   optional?: boolean;
   preferredNames?: readonly string[];
 };

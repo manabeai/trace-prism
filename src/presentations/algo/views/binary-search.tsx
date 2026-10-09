@@ -5,14 +5,14 @@ import { numberOf } from '../../value-shapes';
 
 export const binarySearch: AlgoViewDefinition = {
   id: 'binary',
-  name: 'Binary search',
-  description: 'Bounds, midpoint, and predicate at every record.',
-  summary: 'Bounds, midpoint, predicate',
+  name: 'Range & marker',
+  description: 'Show a numeric range, its marker, and a true or false value.',
+  summary: 'Two bounds + marker + condition',
   roles: [
-    { name: 'left', shape: 'int' },
-    { name: 'right', shape: 'int' },
-    { name: 'mid', shape: 'int' },
-    { name: 'predicate', shape: 'bool' },
+    { name: 'left', shape: 'int', previewHint: 'Moves the start of the highlighted range.' },
+    { name: 'right', shape: 'int', previewHint: 'Moves the end of the highlighted range.' },
+    { name: 'mid', shape: 'int', previewHint: 'Moves the marker.' },
+    { name: 'predicate', shape: 'bool', previewHint: 'Changes the true or false indicator.' },
   ],
   icon: IconGitBranch,
   component: (props) => {
@@ -35,6 +35,11 @@ export const binarySearch: AlgoViewDefinition = {
               {(index) => (
                 <span
                   classList={{ 'in-range': index >= left() && index < right(), 'is-mid': index === mid() }}
+                  data-view-role={
+                    [index === left() && 'left', index === right() - 1 && 'right', index === mid() && 'mid']
+                      .filter(Boolean)
+                      .join(' ') || undefined
+                  }
                 >
                   <small>{index}</small>
                 </span>
@@ -43,10 +48,12 @@ export const binarySearch: AlgoViewDefinition = {
           </div>
           <div class="dg-binary-readout">
             <code>
-              L {left()} · M {mid()} · R {right()}
+              <span data-view-role="left">L {left()}</span> · <span data-view-role="mid">M {mid()}</span> ·{' '}
+              <span data-view-role="right">R {right()}</span>
             </code>
             <span
               class="dg-bool"
+              data-view-role="predicate"
               classList={{
                 'is-true': predicateValue() === true,
                 'is-false': predicateValue() === false,

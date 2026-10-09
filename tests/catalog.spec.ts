@@ -23,7 +23,7 @@ test('Field Notes catalog exposes interactive value and history states', async (
   await expect(page.getByRole('checkbox', { name: 'Changes only' })).not.toBeChecked();
   await expect(page.locator('.ct-inspection')).toContainText('#07');
   await page.getByRole('button', { name: 'Open configuration' }).click();
-  await expect(page.getByRole('dialog')).toContainText('Binary search');
+  await expect(page.getByRole('dialog')).toContainText('Range & marker');
   await page.getByRole('button', { name: 'Close dialog' }).click();
 });
 

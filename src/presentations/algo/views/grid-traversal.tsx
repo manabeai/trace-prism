@@ -6,12 +6,12 @@ import { valueText } from '../../../trace/value';
 
 export const gridTraversal: AlgoViewDefinition = {
   id: 'grid',
-  name: 'Grid traversal',
-  description: 'Current position over the recorded grid.',
-  summary: 'Grid with current position',
+  name: 'Grid & position',
+  description: 'Show a matrix with one highlighted position.',
+  summary: 'Matrix + position',
   roles: [
-    { name: 'board', shape: 'matrix' },
-    { name: 'position', shape: 'position' },
+    { name: 'board', shape: 'matrix', previewHint: 'Changes the grid cells and walls.' },
+    { name: 'position', shape: 'position', previewHint: 'Moves the highlighted cell.' },
   ],
   icon: IconGridDots,
   component: (props) => {
@@ -33,7 +33,7 @@ export const gridTraversal: AlgoViewDefinition = {
     return (
       <Show when={valid()} fallback={<span class="dg-quiet">—</span>}>
         <div class="dg-grid-view">
-          <div class="dg-mini-grid" style={{ '--grid-columns': String(width()) }}>
+          <div class="dg-mini-grid" data-view-role="board" style={{ '--grid-columns': String(width()) }}>
             <For each={rows()}>
               {(line, y) => (
                 <For each={line.t === 'array' ? line.items : []}>
@@ -43,6 +43,9 @@ export const gridTraversal: AlgoViewDefinition = {
                         wall: numberOf(cell) === 1,
                         current: coordinates()[0] === y() && coordinates()[1] === x(),
                       }}
+                      data-view-role={
+                        coordinates()[0] === y() && coordinates()[1] === x() ? 'position' : undefined
+                      }
                       title={valueText(cell)}
                     />
                   )}
@@ -50,7 +53,7 @@ export const gridTraversal: AlgoViewDefinition = {
               )}
             </For>
           </div>
-          <code>
+          <code data-view-role="position">
             ({coordinates()[0]}, {coordinates()[1]})
           </code>
         </div>
