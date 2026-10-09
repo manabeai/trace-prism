@@ -56,14 +56,14 @@ describe('run polling', () => {
     vi.useFakeTimers();
     let finish: (value: DecodedRuns) => void = () => undefined;
     const list = vi.fn(
-      (_signal?: AbortSignal) =>
+      (_selectedId: string | null, _signal?: AbortSignal) =>
         new Promise<DecodedRuns>((resolve) => {
           finish = resolve;
         }),
     );
     const repository: RunRepository = { list };
     const onRuns = vi.fn();
-    const stop = pollRuns(repository, onRuns, vi.fn(), 1000);
+    const polling = pollRuns(repository, () => null, onRuns, vi.fn(), 1000);
     expect(list).toHaveBeenCalledTimes(1);
     await vi.advanceTimersByTimeAsync(5000);
     expect(list).toHaveBeenCalledTimes(1);
@@ -72,12 +72,34 @@ describe('run polling', () => {
     expect(onRuns).toHaveBeenCalledTimes(1);
     await vi.advanceTimersByTimeAsync(1000);
     expect(list).toHaveBeenCalledTimes(2);
-    const signal = list.mock.calls[1]?.[0];
-    stop();
+    const signal = list.mock.calls[1]?.[1];
+    polling.stop();
     expect(signal?.aborted).toBe(true);
     finish({ runs: [], errors: [] });
     await vi.advanceTimersByTimeAsync(5000);
     expect(onRuns).toHaveBeenCalledTimes(1);
     expect(list).toHaveBeenCalledTimes(2);
+  });
+
+  it('refreshes the selected run without publishing a stale response', async () => {
+    vi.useFakeTimers();
+    const finish: ((value: DecodedRuns) => void)[] = [];
+    const list = vi.fn(
+      (_selectedId: string | null, _signal?: AbortSignal) =>
+        new Promise<DecodedRuns>((resolve) => finish.push(resolve)),
+    );
+    let selectedId = 'first';
+    const onRuns = vi.fn();
+    const polling = pollRuns({ list }, () => selectedId, onRuns, vi.fn());
+    selectedId = 'second';
+    polling.refresh();
+    finish[0]({ runs: [], errors: [] });
+    await vi.advanceTimersByTimeAsync(0);
+    expect(onRuns).not.toHaveBeenCalled();
+    expect(list.mock.calls.map(([id]) => id)).toEqual(['first', 'second']);
+    finish[1]({ runs: [], errors: [] });
+    await vi.advanceTimersByTimeAsync(0);
+    expect(onRuns).toHaveBeenCalledTimes(1);
+    polling.stop();
   });
 });
