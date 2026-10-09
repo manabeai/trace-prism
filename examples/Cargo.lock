@@ -88,7 +88,9 @@ dependencies = [
 
 [[package]]
 name = "traceprism"
-version = "0.1.0-preview.2"
+version = "0.1.0-preview.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "1ff65533c36fbcdbff33d89cd7bbd9e49503e0d3188ffa4dc5054e20bc12083c"
 dependencies = [
  "serde",
  "serde_json",

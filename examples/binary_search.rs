@@ -1,7 +1,11 @@
 #[cfg(feature = "viz")]
 use traceprism::record;
 #[cfg(not(feature = "viz"))]
-macro_rules! record { ($($tokens:tt)*) => { () }; }
+macro_rules! record {
+    ($($tokens:tt)*) => {
+        ()
+    };
+}
 
 fn main() {
     let a = vec![2, 5, 8, 11, 15];
@@ -16,7 +20,11 @@ fn main() {
         mid = (left + right) / 2;
         ok = a[mid] >= target;
         let compared = record!([iteration], from: origin, left, right, mid, ok);
-        if ok { right = mid; } else { left = mid + 1; }
+        if ok {
+            right = mid;
+        } else {
+            left = mid + 1;
+        }
         record!([iteration, 1], from: compared, left, right);
         iteration += 1;
     }

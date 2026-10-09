@@ -8,7 +8,7 @@ default = ["viz"]
 viz = ["dep:traceprism"]
 
 [dependencies]
-traceprism = { path = "../sdk/rust", optional = true }
+traceprism = { version = "=0.1.0-preview.3", optional = true }
 
 [[bin]]
 name = "basic"

@@ -2,7 +2,11 @@
 #[cfg(feature = "viz")]
 use traceprism::record;
 #[cfg(not(feature = "viz"))]
-macro_rules! record { ($($tokens:tt)*) => { () }; }
+macro_rules! record {
+    ($($tokens:tt)*) => {
+        ()
+    };
+}
 
 fn dfs_children(
     u: usize,
@@ -28,5 +32,12 @@ fn main() {
     seen[0] = true;
     record!([0], adjacency, seen, order, u = 0);
     dfs_children(0, &adjacency, &mut seen, &mut order);
-    println!("{}", order.iter().map(usize::to_string).collect::<Vec<_>>().join(" "));
+    println!(
+        "{}",
+        order
+            .iter()
+            .map(usize::to_string)
+            .collect::<Vec<_>>()
+            .join(" ")
+    );
 }

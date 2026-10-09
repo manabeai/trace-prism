@@ -2,7 +2,7 @@
 
 ## Tauriデスクトップ版（プレビュー）
 
-TracePrismはLinux・macOS・Windows向けのネイティブアプリです。Rust SDK `0.1.0-preview.2` が実行履歴をファイルに記録し、Tauriアプリが読み込みます。アプリのビルドにはNode.js 22.12以降、Rust、各OSの[Tauri依存パッケージ](https://tauri.app/start/prerequisites/)が必要です。
+TracePrismはLinux・macOS・Windows向けのネイティブアプリです。Rust SDK `0.1.0-preview.3` が実行履歴をファイルに記録し、Tauriアプリが読み込みます。アプリのビルドにはNode.js 22.12以降、Rust、各OSの[Tauri依存パッケージ](https://tauri.app/start/prerequisites/)が必要です。
 
 ```sh
 npm ci
@@ -14,7 +14,7 @@ LinuxでWebKitGTKをNixから導入する場合は、`npm ci` の後に `nix-she
 競プロコードの `Cargo.toml` では、ファイル連携版SDKを指定します。
 
 ```toml
-traceprism = { version = "=0.1.0-preview.2", optional = true }
+traceprism = { version = "=0.1.0-preview.3", optional = true }
 ```
 
 別のターミナルで通常の `cargo run --bin a` などを実行します。SDKは実行ごとのNDJSONを直接書き、アプリは保存先を読み直します。受信サーバーは不要です。インストーラーは `npm run tauri -- build` で作成できます。
@@ -45,7 +45,7 @@ cargo run --manifest-path examples/Cargo.toml --bin dfs
 
 ## 自分の競プロコードで使う
 
-Cargoプロジェクトにcrateを追加します。Cargoパッケージ名とRustのimport名はいずれも `traceprism` です。リポジトリ内で開発する場合は `version` を `path = "/home/mana/programs/algo-visualizer/sdk/rust"` に置き換えられます。
+Cargoプロジェクトにcrateを追加します。Cargoパッケージ名とRustのimport名はいずれも `traceprism` です。SDKのソースとCIは[独立リポジトリ](https://github.com/manabeai/trace-prism-sdk-rs)で管理します。
 
 ```toml
 [features]
@@ -53,7 +53,7 @@ default = ["viz"]
 viz = ["dep:traceprism"]
 
 [dependencies]
-traceprism = { version = "=0.1.0-preview.2", optional = true }
+traceprism = { version = "=0.1.0-preview.3", optional = true }
 ```
 
 ソースが単体提出でもコンパイルできるよう、featureがないときだけ空のマクロを定義します。
@@ -68,9 +68,9 @@ let origin = record!([], a, left, right);
 record!([i, j], from: origin, a, left, right);
 ```
 
-`record!` は可視化用の引数をfeatureなしでは評価しません。`0.1.0-preview.2` の通常の `cargo run` はファイルへ記録します。保存先を作れない場合もプログラム本体は続き、標準出力は変更しません。[Rust crateの説明](sdk/rust/README.md)と[実際のサンプル](examples/abc007_c.rs)も参照してください。
+`record!` は可視化用の引数をfeatureなしでは評価しません。`0.1.0-preview.3` の通常の `cargo run` はファイルへ記録します。保存先を作れない場合もプログラム本体は続き、標準出力は変更しません。[Rust crateの説明](https://github.com/manabeai/trace-prism-sdk-rs#traceprism-rust-crate)と[実際のサンプル](examples/abc007_c.rs)も参照してください。
 
-`../AtCoder/contest/abc001/a/main.rs` に導入済みです。そのコンテストのCargo設定ではファイル連携版の `traceprism = "=0.1.0-preview.2"` を使用します。`cargo run --manifest-path ../AtCoder/contest/abc001/Cargo.toml --bin a < ../AtCoder/contest/abc001/a/tests/sample-1.in` でサンプル入力を与えられます。提出用のfeatureなし `rustc` 実行も確認しています。
+`../AtCoder/contest/abc001/a/main.rs` に導入済みです。そのコンテストのCargo設定ではファイル連携版の `traceprism = "=0.1.0-preview.3"` を使用します。`cargo run --manifest-path ../AtCoder/contest/abc001/Cargo.toml --bin a < ../AtCoder/contest/abc001/a/tests/sample-1.in` でサンプル入力を与えられます。提出用のfeatureなし `rustc` 実行も確認しています。
 
 ## データと画面
 
@@ -85,9 +85,7 @@ npm run check
 npm run build
 npm run test:e2e
 node protocol/v2/validate.test.mjs
-cargo fmt --manifest-path sdk/rust/Cargo.toml -- --check
-cargo clippy --manifest-path sdk/rust/Cargo.toml --all-targets -- -D warnings
-cargo test --manifest-path sdk/rust/Cargo.toml
+cargo fmt --manifest-path examples/Cargo.toml -- --check
 cargo test --manifest-path examples/Cargo.toml
 ```
 

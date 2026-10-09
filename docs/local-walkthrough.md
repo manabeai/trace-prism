@@ -28,7 +28,7 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-traceprism = { path = "../../sdk/rust" }
+traceprism = "=0.1.0-preview.3"
 TOML
 ```
 
@@ -79,7 +79,7 @@ cargo run --manifest-path .viz/tutorial/Cargo.toml
 
 記録ファイルは[OS別の履歴保存先](../README.md#tauriデスクトップ版プレビュー)に保存される。アプリを再起動しても履歴を読み直せる。
 
-**Runs に追加されない場合:** `record!` を含むプログラムを普通の `cargo run` で実行し、SDKがこのブランチの `sdk/rust` を参照しているか確認する。`TRACEPRISM_RUN_DIR` を使う場合はアプリとプログラムの両方に同じ絶対パスを設定する。ファイルを作れない場合は標準エラーに原因を表示する。
+**Runs に追加されない場合:** `record!` を含むプログラムを普通の `cargo run` で実行し、SDKが公開版 `0.1.0-preview.3` を参照しているか確認する。`TRACEPRISM_RUN_DIR` を使う場合はアプリとプログラムの両方に同じ絶対パスを設定する。ファイルを作れない場合は標準エラーに原因を表示する。
 
 ## 4. DFS の呼び出し木を確認する
 

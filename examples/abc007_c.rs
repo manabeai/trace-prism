@@ -2,7 +2,11 @@
 #[cfg(feature = "viz")]
 use traceprism::record;
 #[cfg(not(feature = "viz"))]
-macro_rules! record { ($($tokens:tt)*) => { () }; }
+macro_rules! record {
+    ($($tokens:tt)*) => {
+        ()
+    };
+}
 
 use std::collections::VecDeque;
 use std::io::{self, Read};
@@ -17,7 +21,16 @@ fn main() {
     let sx: usize = words.next().unwrap().parse::<usize>().unwrap() - 1;
     let gy: usize = words.next().unwrap().parse::<usize>().unwrap() - 1;
     let gx: usize = words.next().unwrap().parse::<usize>().unwrap() - 1;
-    let board: Vec<Vec<u8>> = (0..rows).map(|_| words.next().unwrap().bytes().map(|cell| u8::from(cell == b'#')).collect()).collect();
+    let board: Vec<Vec<u8>> = (0..rows)
+        .map(|_| {
+            words
+                .next()
+                .unwrap()
+                .bytes()
+                .map(|cell| u8::from(cell == b'#'))
+                .collect()
+        })
+        .collect();
 
     let mut dist = vec![vec![-1_i32; cols]; rows];
     dist[sy][sx] = 0;
@@ -29,13 +42,19 @@ fn main() {
     while let Some((y, x)) = queue.pop_front() {
         let _pos = [y, x];
         let _visit = record!([dist[y][x], y, x], from: parent[y][x], dist, queue, pos = _pos);
-        if (y, x) == (gy, gx) { break; }
+        if (y, x) == (gy, gx) {
+            break;
+        }
         for (dy, dx) in [(-1, 0), (1, 0), (0, -1), (0, 1)] {
             let ny = y as isize + dy;
             let nx = x as isize + dx;
-            if ny < 0 || nx < 0 || ny >= rows as isize || nx >= cols as isize { continue; }
+            if ny < 0 || nx < 0 || ny >= rows as isize || nx >= cols as isize {
+                continue;
+            }
             let (ny, nx) = (ny as usize, nx as usize);
-            if board[ny][nx] == 1 || dist[ny][nx] != -1 { continue; }
+            if board[ny][nx] == 1 || dist[ny][nx] != -1 {
+                continue;
+            }
             dist[ny][nx] = dist[y][x] + 1;
             queue.push_back((ny, nx));
             let _pos = [ny, nx];
