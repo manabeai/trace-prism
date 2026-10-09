@@ -73,16 +73,23 @@ fn read_run_summary(path: &Path, system: &mut System) -> Result<Option<Value>, S
     if file_meta.len() > MAX_TRACE_BYTES {
         return Err("trace exceeds 64 MiB".to_owned());
     }
-    let mut first_line = Vec::new();
     let file = fs::File::open(path).map_err(|error| error.to_string())?;
-    BufReader::new(file)
-        .read_until(b'\n', &mut first_line)
-        .map_err(|error| error.to_string())?;
-    if first_line.last() != Some(&b'\n') {
-        return Ok(None);
-    }
-    let first: Value =
-        serde_json::from_slice(&first_line).map_err(|error| format!("line 1: {error}"))?;
+    let mut reader = BufReader::new(file);
+    let mut first_line = Vec::new();
+    let first = loop {
+        first_line.clear();
+        reader
+            .read_until(b'\n', &mut first_line)
+            .map_err(|error| error.to_string())?;
+        if first_line.last() != Some(&b'\n') {
+            return Ok(None);
+        }
+        if first_line.iter().all(u8::is_ascii_whitespace) {
+            continue;
+        }
+        break serde_json::from_slice::<Value>(&first_line)
+            .map_err(|error| format!("first record: {error}"))?;
+    };
     let meta_path = path.with_file_name(format!("{id}.meta.json"));
     let saved_meta = match fs::read(&meta_path) {
         Ok(bytes) => {
@@ -212,7 +219,7 @@ mod tests {
         let path = dir.join("run-1700000000000-1.jsonl");
         fs::write(
             &path,
-            b"{\"pid\":1,\"source\":{\"file\":\"a.rs\"}}\n{\"seq\":\"1\"",
+            b"\n{\"pid\":1,\"source\":{\"file\":\"a.rs\"}}\n{\"seq\":\"1\"",
         )
         .unwrap();
         let run = read_run_summary(&path, &mut System::new())
