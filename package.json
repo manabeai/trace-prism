@@ -6,7 +6,7 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/manabeai/algo-vis.git"
+    "url": "git+https://github.com/manabeai/trace-prism.git"
   },
   "type": "module",
   "scripts": {

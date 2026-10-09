@@ -19,7 +19,7 @@ traceprism = { version = "=0.1.0-preview.3", optional = true }
 
 別のターミナルで通常の `cargo run --bin a` などを実行します。SDKは実行ごとのNDJSONを直接書き、アプリは保存先を読み直します。受信サーバーは不要です。インストーラーは `npm run tauri -- build` で作成できます。
 
-配布用インストーラーは[GitHub Releases](https://github.com/manabeai/algo-vis/releases)で公開します。`v` で始まるタグをpushすると、Tauri公式の`tauri-action`がLinux、macOS（Apple Silicon・Intel）、Windowsの各環境でビルドします。全ジョブ成功後にプレビュー版を公開します。
+配布用インストーラーは[GitHub Releases](https://github.com/manabeai/trace-prism/releases)で公開します。`v` で始まるタグをpushすると、Tauri公式の`tauri-action`がLinux、macOS（Apple Silicon・Intel）、Windowsの各環境でビルドします。全ジョブ成功後にプレビュー版を公開します。
 
 | OS      | 既定の履歴保存先                                                              |
 | ------- | ----------------------------------------------------------------------------- |

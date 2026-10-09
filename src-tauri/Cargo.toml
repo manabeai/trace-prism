@@ -3,7 +3,7 @@ name = "traceprism-desktop"
 version = "0.2.0-preview.1"
 description = "TracePrism desktop visualizer"
 license = "MIT"
-repository = "https://github.com/manabeai/algo-vis"
+repository = "https://github.com/manabeai/trace-prism"
 edition = "2024"
 rust-version = "1.89"
 
