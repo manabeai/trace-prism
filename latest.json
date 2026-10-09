@@ -1,0 +1,43 @@
+{
+  "version": "0.2.1-preview.1",
+  "notes": "Linux、macOS、Windows 向けのプレビュー版です。アプリ内更新には Linux の AppImage、macOS のアプリ、Windows の NSIS インストーラーを利用します。Debian パッケージは手動更新です。",
+  "pub_date": "2026-10-09T09:33:47.792Z",
+  "platforms": {
+    "windows-x86_64": {
+      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVUYWlFei9oSmEwbndaRlBCRFVJMEg0Mm84NmZ2dU4zZlBPMmMyNjVOUGsyNnZSVGhUWjlqVmpJRUg1S2MvWWVQS3BNb0M4bUpXZStqSFV4bUtMUFh5MUFHSm9PempWTGdVPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzkxNTM4NDIzCWZpbGU6VHJhY2VQcmlzbV8wLjIuMS1wcmV2aWV3LjFfeDY0LXNldHVwLmV4ZQl2ZXJzaW9uOjAuMi4xLXByZXZpZXcuMQo3VkloOEt1VTV5SlFqRUllOHd0VWlkTTJXSDRhOHpYbW5SbnhHMVF4bVJpMFZEaVBJV3NUS2YvSGdralM4dVQzNVU4VmgxdFljckFncFRtOWVBSGRDUT09Cg==",
+      "url": "https://github.com/manabeai/trace-prism/releases/download/v0.2.1/TracePrism_0.2.1-preview.1_x64-setup.exe"
+    },
+    "windows-x86_64-nsis": {
+      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVUYWlFei9oSmEwbndaRlBCRFVJMEg0Mm84NmZ2dU4zZlBPMmMyNjVOUGsyNnZSVGhUWjlqVmpJRUg1S2MvWWVQS3BNb0M4bUpXZStqSFV4bUtMUFh5MUFHSm9PempWTGdVPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzkxNTM4NDIzCWZpbGU6VHJhY2VQcmlzbV8wLjIuMS1wcmV2aWV3LjFfeDY0LXNldHVwLmV4ZQl2ZXJzaW9uOjAuMi4xLXByZXZpZXcuMQo3VkloOEt1VTV5SlFqRUllOHd0VWlkTTJXSDRhOHpYbW5SbnhHMVF4bVJpMFZEaVBJV3NUS2YvSGdralM4dVQzNVU4VmgxdFljckFncFRtOWVBSGRDUT09Cg==",
+      "url": "https://github.com/manabeai/trace-prism/releases/download/v0.2.1/TracePrism_0.2.1-preview.1_x64-setup.exe"
+    },
+    "linux-x86_64": {
+      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVUYWlFei9oSmEwbjhCT1pncVFvQ0FvUElWVFVXbElkR1E0RmlOSnJXcTRBUVVkaVM0Lzg1M3ZXQVk4bnpoS2FBMW4xRzgvVUgwQUhWeVROdEpBdTJwandkQ2thU05YM3djPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzkxNTM3NjYwCWZpbGU6VHJhY2VQcmlzbV8wLjIuMS1wcmV2aWV3LjFfYW1kNjQuQXBwSW1hZ2UJdmVyc2lvbjowLjIuMS1wcmV2aWV3LjEKZnBSOUNQUFZ3ZHBHaDA0dmdaZlVlZmxyU2lUWGdDUThSWE9YVDd3Rm9LRjdVcHJBWEluQ3BpazJPMUljQm9RVEVUVDhQbE1paG1zUzM2cjVwa3VYRHc9PQo=",
+      "url": "https://github.com/manabeai/trace-prism/releases/download/v0.2.1/TracePrism_0.2.1-preview.1_amd64.AppImage"
+    },
+    "linux-x86_64-appimage": {
+      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVUYWlFei9oSmEwbjhCT1pncVFvQ0FvUElWVFVXbElkR1E0RmlOSnJXcTRBUVVkaVM0Lzg1M3ZXQVk4bnpoS2FBMW4xRzgvVUgwQUhWeVROdEpBdTJwandkQ2thU05YM3djPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzkxNTM3NjYwCWZpbGU6VHJhY2VQcmlzbV8wLjIuMS1wcmV2aWV3LjFfYW1kNjQuQXBwSW1hZ2UJdmVyc2lvbjowLjIuMS1wcmV2aWV3LjEKZnBSOUNQUFZ3ZHBHaDA0dmdaZlVlZmxyU2lUWGdDUThSWE9YVDd3Rm9LRjdVcHJBWEluQ3BpazJPMUljQm9RVEVUVDhQbE1paG1zUzM2cjVwa3VYRHc9PQo=",
+      "url": "https://github.com/manabeai/trace-prism/releases/download/v0.2.1/TracePrism_0.2.1-preview.1_amd64.AppImage"
+    },
+    "linux-x86_64-deb": {
+      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVUYWlFei9oSmEwbjZ4TFlMR3d3QUxrYi95SkluWGVQYXllditxT2ZJRnV4RkgvY1lDb05JLzN5bGdLbGU5UzlhSWl6Y2hhSTdoOE5vd1pveVVhS0NqMmRnU08xMFJnaUFFPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzkxNTM3NjYwCWZpbGU6VHJhY2VQcmlzbV8wLjIuMS1wcmV2aWV3LjFfYW1kNjQuZGViCXZlcnNpb246MC4yLjEtcHJldmlldy4xClBDWVQxejA1YW1TSjAwTFZvc2trT212ZGhEWlArNUNua0JoUW9jZmlTcVRsZ2R2SmtndnlWQnBFUUNRUEYxemJIc0lhOFJWODRjZGM5dTcyNU1lTEFRPT0K",
+      "url": "https://github.com/manabeai/trace-prism/releases/download/v0.2.1/TracePrism_0.2.1-preview.1_amd64.deb"
+    },
+    "darwin-aarch64": {
+      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVUYWlFei9oSmEwbjZPOVRPQjVIY25XS1R3eVFDNDU3WlJFcjFHQ2pqYnlxbVN2b2RPdUMvZVA0YlNJc2R0c2kzU3E0VDNDTzVtU1FWaUowMFd4ZjRPS0pUNFgwMm5QVndjPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzkxNTM3ODYxCWZpbGU6VHJhY2VQcmlzbS5hcHAudGFyLmd6CXZlcnNpb246MC4yLjEtcHJldmlldy4xCjBMcXBwSThMY3pyV21IdkdhQW52QzJpdEZSemRMTFZFVUdwcUN2VWdFRGsvTEVXRUlXaitYWm14NzJXdzJzcnVYZXJVTzlNK0RBUGs3RHpxcW94SEJBPT0K",
+      "url": "https://github.com/manabeai/trace-prism/releases/download/v0.2.1/TracePrism_0.2.1-preview.1_aarch64.app.tar.gz"
+    },
+    "darwin-aarch64-app": {
+      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVUYWlFei9oSmEwbjZPOVRPQjVIY25XS1R3eVFDNDU3WlJFcjFHQ2pqYnlxbVN2b2RPdUMvZVA0YlNJc2R0c2kzU3E0VDNDTzVtU1FWaUowMFd4ZjRPS0pUNFgwMm5QVndjPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzkxNTM3ODYxCWZpbGU6VHJhY2VQcmlzbS5hcHAudGFyLmd6CXZlcnNpb246MC4yLjEtcHJldmlldy4xCjBMcXBwSThMY3pyV21IdkdhQW52QzJpdEZSemRMTFZFVUdwcUN2VWdFRGsvTEVXRUlXaitYWm14NzJXdzJzcnVYZXJVTzlNK0RBUGs3RHpxcW94SEJBPT0K",
+      "url": "https://github.com/manabeai/trace-prism/releases/download/v0.2.1/TracePrism_0.2.1-preview.1_aarch64.app.tar.gz"
+    },
+    "darwin-x86_64": {
+      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVUYWlFei9oSmEwbjkzNTRWL3VaKzlEZzJkME1UMVhwTGJPbGo4Z2V4UTJCd0w4MmdZc3U3VURVdysvRjBrZVFWVWR3c0U3L1J1MmVxUzNYaU1TZE9GQjE5UGI4cWNNdUEwPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzkxNTM4MTY4CWZpbGU6VHJhY2VQcmlzbS5hcHAudGFyLmd6CXZlcnNpb246MC4yLjEtcHJldmlldy4xCnhKWEpNaTBkRVI0NlUrVDBzUUk3bjEyUXd6ZngzaXBLMldvMUdMZTRWVkJhQ1dWZU9Cdy9HSm9YSldwVTZPWEY2VUVlU2w2a0gralZWKzFBbjlEMUFnPT0K",
+      "url": "https://github.com/manabeai/trace-prism/releases/download/v0.2.1/TracePrism_0.2.1-preview.1_x64.app.tar.gz"
+    },
+    "darwin-x86_64-app": {
+      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVUYWlFei9oSmEwbjkzNTRWL3VaKzlEZzJkME1UMVhwTGJPbGo4Z2V4UTJCd0w4MmdZc3U3VURVdysvRjBrZVFWVWR3c0U3L1J1MmVxUzNYaU1TZE9GQjE5UGI4cWNNdUEwPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzkxNTM4MTY4CWZpbGU6VHJhY2VQcmlzbS5hcHAudGFyLmd6CXZlcnNpb246MC4yLjEtcHJldmlldy4xCnhKWEpNaTBkRVI0NlUrVDBzUUk3bjEyUXd6ZngzaXBLMldvMUdMZTRWVkJhQ1dWZU9Cdy9HSm9YSldwVTZPWEY2VUVlU2w2a0gralZWKzFBbjlEMUFnPT0K",
+      "url": "https://github.com/manabeai/trace-prism/releases/download/v0.2.1/TracePrism_0.2.1-preview.1_x64.app.tar.gz"
+    }
+  }
+}
