@@ -262,8 +262,7 @@
   border-bottom: 1px solid var(--fl-border);
   background: var(--fl-panel);
 }
-.fl-brand,
-.fl-app-status {
+.fl-brand {
   display: flex;
   align-items: center;
   gap: 9px;
@@ -282,25 +281,6 @@
   font-size: 21px;
   font-weight: 600;
 }
-.fl-brand-separator {
-  width: 1px;
-  height: 16px;
-  margin: 0 3px;
-  background: var(--fl-border);
-}
-.fl-brand > span:last-child,
-.fl-app-status {
-  color: var(--fl-muted);
-  font-size: 10px;
-}
-.fl-app-status code {
-  padding: 4px 7px;
-  border: 1px solid var(--fl-border);
-  border-radius: var(--fl-radius);
-  color: var(--fl-ink);
-  font-size: 9px;
-}
-.fl-status-dot,
 .fl-seq-dot,
 .fl-tip-dot {
   display: inline-block;

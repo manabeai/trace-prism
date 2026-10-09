@@ -458,13 +458,12 @@ export function LiveWorkspace(props: { repository?: RunRepository }) {
         <div class="dg-brand">
           <BrandMark />
           <strong>TracePrism</strong>
-          <span class="dg-brand-divider" />
-          <span>Data history</span>
         </div>
         <div class="dg-header-meta">
-          <span class="dg-live-dot" />
-          {current()?.status === 'running' ? 'Recording' : 'Local traces'}
-          <small>Rust SDK</small>
+          <Show when={current()?.status === 'running'}>
+            <span class="dg-live-dot" />
+            Recording
+          </Show>
           <UpdateControl />
         </div>
       </header>

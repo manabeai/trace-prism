@@ -18,7 +18,7 @@ describe('desktop updates', () => {
     };
 
     render(() => <UpdateControl service={service} />);
-    fireEvent.click(await screen.findByRole('button', { name: '0.2.2-preview.1 に更新' }));
+    fireEvent.click(await screen.findByRole('button', { name: 'Update to 0.2.2-preview.1' }));
 
     await vi.waitFor(() => {
       expect(downloadAndInstall).toHaveBeenCalledOnce();
@@ -36,7 +36,7 @@ describe('desktop updates', () => {
 
     render(() => <UpdateControl service={service} />);
 
-    const link = await screen.findByRole('link', { name: '更新版を入手' });
+    const link = await screen.findByRole('link', { name: 'Download update' });
     expect(link.getAttribute('href')).toBe('https://github.com/manabeai/trace-prism/releases');
     expect(check).not.toHaveBeenCalled();
   });

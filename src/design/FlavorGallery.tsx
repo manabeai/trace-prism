@@ -175,11 +175,6 @@ export default function FlavorGallery() {
             <div class="fl-brand">
               <BrandMark />
               <strong>TracePrism</strong>
-              <span class="fl-brand-separator" />
-              <span>Data history</span>
-            </div>
-            <div class="fl-app-status">
-              <span class="fl-status-dot" /> Local trace <code>binary-search.rs</code>
             </div>
           </div>
 

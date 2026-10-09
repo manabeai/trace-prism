@@ -69,25 +69,9 @@
   font: 500 26px/1 var(--fn-display);
   letter-spacing: -0.02em;
 }
-.dg-brand > span:last-child {
-  font-size: 12px;
-  color: var(--dg-secondary);
-}
-.dg-brand-divider {
-  display: block;
-  width: 1px;
-  height: 17px;
-  background: var(--dg-seam);
-}
 .dg-header-meta {
   font: 11px var(--font-code);
   color: var(--dg-secondary);
-}
-.dg-header-meta small {
-  font: 10px var(--font-code);
-  border: 1px solid var(--dg-seam);
-  padding: 4px 7px;
-  margin-left: 7px;
 }
 .dg-update-control {
   display: inline-flex;
@@ -1199,16 +1183,9 @@
   .dg-brand {
     gap: 8px;
   }
-  .dg-brand-divider,
-  .dg-brand > span:last-child {
-    display: none;
-  }
   .dg-header-meta {
     gap: 7px;
     white-space: nowrap;
-  }
-  .dg-header-meta small {
-    display: none;
   }
   .dg-side-panel {
     height: auto;
@@ -1271,9 +1248,6 @@
 }
 .dg-brand strong {
   font: 500 26px/1 var(--fn-display);
-}
-.dg-brand > span:last-child {
-  font-size: 12px;
 }
 .dg-config,
 .dg-runs {

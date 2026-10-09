@@ -67,17 +67,17 @@ export function UpdateControl(props: { service?: UpdateService }) {
   const label = () => {
     switch (state()) {
       case 'checking':
-        return '更新を確認中';
+        return 'Checking for updates';
       case 'current':
-        return '最新版';
+        return 'Up to date';
       case 'available':
-        return `${update()?.version} に更新`;
+        return `Update to ${update()?.version}`;
       case 'installing':
-        return '更新を適用中';
+        return 'Installing update';
       case 'check-error':
-        return '更新確認を再試行';
+        return 'Retry update check';
       case 'install-error':
-        return '更新を再試行';
+        return 'Retry installation';
     }
   };
 
@@ -88,7 +88,7 @@ export function UpdateControl(props: { service?: UpdateService }) {
         fallback={
           <a class="dg-update-control" href="https://github.com/manabeai/trace-prism/releases">
             <IconDownload size="14" />
-            更新版を入手
+            Download update
           </a>
         }
       >
