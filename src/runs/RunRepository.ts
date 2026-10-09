@@ -1,5 +1,5 @@
 import type { DecodedRuns } from '../trace/decode';
 
 export interface RunRepository {
-  list(signal?: AbortSignal): Promise<DecodedRuns>;
+  list(selectedId: string | null, signal?: AbortSignal): Promise<DecodedRuns>;
 }

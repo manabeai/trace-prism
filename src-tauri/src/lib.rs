@@ -1,8 +1,8 @@
 mod runs;
 
 #[tauri::command]
-async fn list_runs() -> Result<serde_json::Value, String> {
-    tauri::async_runtime::spawn_blocking(runs::list_runs)
+async fn list_runs(selected_id: Option<String>) -> Result<serde_json::Value, String> {
+    tauri::async_runtime::spawn_blocking(move || runs::list_runs(selected_id.as_deref()))
         .await
         .map_err(|error| error.to_string())?
 }
