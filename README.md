@@ -2,7 +2,7 @@
 
 ## Tauriデスクトップ版（開発ブランチ）
 
-Linux・macOS・Windows向けのファイル連携版を開発中です。公開済みの `0.1.0-preview.1` は旧HTTP版で、以下の変更はまだ公開パッケージには含まれません。ビルドにはNode.js 22.12以降、Rust、各OSの[Tauri依存パッケージ](https://tauri.app/start/prerequisites/)が必要です。
+Linux・macOS・Windows向けのファイル連携版を開発中です。Rust SDK `0.1.0-preview.2` はファイル連携版、npm CLI `0.1.0-preview.1` は旧HTTP版です。TauriアプリのビルドにはNode.js 22.12以降、Rust、各OSの[Tauri依存パッケージ](https://tauri.app/start/prerequisites/)が必要です。
 
 ```sh
 npm ci
@@ -11,10 +11,10 @@ npm run tauri -- dev
 
 LinuxでWebKitGTKをNixから導入する場合は、`npm ci` の後に `nix-shell --run 'npm run tauri -- dev'` を使います。リポジトリの [`shell.nix`](shell.nix) はWebKitGTK・GTK・コンパイラを同一のNix環境から揃えます。`PKG_CONFIG_PATH` だけをNixに向けてホストのリンカを使うと、glibcのバージョンが混ざってリンクに失敗します。Nix環境でのローカルビルドは動作確認用とし、配布用のdebはUbuntuのCI成果物を使用します。
 
-競プロコードの `Cargo.toml` では、SDK依存をこのブランチのソースへ切り替えます。
+競プロコードの `Cargo.toml` では、ファイル連携版SDKを指定します。
 
 ```toml
-traceprism = { path = "/path/to/algo-visualizer/sdk/rust", optional = true }
+traceprism = { version = "=0.1.0-preview.2", optional = true }
 ```
 
 別のターミナルで通常の `cargo run --bin a` などを実行します。SDKは実行ごとのNDJSONを直接書き、アプリは保存先を読み直します。受信サーバーは不要です。インストーラーは `npm run tauri -- build` で作成できます。
@@ -33,7 +33,7 @@ traceprism = { path = "/path/to/algo-visualizer/sdk/rust", optional = true }
 
 Rustコードの任意の箇所に `record!` を置き、実行後に値の履歴をWeb UIで追うローカルVisualizerです。通常の配列・整数・Set・Mapなどをそのまま記録します。アルゴリズム固有の意味はコードから送らず、Algo Viewを画面側で選んで記録済み変数に割り当てます。
 
-現在公開しているのは `0.1.0-preview.1` です。Rust SDK とローカル受信サーバーを試すためのプレリリースで、API・保存形式・操作方法は今後変更される可能性があります。
+旧HTTP版は `0.1.0-preview.1` です。API・保存形式・操作方法はプレリリース中に変更される可能性があります。
 
 ## 公開版を使う
 
@@ -82,7 +82,7 @@ default = ["viz"]
 viz = ["dep:traceprism"]
 
 [dependencies]
-traceprism = { version = "=0.1.0-preview.1", optional = true }
+traceprism = { version = "=0.1.0-preview.2", optional = true }
 ```
 
 ソースが単体提出でもコンパイルできるよう、featureがないときだけ空のマクロを定義します。
@@ -97,9 +97,9 @@ let origin = record!([], a, left, right);
 record!([i, j], from: origin, a, left, right);
 ```
 
-`record!` は可視化用の引数をfeatureなしでは評価しません。通常の `cargo run` はサーバーへ送信し、サーバーがなければ記録だけ無効になってプログラム本体は続きます。標準出力は変更しません。[Rust crateの説明](sdk/rust/README.md)と[実際のサンプル](examples/abc007_c.rs)も参照してください。
+`record!` は可視化用の引数をfeatureなしでは評価しません。`0.1.0-preview.2` の通常の `cargo run` はファイルへ記録します。保存先を作れない場合もプログラム本体は続き、標準出力は変更しません。[Rust crateの説明](sdk/rust/README.md)と[実際のサンプル](examples/abc007_c.rs)も参照してください。
 
-`../AtCoder/contest/abc001/a/main.rs` に導入済みです。そのコンテストのCargo設定では公開済みの `traceprism = "=0.1.0-preview.1"` を使用します。`cargo run --manifest-path ../AtCoder/contest/abc001/Cargo.toml --bin a < ../AtCoder/contest/abc001/a/tests/sample-1.in` でサンプル入力を与えられます。提出用のfeatureなし `rustc` 実行も確認しています。
+`../AtCoder/contest/abc001/a/main.rs` に導入済みです。そのコンテストのCargo設定ではファイル連携版の `traceprism = "=0.1.0-preview.2"` を使用します。`cargo run --manifest-path ../AtCoder/contest/abc001/Cargo.toml --bin a < ../AtCoder/contest/abc001/a/tests/sample-1.in` でサンプル入力を与えられます。提出用のfeatureなし `rustc` 実行も確認しています。
 
 ## データと画面
 
