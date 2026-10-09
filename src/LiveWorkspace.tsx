@@ -513,7 +513,7 @@ export function LiveWorkspace(props: { repository?: RunRepository }) {
                   when={runs().length}
                   fallback={
                     <p class="lv-sidebar-empty">
-                      No runs yet. Start the server, then run code with <code>record!</code>.
+                      No runs yet. Run Rust code with <code>record!</code> to create a trace.
                     </p>
                   }
                 >
@@ -573,9 +573,9 @@ export function LiveWorkspace(props: { repository?: RunRepository }) {
               when={!error()}
               fallback={
                 <div class="lv-message lv-error">
-                  <strong>Could not connect to the local server.</strong>
+                  <strong>Could not read saved runs.</strong>
                   <p>{error()}</p>
-                  <code>npm run build && npm run serve</code>
+                  <p>Check the trace storage directory and try again.</p>
                 </div>
               }
             >
@@ -586,7 +586,7 @@ export function LiveWorkspace(props: { repository?: RunRepository }) {
                     <IconHistory size="28" stroke="1.4" />
                     <strong>No runs yet</strong>
                     <p>
-                      Add <code>record!([], value)</code> to Rust code, then run it with the server open.
+                      Add <code>record!([], value)</code> to Rust code, then run it.
                     </p>
                   </div>
                 }

@@ -1,5 +1,6 @@
 import { readFileSync } from 'node:fs';
 import { expect, test } from '@playwright/test';
+import { mockRuns } from './support/mock-tauri';
 
 const records = readFileSync(new URL('../protocol/v2/example.ndjson', import.meta.url), 'utf8')
   .trim()
@@ -30,7 +31,7 @@ const runs = [
 test('v2 trace materializes in the live workspace and remains explorable', async ({ page }) => {
   const errors: string[] = [];
   page.on('pageerror', (error) => errors.push(error.message));
-  await page.route('**/api/runs', (route) => route.fulfill({ json: { runs } }));
+  await mockRuns(page, runs);
   await page.goto('/');
 
   await expect(page.locator('.dg-frame-row')).toHaveCount(4);
@@ -96,7 +97,7 @@ test('fromId relates recorded IDs while the table keeps the record order', async
       },
     ],
   };
-  await page.route('**/api/runs', (route) => route.fulfill({ json: { runs: [run] } }));
+  await mockRuns(page, [run]);
   await page.goto('/');
 
   await expect(page.locator('.dg-frame-row th')).toContainText(['0', '1', '2', '3']);
@@ -139,7 +140,7 @@ test('Graph Algo View binds an adjacency list with optional visited and current 
       },
     ],
   };
-  await page.route('**/api/runs', (route) => route.fulfill({ json: { runs: [run] } }));
+  await mockRuns(page, [run]);
   await page.goto('/');
   await page.getByRole('button', { name: 'Add Algo View' }).click();
   await page.locator('.dg-template-grid button').filter({ hasText: 'Graph' }).click();
@@ -165,7 +166,7 @@ test('Graph Algo View binds an adjacency list with optional visited and current 
 });
 
 test('table and graph stay side by side and share record focus', async ({ page }) => {
-  await page.route('**/api/runs', (route) => route.fulfill({ json: { runs: [runs[0]] } }));
+  await mockRuns(page, [runs[0]]);
   await page.goto('/');
 
   const table = page.locator('.dg-table-scroll');
@@ -211,7 +212,7 @@ test('table and graph stay side by side and share record focus', async ({ page }
 });
 
 test('history divider can collapse and restore either pane', async ({ page }) => {
-  await page.route('**/api/runs', (route) => route.fulfill({ json: { runs: [runs[0]] } }));
+  await mockRuns(page, [runs[0]]);
   await page.goto('/');
   const tablePanel = page.locator('.dg-history-table-panel');
   const graphPanel = page.locator('.dg-history-graph-panel');
@@ -256,7 +257,7 @@ test('history divider can collapse and restore either pane', async ({ page }) =>
 
 test('history panes stack with usable graph space on a narrow screen', async ({ page }) => {
   await page.setViewportSize({ width: 620, height: 950 });
-  await page.route('**/api/runs', (route) => route.fulfill({ json: { runs: [runs[0]] } }));
+  await mockRuns(page, [runs[0]]);
   await page.goto('/');
   const layout = page.locator('.dg-history-layout');
   await expect(layout).toHaveAttribute('data-orientation', 'vertical');
@@ -298,7 +299,7 @@ test('the seq slider keeps the selected table row in view', async ({ page }) => 
       values: [{ name: 'n', value: { t: 'int', v: String(index) } }],
     })),
   };
-  await page.route('**/api/runs', (route) => route.fulfill({ json: { runs: [longRun] } }));
+  await mockRuns(page, [longRun]);
   await page.goto('/');
   const table = page.locator('.dg-table-scroll');
   const slider = page.getByRole('slider', { name: 'Record position' });
@@ -343,18 +344,24 @@ test('the seq slider keeps the selected table row in view', async ({ page }) => 
 });
 
 test('format popover stays open across run polling while moving into its options', async ({ page }) => {
-  let requests = 0;
-  await page.route('**/api/runs', (route) => {
-    requests += 1;
-    return route.fulfill({ json: { runs: [runs[0]] } });
-  });
+  await mockRuns(page, [runs[0]]);
   await page.goto('/');
   const trigger = page.getByRole('button', { name: 'Change a display format' });
   await trigger.click();
   const popover = page.getByRole('dialog', { name: 'Display a' });
   await expect(popover).toBeVisible();
 
-  await expect.poll(() => requests, { timeout: 10_000 }).toBeGreaterThanOrEqual(3);
+  await expect
+    .poll(
+      () =>
+        page.evaluate(
+          () => (window as Window & { __traceprismListRunsCalls: number }).__traceprismListRunsCalls,
+        ),
+      {
+        timeout: 10_000,
+      },
+    )
+    .toBeGreaterThanOrEqual(3);
   await expect(popover).toBeVisible();
   await popover.getByRole('button', { name: 'Bars' }).hover();
   await expect(popover).toBeVisible();
@@ -395,7 +402,7 @@ test('grid Algo View binds recorded matrix and position values', async ({ page }
       },
     ],
   };
-  await page.route('**/api/runs', (route) => route.fulfill({ json: { runs: [gridRun] } }));
+  await mockRuns(page, [gridRun]);
   await page.goto('/');
   await expect(page.locator('.dg-table-scroll .lv-matrix')).toHaveCount(2);
   await page.getByRole('button', { name: 'Add Algo View' }).click();
@@ -407,7 +414,7 @@ test('grid Algo View binds recorded matrix and position values', async ({ page }
 });
 
 test('selection and display settings are retained separately for each run', async ({ page }) => {
-  await page.route('**/api/runs', (route) => route.fulfill({ json: { runs } }));
+  await mockRuns(page, runs);
   await page.goto('/');
   await expect(page.locator('.dg-frame-row')).toHaveCount(4);
   await page.getByRole('button', { name: 'Select record 1' }).click();
@@ -422,7 +429,7 @@ test('selection and display settings are retained separately for each run', asyn
 });
 
 test('nested span groups collapse and expand through the table row model', async ({ page }) => {
-  await page.route('**/api/runs', (route) => route.fulfill({ json: { runs: [runs[0]] } }));
+  await mockRuns(page, [runs[0]]);
   await page.goto('/');
   await expect(page.locator('.dg-frame-row')).toHaveCount(4);
   const outer = page.locator('.dg-group-row button').filter({ hasText: '[0]' }).first();

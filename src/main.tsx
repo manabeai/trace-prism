@@ -9,15 +9,15 @@ import './design/field-notes-tokens.css';
 import './workspace.css';
 
 const root = document.getElementById('root')!;
-if (window.location.pathname === '/catalog/search') {
+if (import.meta.env.DEV && window.location.pathname === '/catalog/search') {
   void import('./design/SearchCatalog').then(({ default: SearchCatalog }) =>
     render(() => <SearchCatalog />, root),
   );
-} else if (window.location.pathname === '/flavors') {
+} else if (import.meta.env.DEV && window.location.pathname === '/flavors') {
   void import('./design/FlavorGallery').then(({ default: FlavorGallery }) =>
     render(() => <FlavorGallery />, root),
   );
-} else if (window.location.pathname === '/catalog') {
+} else if (import.meta.env.DEV && window.location.pathname === '/catalog') {
   void import('./design/DesignCatalog').then(({ default: DesignCatalog }) =>
     render(() => <DesignCatalog />, root),
   );

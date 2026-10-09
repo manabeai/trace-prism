@@ -13,9 +13,7 @@ import {
   type Role,
   type Template,
 } from '../presentations/algo/registry';
-import { HttpRunRepository } from '../runs/HttpRunRepository';
 import { TauriRunRepository } from '../runs/TauriRunRepository';
-import { isTauri } from '@tauri-apps/api/core';
 import type { RunRepository } from '../runs/RunRepository';
 import { pollRuns } from '../runs/pollRuns';
 import { emptyQuery, searchFields, type Query } from '../search/model';
@@ -43,9 +41,7 @@ const initialState = (): RunState => ({
   searchText: '',
 });
 
-export function createWorkspaceController(
-  repository: RunRepository = isTauri() ? new TauriRunRepository() : new HttpRunRepository(),
-) {
+export function createWorkspaceController(repository: RunRepository = new TauriRunRepository()) {
   const [runs, setRuns] = createSignal<Run[]>([]);
   const [runId, setRunId] = createSignal<RunId | null>(null);
   const [states, setStates] = createSignal<Record<string, RunState>>({});

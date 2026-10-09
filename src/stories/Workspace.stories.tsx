@@ -20,6 +20,6 @@ export const NoRuns: Story = {
   render: () => <LiveWorkspace repository={emptyRepository} />,
 };
 
-export const ServerUnavailable: Story = {
+export const StorageUnavailable: Story = {
   render: () => <LiveWorkspace repository={failingRepository} />,
 };

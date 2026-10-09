@@ -1,8 +1,8 @@
 # TracePrism
 
-## Tauriデスクトップ版（開発ブランチ）
+## Tauriデスクトップ版（プレビュー）
 
-Linux・macOS・Windows向けのファイル連携版を開発中です。Rust SDK `0.1.0-preview.2` はファイル連携版、npm CLI `0.1.0-preview.1` は旧HTTP版です。TauriアプリのビルドにはNode.js 22.12以降、Rust、各OSの[Tauri依存パッケージ](https://tauri.app/start/prerequisites/)が必要です。
+TracePrismはLinux・macOS・Windows向けのネイティブアプリです。Rust SDK `0.1.0-preview.2` が実行履歴をファイルに記録し、Tauriアプリが読み込みます。アプリのビルドにはNode.js 22.12以降、Rust、各OSの[Tauri依存パッケージ](https://tauri.app/start/prerequisites/)が必要です。
 
 ```sh
 npm ci
@@ -19,6 +19,8 @@ traceprism = { version = "=0.1.0-preview.2", optional = true }
 
 別のターミナルで通常の `cargo run --bin a` などを実行します。SDKは実行ごとのNDJSONを直接書き、アプリは保存先を読み直します。受信サーバーは不要です。インストーラーは `npm run tauri -- build` で作成できます。
 
+配布用インストーラーは[GitHub Releases](https://github.com/manabeai/algo-vis/releases)で公開します。`v` で始まるタグをpushすると、Tauri公式の`tauri-action`がLinux、macOS（Apple Silicon・Intel）、Windowsの各環境でビルドします。全ジョブ成功後にプレビュー版を公開します。
+
 | OS      | 既定の履歴保存先                                                              |
 | ------- | ----------------------------------------------------------------------------- |
 | Linux   | `$XDG_DATA_HOME/traceprism/runs`、未設定なら `~/.local/share/traceprism/runs` |
@@ -29,30 +31,9 @@ traceprism = { version = "=0.1.0-preview.2", optional = true }
 
 旧版で保存した `.viz/runs/` の `.jsonl` と `.meta.json` は、上記の履歴保存先へコピーするとデスクトップ版でも読めます。
 
-## 公開済みの旧HTTP版
+## サンプルを実行する
 
-Rustコードの任意の箇所に `record!` を置き、実行後に値の履歴をWeb UIで追うローカルVisualizerです。通常の配列・整数・Set・Mapなどをそのまま記録します。アルゴリズム固有の意味はコードから送らず、Algo Viewを画面側で選んで記録済み変数に割り当てます。
-
-旧HTTP版は `0.1.0-preview.1` です。API・保存形式・操作方法はプレリリース中に変更される可能性があります。
-
-## 公開版を使う
-
-```sh
-npm install --global traceprism@preview
-traceprism serve
-```
-
-別のターミナルで、Rust プロジェクトの `Cargo.toml` に `traceprism = "=0.1.0-preview.1"` を追加し、`record!` を使うプログラムを実行します。ビューワは [http://127.0.0.1:4317/](http://127.0.0.1:4317/) で開けます。npm パッケージには Web ビルドと Rust SDK のソースが含まれ、`traceprism run main.rs` で単体の Rust ファイルも実行できます。実行履歴と一時的なバイナリはコマンドを実行したディレクトリの `.viz/` に保存されます。
-
-## リポジトリから試す
-
-```sh
-npm install
-npm run build
-npm run serve
-```
-
-別のターミナルで、Rustのサンプルを通常のCargoで実行します。
+アプリを開いたまま、別のターミナルでRustのサンプルを通常のCargoで実行します。
 
 ```sh
 cargo run --manifest-path examples/Cargo.toml --bin binary-search
@@ -60,17 +41,7 @@ cargo run --manifest-path examples/Cargo.toml --bin abc007-c < examples/fixtures
 cargo run --manifest-path examples/Cargo.toml --bin dfs
 ```
 
-[http://127.0.0.1:4317/](http://127.0.0.1:4317/) を開くと、実行ごとに独立した履歴が表示されます。左上で値の列を選び、列見出しのアイコンで表示形式を変更します。Algo Viewを追加すると必要な値をクリックで割り当てられます。TableとGraphは左右に並び、共通のseq選択に連動します。中央の二本線をドラッグして幅を変え、片側を完全に畳むこともできます。`from:` があればGraphは依存関係を初期表示し、**ID tree** ボタンでspan ID階層へ切り替えられます。[DFSサンプルの見方](docs/local-walkthrough.md#4-dfs-の呼び出し木を確認する)も参照してください。
-
-単体の `.rs` ファイルはCLIからも実行できます。サーバー未起動なら自動で立ち上がり、実行後もWeb UIを開ける状態を維持します。
-
-```sh
-node bin/traceprism.mjs run examples/abc007_c.rs < examples/fixtures/abc007-c-1.in
-```
-
-`npm link` 後は `traceprism run ...` と `traceprism serve` でも呼び出せます。トレースだけ保存するなら `--no-serve` を付けます。記録は `.viz/runs/` にNDJSONとして残り、サーバーの再起動後も実行履歴に表示されます。
-
-通常の `cargo run` では、言語共通の受信サーバーを先に `traceprism serve`（または `npm run serve`）で起動します。SDKは値の記録・送信のみを担当し、Webアプリの起動には関与しません。他言語のSDKも同じ受信サーバーを使う設計です。
+実行ごとに独立した履歴がアプリに表示されます。左上で値の列を選び、列見出しのアイコンで表示形式を変更します。Algo Viewを追加すると必要な値をクリックで割り当てられます。TableとGraphは左右に並び、共通のseq選択に連動します。中央の二本線をドラッグして幅を変え、片側を完全に畳むこともできます。`from:` があればGraphは依存関係を初期表示し、**ID tree** ボタンでspan ID階層へ切り替えられます。[DFSサンプルの見方](docs/local-walkthrough.md#4-dfs-の呼び出し木を確認する)も参照してください。
 
 ## 自分の競プロコードで使う
 
@@ -103,9 +74,9 @@ record!([i, j], from: origin, a, left, right);
 
 ## データと画面
 
-SDKは [`viz.trace/v2` のsnapshot/patch](protocol/v2/README.md)を送信します。最初の記録が完全なsnapshot、その後は値が変わった名前だけを `put` するpatchです。同値の場合も空のpatchを残し、観測点を失いません。`span` は型付きIDの配列です。`from: 親ID` は同じ型の `fromId` に変換され、`from: FrameRef` は従来どおり過去のseq参照 `from` になります。UIはseq順に完全な状態を復元します。古いv1の保存済みtraceも読み取れます。
+SDKは [`viz.trace/v2` のsnapshot/patch](protocol/v2/README.md)を記録します。最初の記録が完全なsnapshot、その後は値が変わった名前だけを `put` するpatchです。同値の場合も空のpatchを残し、観測点を失いません。`span` は型付きIDの配列です。`from: 親ID` は同じ型の `fromId` に変換され、`from: FrameRef` は従来どおり過去のseq参照 `from` になります。UIはseq順に完全な状態を復元します。古いv1の保存済みtraceも読み取れます。
 
-現在のMVPはRust SDK、受信サーバー、保存、実行履歴、値の履歴表・表示形式、Algo Viewの二分探索・グリッド、関係グラフまで動作します。
+現在のMVPはRust SDK、ファイル保存、実行履歴、値の履歴表・表示形式、Algo Viewの二分探索・グリッド、関係グラフまで動作します。
 
 ## 開発と品質チェック
 

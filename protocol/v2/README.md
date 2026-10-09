@@ -1,6 +1,6 @@
 # viz.trace/v2
 
-Rust SDK、ローカルの `/api/record` 受信サーバー、Web Workspaceで使用するNDJSON形式。1行が1回の `record!` に対応する。[JSON Schema](trace.schema.json)が各行の形を、[`validate.mjs`](validate.mjs)が実行全体の整合性を検証する。既存のv1記録もWorkspaceで読み込める。[v3草案](../v3/DRAFT.md)は未実装であり、この形式の要件ではない。
+Rust SDKが書き出し、Tauriアプリが読み取るNDJSON形式。1行が1回の `record!` に対応する。[JSON Schema](trace.schema.json)が各行の形を、[`validate.mjs`](validate.mjs)が実行全体の整合性を検証する。既存のv1記録もWorkspaceで読み込める。[v3草案](../v3/DRAFT.md)は未実装であり、この形式の要件ではない。
 
 ## 記録とID
 

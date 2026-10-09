@@ -4,6 +4,5 @@ import solid from 'vite-plugin-solid';
 export default defineConfig({
   plugins: [solid()],
   clearScreen: false,
-  server: { proxy: { '/api': 'http://127.0.0.1:4317' } },
   build: { target: 'es2022' },
 });

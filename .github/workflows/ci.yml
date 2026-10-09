@@ -36,19 +36,25 @@ jobs:
       - run: cargo test --manifest-path examples/Cargo.toml
 
   desktop:
+    needs: [web, rust]
+    permissions:
+      contents: write
     strategy:
       fail-fast: false
       matrix:
         include:
           - os: ubuntu-latest
-            bundle: deb
-            artifact: src-tauri/target/release/bundle/deb/*.deb
+            args: --bundles deb --ci --no-sign
+            targets: ''
           - os: macos-latest
-            bundle: dmg
-            artifact: src-tauri/target/release/bundle/dmg/*.dmg
+            args: --bundles dmg --ci --no-sign --target aarch64-apple-darwin
+            targets: aarch64-apple-darwin,x86_64-apple-darwin
+          - os: macos-latest
+            args: --bundles dmg --ci --no-sign --target x86_64-apple-darwin
+            targets: aarch64-apple-darwin,x86_64-apple-darwin
           - os: windows-latest
-            bundle: nsis
-            artifact: src-tauri/target/release/bundle/nsis/*.exe
+            args: --bundles nsis --ci --no-sign
+            targets: ''
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
@@ -57,6 +63,8 @@ jobs:
           node-version: '22.12.0'
           cache: npm
       - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.targets }}
       - name: Install Linux WebKit dependencies
         if: runner.os == 'Linux'
         run: |
@@ -65,32 +73,47 @@ jobs:
       - run: npm ci
       - run: cargo fmt --manifest-path src-tauri/Cargo.toml -- --check
       - run: cargo test --manifest-path src-tauri/Cargo.toml --locked
-      - run: npx tauri build --bundles ${{ matrix.bundle }} --ci --no-sign
-      - uses: actions/upload-artifact@v4
+      - name: Build desktop bundle
+        if: ${{ !startsWith(github.ref, 'refs/tags/v') }}
+        uses: tauri-apps/tauri-action@v1
         with:
-          name: traceprism-${{ matrix.os }}
-          path: ${{ matrix.artifact }}
-          if-no-files-found: error
+          args: ${{ matrix.args }}
+          uploadWorkflowArtifacts: true
+      - name: Build and upload draft release
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: tauri-apps/tauri-action@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tagName: ${{ github.ref_name }}
+          releaseName: TracePrism ${{ github.ref_name }} (preview)
+          releaseBody: Linux、macOS、Windows 向けのプレビュー版です。各 OS のインストーラーを添付しています。
+          releaseDraft: true
+          prerelease: true
+          args: ${{ matrix.args }}
+          uploadWorkflowArtifacts: true
 
-  release:
+  publish-release:
     if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
-    needs: [web, rust, desktop]
+    needs: desktop
     runs-on: ubuntu-latest
     permissions:
       contents: write
     steps:
-      - uses: actions/download-artifact@v4
-        with:
-          pattern: traceprism-*
-          path: release-assets
-          merge-multiple: true
+      - name: Verify native installers
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          test "$(gh release view "$GITHUB_REF_NAME" --json assets --jq '
+            [.assets[].name]
+            | (map(select(endswith(".dmg"))) | length == 2)
+              and (map(select(endswith(".deb"))) | length == 1)
+              and (map(select(endswith(".exe"))) | length == 1)
+          ')" = true
       - name: Publish preview release
         env:
           GH_TOKEN: ${{ github.token }}
           GH_REPO: ${{ github.repository }}
         run: |
-          gh release create "$GITHUB_REF_NAME" release-assets/* \
-            --verify-tag \
-            --prerelease \
-            --title "TracePrism $GITHUB_REF_NAME (preview)" \
-            --notes "Linux、macOS、Windows 向けのプレビュー版です。各 OS のインストーラーを添付しています。"
+          gh release edit "$GITHUB_REF_NAME" --draft=false --prerelease

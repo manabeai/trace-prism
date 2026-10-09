@@ -1,6 +1,7 @@
 import { readFileSync } from 'node:fs';
 import AxeBuilder from '@axe-core/playwright';
 import { expect, test } from '@playwright/test';
+import { mockRuns } from './support/mock-tauri';
 
 const records = readFileSync(new URL('../protocol/v2/example.ndjson', import.meta.url), 'utf8')
   .trim()
@@ -17,7 +18,7 @@ const runs = ['search-one', 'search-two'].map((id) => ({
 }));
 
 test.beforeEach(async ({ page }) => {
-  await page.route('**/api/runs', (route) => route.fulfill({ json: { runs } }));
+  await mockRuns(page, runs);
   await page.goto('/');
   await expect(page.locator('.dg-frame-row')).toHaveCount(4);
 });

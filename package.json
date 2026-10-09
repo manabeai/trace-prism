@@ -1,37 +1,23 @@
 {
   "name": "traceprism",
-  "version": "0.1.0-preview.2",
-  "description": "Local server and CLI for the TracePrism algorithm visualizer",
+  "version": "0.2.0-preview.1",
+  "description": "TracePrism native algorithm visualizer",
+  "private": true,
   "license": "MIT",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/manabeai/algo-vis.git"
   },
-  "files": [
-    "bin/traceprism.mjs",
-    "dist/",
-    "protocol/v2/trace.schema.json",
-    "protocol/v2/validate.mjs",
-    "sdk/rust/Cargo.lock",
-    "sdk/rust/Cargo.toml",
-    "sdk/rust/src/"
-  ],
   "type": "module",
-  "bin": {
-    "traceprism": "bin/traceprism.mjs"
-  },
   "scripts": {
     "dev": "vite --host 127.0.0.1 --port 5173 --strictPort",
     "dev:tauri": "vite --host 127.0.0.1 --port 5173 --strictPort",
     "tauri": "tauri",
-    "serve": "node bin/traceprism.mjs serve",
     "build": "tsc --noEmit && vite build",
-    "preview": "vite preview --host 127.0.0.1 --port 4173",
     "storybook": "storybook dev -p 6006 --host 127.0.0.1",
     "build:storybook": "storybook build --output-dir storybook-static",
     "test": "vitest run && playwright test",
     "prepare": "husky",
-    "prepack": "npm run build",
     "typecheck": "tsc --noEmit && tsc --noEmit -p tsconfig.test.json",
     "lint": "eslint .",
     "format:check": "prettier --check \"src/**/*.{ts,tsx,css}\" \"tests/**/*.{ts,tsx}\" \".storybook/**/*.{ts,tsx,css}\" \"*.ts\" eslint.config.mjs package.json tsconfig.json tsconfig.test.json .github .lintstagedrc.json .prettierrc.json",

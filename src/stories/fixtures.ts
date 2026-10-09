@@ -31,7 +31,7 @@ export const recordedRepository: RunRepository = { list: async () => sampleRuns 
 export const emptyRepository: RunRepository = { list: async () => ({ runs: [], errors: [] }) };
 export const failingRepository: RunRepository = {
   list: async () => {
-    throw new Error('Local trace server unavailable');
+    throw new Error('Trace storage unavailable');
   },
 };
 

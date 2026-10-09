@@ -1,6 +1,6 @@
 # Field Notes コンポーネントカタログ
 
-「紙のやつ」として選んだ Field Notes を、コンポーネント単位で確認する画面。`npm run dev` または `npm run serve` のあと `/catalog` を開く。現行 Workspace でも同じ視覚規則を使用する。
+「紙のやつ」として選んだ Field Notes を、コンポーネント単位で確認する開発用画面。`npm run dev` のあと `/catalog` を開く。現行 Workspace でも同じ視覚規則を使用する。
 
 静止画: [デスクトップ](catalog/desktop.png)・[モバイル](catalog/mobile.png)・[棒グラフ](catalog/bars.png)・[Text 表示](catalog/text-mobile.png)・[表示形式 Popover](catalog/popover.png)・[Tooltip](catalog/tooltip.png)・[設定 Dialog](catalog/dialog.png)。表示形式の切替、履歴の選択、ポップアップなどは `/catalog` で操作できる。
 

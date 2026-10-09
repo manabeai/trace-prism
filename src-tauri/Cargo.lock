@@ -3588,7 +3588,7 @@ dependencies = [
 
 [[package]]
 name = "traceprism-desktop"
-version = "0.1.0-preview.2"
+version = "0.2.0-preview.1"
 dependencies = [
  "chrono",
  "serde_json",
