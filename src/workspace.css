@@ -1924,6 +1924,37 @@ body {
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+.lv-binary-value {
+  min-width: 0;
+  max-width: 100%;
+  overflow-x: auto;
+  white-space: nowrap;
+  direction: rtl;
+  color: var(--dg-ink);
+  scrollbar-width: thin;
+}
+.lv-binary-value:focus-visible {
+  outline: 2px solid var(--dg-accent);
+  outline-offset: -2px;
+}
+.lv-binary-value code {
+  display: inline-block;
+  direction: ltr;
+  font: 11px var(--font-code);
+}
+.lv-binary-sign {
+  color: var(--dg-secondary);
+}
+.lv-binary-bit.starts-group {
+  margin-left: 5px;
+}
+.lv-binary-bit.is-changed,
+.lv-binary-sign.is-changed {
+  background: var(--fn-copper-soft);
+  box-shadow: inset 0 -2px var(--fn-copper);
+  color: var(--fn-copper-ink);
+  font-weight: 700;
+}
 .lv-matrix {
   display: grid;
   gap: 2px;

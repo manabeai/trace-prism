@@ -45,4 +45,11 @@ test('the trace workspace has no detectable accessibility violations', async ({ 
   expect(
     withView.violations.map(({ id, nodes }) => ({ id, targets: nodes.map((node) => node.target) })),
   ).toEqual([]);
+
+  await page.getByRole('button', { name: 'Change left display format' }).click();
+  await page.getByRole('button', { name: 'Binary' }).click();
+  const withBinary = await new AxeBuilder({ page }).analyze();
+  expect(
+    withBinary.violations.map(({ id, nodes }) => ({ id, targets: nodes.map((node) => node.target) })),
+  ).toEqual([]);
 });

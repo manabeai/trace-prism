@@ -98,6 +98,77 @@ test('record position keeps the playback slider stable across span lengths', asy
   expect(afterSlider?.width).toBe(beforeSlider?.width);
 });
 
+test('integer columns offer binary display with bit-level differences', async ({ page }) => {
+  await mockRuns(page, [runs[0]]);
+  await page.goto('/');
+
+  await page.getByRole('button', { name: 'Change left display format' }).click();
+  await page.getByRole('button', { name: 'Binary' }).click();
+
+  const changed = page.locator('.dg-frame-row').nth(2).locator('.dg-value-cell').nth(1);
+  await expect(changed.locator('.lv-binary-value')).toContainText('10');
+  await expect(changed.locator('.lv-binary-bit.is-changed')).toHaveAttribute('data-bit-position', '1');
+  await expect(
+    page
+      .locator('.dg-frame-row')
+      .nth(3)
+      .locator('.dg-value-cell')
+      .nth(1)
+      .locator('.lv-binary-bit.is-changed'),
+  ).toHaveCount(0);
+});
+
+test('long binary values initially show the least significant changed bits', async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await mockRuns(page, [
+    {
+      ...runs[0],
+      id: 'wide-binary',
+      frames: [
+        {
+          format: 'viz.trace/v2',
+          kind: 'snapshot',
+          runId: 'wide-binary',
+          seq: '0',
+          span: [],
+          values: [{ name: 'bits', value: { t: 'int', v: '18446744073709551616' } }],
+        },
+        {
+          format: 'viz.trace/v2',
+          kind: 'patch',
+          runId: 'wide-binary',
+          seq: '1',
+          span: [],
+          from: '0',
+          ops: [{ op: 'put', name: 'bits', value: { t: 'int', v: '18446744073709551617' } }],
+        },
+      ],
+    },
+  ]);
+  await page.goto('/');
+  await page.getByRole('button', { name: 'Change bits display format' }).click();
+  await page.getByRole('button', { name: 'Binary' }).click();
+
+  const divider = page.getByRole('separator', { name: 'Resize table and graph' });
+  const layout = await page.locator('.dg-history-layout').boundingBox();
+  const bounds = await divider.boundingBox();
+  await page.mouse.move(bounds!.x + bounds!.width / 2, bounds!.y + 70);
+  await page.mouse.down();
+  await page.mouse.move(layout!.x + 220, bounds!.y + 70, { steps: 8 });
+  await page.mouse.up();
+
+  const binary = page.locator('.dg-frame-row').nth(1).locator('.lv-binary-value');
+  await expect
+    .poll(() => binary.evaluate((element) => element.scrollWidth - element.clientWidth))
+    .toBeGreaterThan(0);
+  const changedBit = binary.locator('.lv-binary-bit.is-changed');
+  await expect(changedBit).toHaveAttribute('data-bit-position', '0');
+  const viewport = await binary.boundingBox();
+  const bit = await changedBit.boundingBox();
+  expect(bit!.x).toBeGreaterThanOrEqual(viewport!.x);
+  expect(bit!.x + bit!.width).toBeLessThanOrEqual(viewport!.x + viewport!.width);
+});
+
 test('view layout and value assignment slide within a stable dialog', async ({ page }) => {
   await mockRuns(page, [runs[0]]);
   await page.goto('/');

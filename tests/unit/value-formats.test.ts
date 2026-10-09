@@ -42,7 +42,7 @@ describe('value formats', () => {
   });
 
   it('defines available formats for every protocol value kind', () => {
-    expect(options({ t: 'int', v: '3' })).toEqual(['number', 'text']);
+    expect(options({ t: 'int', v: '3' })).toEqual(['number', 'binary', 'text']);
     expect(options({ t: 'float', v: '3.5' })).toEqual(['number', 'text']);
     expect(options({ t: 'bool', v: true })).toEqual(['badge', 'text']);
     expect(options({ t: 'string', v: 'hello' })).toEqual(['text']);
@@ -119,6 +119,61 @@ describe('value formats', () => {
         bar.classList.contains('is-changed'),
       ),
     ).toEqual([false, true]);
+  });
+
+  it('renders arbitrary precision integer bits and highlights only the changed positions', () => {
+    const after = { t: 'int' as const, v: '9007199254740993' };
+    const output = render(() =>
+      renderValue(after, 'binary', [
+        {
+          kind: 'updated',
+          path: [],
+          before: { t: 'int', v: '9007199254740992' },
+          after,
+        },
+      ]),
+    );
+    const binary = output.container.querySelector('.lv-binary-value');
+    expect(binary?.textContent).toBe(`${'1'.padEnd(53, '0')}1`);
+    expect(binary?.getAttribute('title')).toBe('Decimal 9007199254740993');
+    expect(
+      [...output.container.querySelectorAll('.lv-binary-bit.is-changed')].map((bit) =>
+        bit.getAttribute('data-bit-position'),
+      ),
+    ).toEqual(['0']);
+  });
+
+  it('compares integer magnitudes from the least significant bit and marks sign changes', () => {
+    const shorter = render(() =>
+      renderValue({ t: 'int', v: '1' }, 'binary', [
+        {
+          kind: 'updated',
+          path: [],
+          before: { t: 'int', v: '8' },
+          after: { t: 'int', v: '1' },
+        },
+      ]),
+    );
+    expect(shorter.container.querySelector('.lv-binary-value')?.textContent).toBe('0001');
+    expect(
+      [...shorter.container.querySelectorAll('.lv-binary-bit.is-changed')].map((bit) =>
+        bit.getAttribute('data-bit-position'),
+      ),
+    ).toEqual(['3', '0']);
+    shorter.unmount();
+
+    const sign = render(() =>
+      renderValue({ t: 'int', v: '2' }, 'binary', [
+        {
+          kind: 'updated',
+          path: [],
+          before: { t: 'int', v: '-2' },
+          after: { t: 'int', v: '2' },
+        },
+      ]),
+    );
+    expect(sign.container.querySelector('.lv-binary-sign.is-changed')?.textContent).toBe('+');
+    expect(sign.container.querySelectorAll('.lv-binary-bit.is-changed')).toHaveLength(0);
   });
 
   it('passes typed nested paths to matrix, set, map, and record formats', () => {
