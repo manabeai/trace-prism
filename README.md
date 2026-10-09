@@ -2,7 +2,7 @@
 
 ## Tauriデスクトップ版（プレビュー）
 
-TracePrismはLinux・macOS・Windows向けのネイティブアプリです。Rust SDK `0.1.0-preview.3` が実行履歴をファイルに記録し、Tauriアプリが読み込みます。アプリのビルドにはNode.js 22.12以降、Rust 1.90以降、各OSの[Tauri依存パッケージ](https://tauri.app/start/prerequisites/)が必要です。
+TracePrismはLinux・macOS・Windows向けのネイティブアプリです。Rust SDK `0.1.0-preview.3` が実行履歴をファイルに記録し、Tauriアプリが読み込みます。アプリのビルドにはNode.js 22.12以降、[`rust-toolchain.toml`](rust-toolchain.toml)で指定するRust 1.93.0、各OSの[Tauri依存パッケージ](https://tauri.app/start/prerequisites/)が必要です。
 
 ```sh
 npm ci

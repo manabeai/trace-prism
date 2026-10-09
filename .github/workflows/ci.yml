@@ -27,7 +27,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: dtolnay/rust-toolchain@stable
+      - uses: dtolnay/rust-toolchain@1.93.0
         with:
           components: clippy, rustfmt
       - run: cargo fmt --manifest-path examples/Cargo.toml -- --check
@@ -63,7 +63,7 @@ jobs:
         with:
           node-version: '22.12.0'
           cache: npm
-      - uses: dtolnay/rust-toolchain@stable
+      - uses: dtolnay/rust-toolchain@1.93.0
         with:
           targets: ${{ matrix.targets }}
       - uses: Swatinem/rust-cache@v2
