@@ -32,7 +32,6 @@ function decodeRun(input: unknown): Run {
     typeof input.startedAt !== 'string' ||
     typeof input.durationMs !== 'number' ||
     !['running', 'completed', 'interrupted'].includes(String(input.status)) ||
-    (input.loaded !== undefined && typeof input.loaded !== 'boolean') ||
     !Array.isArray(input.frames)
   )
     throw new Error('invalid run metadata');
@@ -43,7 +42,6 @@ function decodeRun(input: unknown): Run {
     startedAt: input.startedAt,
     durationMs: input.durationMs,
     status: input.status as Run['status'],
-    loaded: input.loaded !== false,
     frames: input.frames.map((frame) => decodeRecord(frame, input.id as string)),
   };
 }

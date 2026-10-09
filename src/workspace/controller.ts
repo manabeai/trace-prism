@@ -124,11 +124,9 @@ export function createWorkspaceController(repository: RunRepository = new TauriR
   const canSwitchGraph = createMemo(() => hasFromLinks(frames()));
   const columnCount = createMemo(() => 1 + shownColumns().length + shownViews().length);
 
-  let refreshRuns = () => {};
   onMount(() => {
-    const polling = pollRuns(
+    const stop = pollRuns(
       repository,
-      () => runId(),
       (result) => {
         setRuns(result.runs);
         setWarning(result.errors.join('; '));
@@ -136,14 +134,10 @@ export function createWorkspaceController(repository: RunRepository = new TauriR
       },
       (cause) => setError(`Could not load runs: ${String(cause)}`),
     );
-    refreshRuns = polling.refresh;
-    onCleanup(polling.stop);
+    onCleanup(stop);
   });
 
-  const chooseRun = (id: RunId) => {
-    setRunId(id);
-    refreshRuns();
-  };
+  const chooseRun = (id: RunId) => setRunId(id);
   const toggleColumn = (name: string) => {
     const all = columns().map((column) => column.name);
     updateState((previous) => {

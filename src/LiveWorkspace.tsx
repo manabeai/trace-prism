@@ -532,8 +532,7 @@ export function LiveWorkspace(props: { repository?: RunRepository }) {
                           </span>
                           <code>{run.id}</code>
                           <span class="dg-run-sub">
-                            {run.loaded === false ? 'Select to load' : `${run.frames.length} records`}
-                            <span>{run.status}</span>
+                            {run.frames.length} records<span>{run.status}</span>
                           </span>
                         </button>
                       )}
@@ -598,11 +597,7 @@ export function LiveWorkspace(props: { repository?: RunRepository }) {
                   when={frames().length}
                   fallback={
                     <div class="lv-message">
-                      <strong>
-                        {current()?.loaded === false
-                          ? 'Loading selected run…'
-                          : 'Waiting for the first record.'}
-                      </strong>
+                      <strong>Waiting for the first record.</strong>
                     </div>
                   }
                 >

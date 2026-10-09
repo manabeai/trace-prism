@@ -1,19 +1,19 @@
 use chrono::{DateTime, Utc};
 use serde_json::{Value, json};
 use std::fs;
-use std::io::{self, BufRead, BufReader};
+use std::io;
 use std::path::Path;
 use std::time::{SystemTime, UNIX_EPOCH};
 use sysinfo::{Pid, ProcessesToUpdate, System};
 
 const MAX_TRACE_BYTES: u64 = 64 * 1024 * 1024;
 
-pub fn list_runs(selected_id: Option<&str>) -> Result<Value, String> {
+pub fn list_runs() -> Result<Value, String> {
     let dir = traceprism::run_dir().map_err(|error| error.to_string())?;
-    list_runs_in(&dir, selected_id)
+    list_runs_in(&dir)
 }
 
-fn list_runs_in(dir: &Path, selected_id: Option<&str>) -> Result<Value, String> {
+fn list_runs_in(dir: &Path) -> Result<Value, String> {
     let entries = match fs::read_dir(dir) {
         Ok(entries) => entries,
         Err(error) if error.kind() == io::ErrorKind::NotFound => return Ok(json!({"runs": []})),
@@ -34,31 +34,17 @@ fn list_runs_in(dir: &Path, selected_id: Option<&str>) -> Result<Value, String> 
         if path.extension().and_then(|extension| extension.to_str()) != Some("jsonl") {
             continue;
         }
-        match read_run_summary(&path, &mut system) {
+        match read_run(&path, &mut system) {
             Ok(Some(run)) => runs.push(run),
             Ok(None) => {}
             Err(error) => errors.push(format!("{}: {error}", path.display())),
         }
     }
     runs.sort_by(|left, right| right["startedAt"].as_str().cmp(&left["startedAt"].as_str()));
-    let selected = selected_id
-        .and_then(|id| runs.iter().position(|run| run["id"].as_str() == Some(id)))
-        .or_else(|| (!runs.is_empty()).then_some(0));
-    if let Some(index) = selected {
-        let id = runs[index]["id"].as_str().unwrap();
-        let path = dir.join(format!("{id}.jsonl"));
-        match read_frames(&path) {
-            Ok(frames) => {
-                runs[index]["frames"] = Value::Array(frames);
-                runs[index]["loaded"] = Value::Bool(true);
-            }
-            Err(error) => errors.push(format!("{}: {error}", path.display())),
-        }
-    }
     Ok(json!({"runs": runs, "errors": errors}))
 }
 
-fn read_run_summary(path: &Path, system: &mut System) -> Result<Option<Value>, String> {
+fn read_run(path: &Path, system: &mut System) -> Result<Option<Value>, String> {
     let id = path
         .file_stem()
         .and_then(|stem| stem.to_str())
@@ -73,16 +59,28 @@ fn read_run_summary(path: &Path, system: &mut System) -> Result<Option<Value>, S
     if file_meta.len() > MAX_TRACE_BYTES {
         return Err("trace exceeds 64 MiB".to_owned());
     }
-    let mut first_line = Vec::new();
-    let file = fs::File::open(path).map_err(|error| error.to_string())?;
-    BufReader::new(file)
-        .read_until(b'\n', &mut first_line)
-        .map_err(|error| error.to_string())?;
-    if first_line.last() != Some(&b'\n') {
+    let bytes = fs::read(path).map_err(|error| error.to_string())?;
+    let mut frames = Vec::new();
+    // 最終行は書き込み途中の場合があるため、改行で確定した行だけ採用する。
+    let complete_len = bytes
+        .iter()
+        .rposition(|byte| *byte == b'\n')
+        .map_or(0, |index| index + 1);
+    for (index, line) in bytes[..complete_len]
+        .split(|byte| *byte == b'\n')
+        .enumerate()
+    {
+        if !line.is_empty() {
+            frames.push(
+                serde_json::from_slice::<Value>(line)
+                    .map_err(|error| format!("line {}: {error}", index + 1))?,
+            );
+        }
+    }
+    if frames.is_empty() {
         return Ok(None);
     }
-    let first: Value =
-        serde_json::from_slice(&first_line).map_err(|error| format!("line 1: {error}"))?;
+    let first = &frames[0];
     let meta_path = path.with_file_name(format!("{id}.meta.json"));
     let saved_meta = match fs::read(&meta_path) {
         Ok(bytes) => {
@@ -150,29 +148,8 @@ fn read_run_summary(path: &Path, system: &mut System) -> Result<Option<Value>, S
         "startedAt": started_at,
         "durationMs": duration_ms,
         "status": status,
-        "loaded": false,
-        "frames": [],
+        "frames": frames,
     })))
-}
-
-fn read_frames(path: &Path) -> Result<Vec<Value>, String> {
-    if fs::metadata(path).map_err(|error| error.to_string())?.len() > MAX_TRACE_BYTES {
-        return Err("trace exceeds 64 MiB".to_owned());
-    }
-    let bytes = fs::read(path).map_err(|error| error.to_string())?;
-    let complete_len = bytes
-        .iter()
-        .rposition(|byte| *byte == b'\n')
-        .map_or(0, |index| index + 1);
-    bytes[..complete_len]
-        .split(|byte| *byte == b'\n')
-        .enumerate()
-        .filter(|(_, line)| !line.is_empty())
-        .map(|(index, line)| {
-            serde_json::from_slice::<Value>(line)
-                .map_err(|error| format!("line {}: {error}", index + 1))
-        })
-        .collect()
 }
 
 fn valid_id(id: &str) -> bool {
@@ -215,11 +192,8 @@ mod tests {
             b"{\"pid\":1,\"source\":{\"file\":\"a.rs\"}}\n{\"seq\":\"1\"",
         )
         .unwrap();
-        let run = read_run_summary(&path, &mut System::new())
-            .unwrap()
-            .unwrap();
-        assert_eq!(run["frames"].as_array().unwrap().len(), 0);
-        assert_eq!(read_frames(&path).unwrap().len(), 1);
+        let run = read_run(&path, &mut System::new()).unwrap().unwrap();
+        assert_eq!(run["frames"].as_array().unwrap().len(), 1);
         fs::remove_dir_all(dir).unwrap();
     }
 
@@ -229,30 +203,9 @@ mod tests {
         fs::create_dir_all(&dir).unwrap();
         fs::write(dir.join("run-1700000000000-1.jsonl"), b"{broken}\n").unwrap();
         fs::write(dir.join("run-1700000000001-1.jsonl"), b"{\"pid\":1}\n").unwrap();
-        let result = list_runs_in(&dir, None).unwrap();
+        let result = list_runs_in(&dir).unwrap();
         assert_eq!(result["runs"].as_array().unwrap().len(), 1);
         assert_eq!(result["errors"].as_array().unwrap().len(), 1);
-        fs::remove_dir_all(dir).unwrap();
-    }
-
-    #[test]
-    fn loads_frames_only_for_selected_run() {
-        let dir = std::env::temp_dir().join(format!("traceprism-selection-{}", std::process::id()));
-        fs::create_dir_all(&dir).unwrap();
-        fs::write(dir.join("run-1700000000000-1.jsonl"), b"{\"seq\":\"0\"}\n").unwrap();
-        fs::write(
-            dir.join("run-1700000000001-1.jsonl"),
-            b"{\"seq\":\"0\"}\n{broken}\n",
-        )
-        .unwrap();
-        let result = list_runs_in(&dir, Some("run-1700000000000-1")).unwrap();
-        let runs = result["runs"].as_array().unwrap();
-        assert_eq!(runs.len(), 2);
-        assert_eq!(result["errors"].as_array().unwrap().len(), 0);
-        assert_eq!(runs[0]["loaded"], false);
-        assert_eq!(runs[0]["frames"].as_array().unwrap().len(), 0);
-        assert_eq!(runs[1]["loaded"], true);
-        assert_eq!(runs[1]["frames"].as_array().unwrap().len(), 1);
         fs::remove_dir_all(dir).unwrap();
     }
 }

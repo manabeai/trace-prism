@@ -41,7 +41,6 @@ export type Run = {
   startedAt: string;
   durationMs: number;
   status: 'running' | 'completed' | 'interrupted';
-  loaded: boolean;
   frames: TraceRecord[];
 };
 export type Frame = {
