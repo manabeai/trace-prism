@@ -1,6 +1,7 @@
 node_modules/
 sdk/rust/target/
 examples/target/
+src-tauri/target/
 .viz/
 dist/
 storybook-static/

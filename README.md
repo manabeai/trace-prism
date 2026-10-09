@@ -1,5 +1,34 @@
 # TracePrism
 
+## Tauriデスクトップ版（開発ブランチ）
+
+Linux・macOS・Windows向けのファイル連携版を開発中です。公開済みの `0.1.0-preview.1` は旧HTTP版で、以下の変更はまだ公開パッケージには含まれません。ビルドにはNode.js 22.12以降、Rust、各OSの[Tauri依存パッケージ](https://tauri.app/start/prerequisites/)が必要です。
+
+```sh
+npm ci
+npm run tauri -- dev
+```
+
+競プロコードの `Cargo.toml` では、SDK依存をこのブランチのソースへ切り替えます。
+
+```toml
+traceprism = { path = "/path/to/algo-visualizer/sdk/rust", optional = true }
+```
+
+別のターミナルで通常の `cargo run --bin a` などを実行します。SDKは実行ごとのNDJSONを直接書き、アプリは保存先を読み直します。受信サーバーは不要です。インストーラーは `npm run tauri -- build` で作成できます。
+
+| OS      | 既定の履歴保存先                                                              |
+| ------- | ----------------------------------------------------------------------------- |
+| Linux   | `$XDG_DATA_HOME/traceprism/runs`、未設定なら `~/.local/share/traceprism/runs` |
+| macOS   | `~/Library/Application Support/traceprism/runs`                               |
+| Windows | `%APPDATA%\traceprism\runs`、未設定なら `%LOCALAPPDATA%\traceprism\runs`      |
+
+絶対パスの `TRACEPRISM_RUN_DIR` でSDK・アプリ双方の保存先を変更できます。`VIZ_TRACE_PATH` は1実行だけ出力先を上書きします。書き込み途中の最終行は次回の読み込みまで保留します。
+
+旧版で保存した `.viz/runs/` の `.jsonl` と `.meta.json` は、上記の履歴保存先へコピーするとデスクトップ版でも読めます。
+
+## 公開済みの旧HTTP版
+
 Rustコードの任意の箇所に `record!` を置き、実行後に値の履歴をWeb UIで追うローカルVisualizerです。通常の配列・整数・Set・Mapなどをそのまま記録します。アルゴリズム固有の意味はコードから送らず、Algo Viewを画面側で選んで記録済み変数に割り当てます。
 
 現在公開しているのは `0.1.0-preview.1` です。Rust SDK とローカル受信サーバーを試すためのプレリリースで、API・保存形式・操作方法は今後変更される可能性があります。

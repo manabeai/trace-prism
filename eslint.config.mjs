@@ -13,6 +13,7 @@ export default tseslint.config(
       'playwright-report/**',
       'sdk/**',
       'examples/**',
+      'src-tauri/**',
       '.impeccable/**',
     ],
   },

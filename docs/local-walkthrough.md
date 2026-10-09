@@ -1,18 +1,19 @@
 # ローカルで `record!` を試す
 
-サーバーを起動し、小さな Rust プログラムを自分で作成して実行し、ブラウザで値の履歴を確認する手順。すべてのコマンドは TracePrism リポジトリのルートで実行する。作成するサンプルは Git 管理外の `.viz/tutorial/` に置く。
+Tauriアプリを起動し、小さな Rust プログラムを自分で作成して実行し、デスクトップ画面で値の履歴を確認する手順。すべてのコマンドは TracePrism リポジトリのルートで実行する。作成するサンプルは Git 管理外の `.viz/tutorial/` に置く。
 
-## 1. ビューワのサーバーを起動する
+以下のファイル作成コマンドはbash形式。WindowsではGit Bashを使うか、ファイル作成を省いて `cargo run --manifest-path examples/Cargo.toml --bin binary-search` で同梱サンプルを実行できる。
+
+## 1. デスクトップアプリを起動する
 
 ターミナル A:
 
 ```sh
 npm ci
-npm run build
-npm run serve
+npm run tauri -- dev
 ```
 
-`TracePrism: http://127.0.0.1:4317/` と表示されたら、そのターミナルを開いたままにする。ブラウザで [http://127.0.0.1:4317/](http://127.0.0.1:4317/) を開く。`npm link` 済みなら `npm run serve` の代わりに `traceprism serve` でもよい。
+TracePrismのウィンドウが開いたら、ターミナルAをそのままにする。アプリのビルドには各OSのTauri依存パッケージが必要。初回はRust依存のコンパイルに時間がかかる。
 
 ## 2. サンプルの Rust コードを書く
 
@@ -69,20 +70,20 @@ RUST
 cargo run --manifest-path .viz/tutorial/Cargo.toml
 ```
 
-標準出力は `3`。ブラウザを更新すると、左下の **Runs** に新しい実行が増える。選択して、以下を確認する。
+標準出力は `3`。アプリの左下の **Runs** に新しい実行が増える。選択して、以下を確認する。
 
 1. **Table** で seq 0 から進めると `left`、`right`、`mid`、`ok` が更新される。`[iteration]` と `[iteration, 1]` が span の階層に分かれる。
 2. `a` 列の見出しのアイコンを押して **Bars** に切り替える。同じ配列を棒グラフとして表示できる。
 3. Tableの右にある **Graph** で、`from:` で指定した遷移を辺として追う。seqバーを動かすと両方の選択が同期し、選択行・選択ノードが可視範囲に入る。
 4. 同じ `cargo run` を再実行する。**Runs** に別の実行が追加され、前回の履歴も残る。
 
-記録ファイルは `.viz/runs/` に保存される。ターミナル A のサーバーを `Ctrl+C` で止めてから `npm run serve` で再起動しても、実行履歴を読み直せる。
+記録ファイルは[OS別の履歴保存先](../README.md#tauriデスクトップ版開発ブランチ)に保存される。アプリを再起動しても履歴を読み直せる。
 
-**Runs に追加されない場合:** サーバーが起動中か確認する。`record!` を含むプログラムを普通の `cargo run` で実行すること。SDK はサーバーを自動起動せず、未起動なら記録だけを無効化してプログラム本体を続ける。`VIZ_PORT` を変更した場合はサーバーと SDK の両方に同じ値を設定する。
+**Runs に追加されない場合:** `record!` を含むプログラムを普通の `cargo run` で実行し、SDKがこのブランチの `sdk/rust` を参照しているか確認する。`TRACEPRISM_RUN_DIR` を使う場合はアプリとプログラムの両方に同じ絶対パスを設定する。ファイルを作れない場合は標準エラーに原因を表示する。
 
 ## 4. DFS の呼び出し木を確認する
 
-同じサーバーを起動したまま、リポジトリ内の[DFSサンプル](../examples/dfs.rs)を実行する。
+同じアプリを起動したまま、リポジトリ内の[DFSサンプル](../examples/dfs.rs)を実行する。
 
 ```sh
 cargo run --manifest-path examples/Cargo.toml --bin dfs

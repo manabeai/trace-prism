@@ -2,18 +2,28 @@
 import { createServer } from 'node:http';
 import { spawn, spawnSync } from 'node:child_process';
 import { createReadStream, existsSync } from 'node:fs';
-import { appendFile, mkdir, readFile, readdir, writeFile } from 'node:fs/promises';
-import { dirname, extname, join, relative, resolve, sep } from 'node:path';
+import { mkdir, readFile, readdir, rename, stat, writeFile } from 'node:fs/promises';
+import { homedir } from 'node:os';
+import { dirname, extname, isAbsolute, join, relative, resolve, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { createTraceValidator } from '../protocol/v2/validate.mjs';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const dataDir = join(process.cwd(), '.viz');
-const runDir = join(dataDir, 'runs');
+const defaultDataDir =
+  process.platform === 'win32'
+    ? process.env.APPDATA || process.env.LOCALAPPDATA
+    : process.platform === 'darwin'
+      ? join(homedir(), 'Library', 'Application Support')
+      : process.env.XDG_DATA_HOME && isAbsolute(process.env.XDG_DATA_HOME)
+        ? process.env.XDG_DATA_HOME
+        : join(homedir(), '.local', 'share');
+const runDir = process.env.TRACEPRISM_RUN_DIR || join(defaultDataDir || homedir(), 'traceprism', 'runs');
+if (!isAbsolute(runDir)) throw new Error('TRACEPRISM_RUN_DIR must be absolute');
 const binDir = join(dataDir, 'bin');
 const sdkTargetDir = join(dataDir, 'sdk-target');
 const distDir = join(root, 'dist');
 const port = Number(process.env.VIZ_PORT || 4317);
+const npmCommand = process.platform === 'win32' ? 'npm.cmd' : 'npm';
 const mime = {
   '.html': 'text/html; charset=utf-8',
   '.js': 'text/javascript; charset=utf-8',
@@ -24,16 +34,34 @@ const mime = {
 
 async function loadRuns() {
   if (!existsSync(runDir)) return [];
-  const files = (await readdir(runDir)).filter((name) => name.endsWith('.meta.json'));
+  const files = (await readdir(runDir)).filter((name) => name.endsWith('.jsonl'));
   const runs = await Promise.all(
     files.map(async (name) => {
       try {
-        const meta = JSON.parse(await readFile(join(runDir, name), 'utf8'));
-        const tracePath = join(runDir, `${meta.id}.jsonl`);
-        const raw = existsSync(tracePath) ? await readFile(tracePath, 'utf8') : '';
+        const id = name.slice(0, -'.jsonl'.length);
+        if (!/^[A-Za-z0-9_-]{1,128}$/.test(id)) return null;
+        const tracePath = join(runDir, name);
+        const raw = await readFile(tracePath, 'utf8');
         const lines = raw.split('\n');
         if (lines.at(-1) !== '') lines.pop(); // Ignore a frame still being written.
-        return { ...meta, frames: lines.filter(Boolean).map((line) => JSON.parse(line)) };
+        const frames = lines.filter(Boolean).map((line) => JSON.parse(line));
+        if (!frames.length) return null;
+        const metaPath = join(runDir, `${id}.meta.json`);
+        const saved = existsSync(metaPath) ? JSON.parse(await readFile(metaPath, 'utf8')) : {};
+        const fileInfo = await stat(tracePath);
+        const startedAt =
+          saved.startedAt ||
+          new Date(Number(id.match(/^run-(\d+)-/)?.[1]) || fileInfo.birthtimeMs).toISOString();
+        return {
+          id,
+          source: saved.source || frames[0].source?.file || 'main.rs',
+          input: saved.input || 'stdin',
+          startedAt,
+          durationMs: saved.durationMs || Math.max(0, fileInfo.mtimeMs - Date.parse(startedAt)),
+          status: saved.status || 'running',
+          pid: saved.pid || frames[0].pid,
+          frames,
+        };
       } catch (error) {
         console.error(`TracePrism: failed to read ${name}:`, error);
         return null;
@@ -47,71 +75,9 @@ async function serve() {
   if (!existsSync(join(distDir, 'index.html'))) {
     throw new Error('Web build is missing. Run npm run build first.');
   }
-  const validators = new Map();
   const server = createServer(async (req, res) => {
     try {
       const url = new URL(req.url || '/', `http://127.0.0.1:${port}`);
-      if (req.method === 'POST' && url.pathname === '/api/record') {
-        const chunks = [];
-        let bytes = 0;
-        for await (const chunk of req) {
-          bytes += chunk.length;
-          if (bytes > 10_000_000) {
-            res.writeHead(413);
-            res.end();
-            return;
-          }
-          chunks.push(chunk);
-        }
-        const event = JSON.parse(Buffer.concat(chunks).toString('utf8'));
-        if (
-          event.format !== 'viz.trace/v2' ||
-          typeof event.runId !== 'string' ||
-          !/^[A-Za-z0-9_-]{1,128}$/.test(event.runId)
-        ) {
-          res.writeHead(400);
-          res.end();
-          return;
-        }
-        const metaPath = join(runDir, `${event.runId}.meta.json`);
-        const tracePath = join(runDir, `${event.runId}.jsonl`);
-        await mkdir(runDir, { recursive: true });
-        let validator = validators.get(event.runId);
-        if (!validator) {
-          validator = createTraceValidator();
-          if (existsSync(tracePath)) {
-            const existing = (await readFile(tracePath, 'utf8')).split('\n').filter(Boolean);
-            for (const [index, line] of existing.entries())
-              validator.accept(JSON.parse(line), `stored line ${index + 1}`);
-          }
-          validators.set(event.runId, validator);
-        }
-        try {
-          validator.accept(event);
-        } catch (error) {
-          res.writeHead(400, { 'Content-Type': 'text/plain; charset=utf-8' });
-          res.end(String(error));
-          return;
-        }
-        const now = new Date().toISOString();
-        const meta = existsSync(metaPath)
-          ? JSON.parse(await readFile(metaPath, 'utf8'))
-          : {
-              id: event.runId,
-              source: event.source?.file || 'main.rs',
-              input: 'stdin',
-              startedAt: now,
-              durationMs: 0,
-              status: 'running',
-              pid: event.pid,
-            };
-        meta.durationMs = Date.now() - Date.parse(meta.startedAt);
-        await appendFile(tracePath, `${JSON.stringify(event)}\n`);
-        await writeFile(metaPath, JSON.stringify(meta));
-        res.writeHead(200, { 'Content-Type': 'application/json' });
-        res.end('{}');
-        return;
-      }
       if (url.pathname === '/api/runs') {
         const runs = await loadRuns();
         for (const run of runs)
@@ -168,6 +134,12 @@ async function serverAlreadyRunning() {
   }
 }
 
+async function writeMeta(path, meta) {
+  const temporary = `${path}.${process.pid}.tmp`;
+  await writeFile(temporary, JSON.stringify(meta));
+  await rename(temporary, path);
+}
+
 async function run(source, noServe) {
   if (!source || !source.endsWith('.rs')) throw new Error('Usage: traceprism run main.rs [--no-serve]');
   const absolute = resolve(source);
@@ -180,7 +152,7 @@ async function run(source, noServe) {
   });
   if (cargo.status !== 0) process.exit(cargo.status || 1);
   const id = `run-${Date.now()}-${process.pid}`;
-  const binary = join(binDir, id);
+  const binary = join(binDir, process.platform === 'win32' ? `${id}.exe` : id);
   const deps = join(sdkTargetDir, 'debug/deps');
   const sdk = join(sdkTargetDir, 'debug/libtraceprism.rlib');
   const compile = spawnSync(
@@ -209,11 +181,11 @@ async function run(source, noServe) {
     durationMs: 0,
     status: 'running',
   };
-  await writeFile(metaPath, JSON.stringify(meta));
+  await writeMeta(metaPath, meta);
   let ownServer = false;
   if (!noServe && !(await serverAlreadyRunning())) {
     if (!existsSync(join(distDir, 'index.html'))) {
-      const build = spawnSync('npm', ['run', 'build'], { cwd: root, stdio: 'inherit' });
+      const build = spawnSync(npmCommand, ['run', 'build'], { cwd: root, stdio: 'inherit' });
       if (build.status !== 0) process.exit(build.status || 1);
     }
     await serve();
@@ -229,14 +201,11 @@ async function run(source, noServe) {
     child.once('error', fail);
     child.once('exit', (exit, signal) => ok(signal ? 128 : (exit ?? 1)));
   });
-  await writeFile(
-    metaPath,
-    JSON.stringify({
-      ...meta,
-      durationMs: Date.now() - started,
-      status: code === 0 ? 'completed' : 'interrupted',
-    }),
-  );
+  await writeMeta(metaPath, {
+    ...meta,
+    durationMs: Date.now() - started,
+    status: code === 0 ? 'completed' : 'interrupted',
+  });
   console.error(`TracePrism: saved ${id} (${code === 0 ? 'completed' : `exit ${code}`})`);
   if (ownServer) console.log('TracePrism: Ctrl+C to stop the web view');
   else process.exitCode = code;
