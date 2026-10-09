@@ -831,8 +831,8 @@
 }
 .dg-playback-position {
   display: flex;
-  flex: 0 0 190px;
-  width: 190px;
+  flex: 0 0 150px;
+  width: 150px;
   gap: 9px;
   align-items: center;
   white-space: nowrap;
