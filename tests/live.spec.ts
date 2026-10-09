@@ -70,6 +70,34 @@ test('v2 trace materializes in the live workspace and remains explorable', async
   expect(errors).toEqual([]);
 });
 
+test('record position keeps the playback slider stable across span lengths', async ({ page }) => {
+  const run = {
+    ...runs[0],
+    id: 'long-span',
+    frames: records.map((record, index) => ({
+      ...record,
+      runId: 'long-span',
+      span: index === 3 ? [{ t: 'int', v: '1000000000' }] : record.span,
+    })),
+  };
+  await mockRuns(page, [run]);
+  await page.goto('/');
+
+  await page.getByRole('button', { name: 'Select record 0' }).click();
+  const label = page.locator('.dg-playback-position');
+  const slider = page.locator('.dg-playback-slider');
+  const beforeLabel = await label.boundingBox();
+  const beforeSlider = await slider.boundingBox();
+
+  await page.getByRole('button', { name: 'Select record 3' }).click();
+  await expect(label).toContainText('[1000000000]');
+  const afterLabel = await label.boundingBox();
+  const afterSlider = await slider.boundingBox();
+
+  expect(afterLabel?.width).toBe(beforeLabel?.width);
+  expect(afterSlider?.width).toBe(beforeSlider?.width);
+});
+
 test('view layout and value assignment slide within a stable dialog', async ({ page }) => {
   await mockRuns(page, [runs[0]]);
   await page.goto('/');

@@ -783,9 +783,11 @@ export function LiveWorkspace(props: { repository?: RunRepository }) {
                       <IconChevronRight size="16" />
                     </button>
                   </div>
-                  <span>
-                    <strong>seq {selected()?.seq ?? '—'}</strong>
-                    <code>{selected() ? spanText(selected()!.span) : '[]'}</code>
+                  <span class="dg-playback-position">
+                    <strong title={`seq ${selected()?.seq ?? '—'}`}>seq {selected()?.seq ?? '—'}</strong>
+                    <code title={selected() ? spanText(selected()!.span) : '[]'}>
+                      {selected() ? spanText(selected()!.span) : '[]'}
+                    </code>
                   </span>
                   <div class="dg-playback-slider">
                     <div

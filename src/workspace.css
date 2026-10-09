@@ -829,16 +829,27 @@
   opacity: 0.45;
   cursor: default;
 }
-.dg-playback > span {
+.dg-playback-position {
   display: flex;
+  flex: 0 0 190px;
+  width: 190px;
   gap: 9px;
   align-items: center;
   white-space: nowrap;
+  min-width: 0;
 }
-.dg-playback > span strong {
+.dg-playback-position strong {
+  flex: 0 1 auto;
+  max-width: 85px;
+  overflow: hidden;
+  text-overflow: ellipsis;
   font: 700 11px var(--font-code);
 }
-.dg-playback > span code {
+.dg-playback-position code {
+  flex: 1 1 0;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
   color: var(--dg-secondary);
   font-size: 10px;
 }
@@ -1974,7 +1985,11 @@ body {
   .lv-workspace .dg-playback {
     gap: 7px;
   }
-  .lv-workspace .dg-playback > span code {
+  .lv-workspace .dg-playback-position {
+    flex-basis: 72px;
+    width: 72px;
+  }
+  .lv-workspace .dg-playback-position code {
     display: none;
   }
   .lv-workspace .dg-run-list button {
