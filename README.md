@@ -9,6 +9,8 @@ npm ci
 npm run tauri -- dev
 ```
 
+LinuxでWebKitGTKをNixから導入する場合は、`npm ci` の後に `nix-shell --run 'npm run tauri -- dev'` を使います。リポジトリの [`shell.nix`](shell.nix) はWebKitGTK・GTK・コンパイラを同一のNix環境から揃えます。`PKG_CONFIG_PATH` だけをNixに向けてホストのリンカを使うと、glibcのバージョンが混ざってリンクに失敗します。Nix環境でのローカルビルドは動作確認用とし、配布用のdebはUbuntuのCI成果物を使用します。
+
 競プロコードの `Cargo.toml` では、SDK依存をこのブランチのソースへ切り替えます。
 
 ```toml

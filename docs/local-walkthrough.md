@@ -13,7 +13,7 @@ npm ci
 npm run tauri -- dev
 ```
 
-TracePrismのウィンドウが開いたら、ターミナルAをそのままにする。アプリのビルドには各OSのTauri依存パッケージが必要。初回はRust依存のコンパイルに時間がかかる。
+LinuxでWebKitGTKをNixから導入する場合は、代わりに `nix-shell --run 'npm run tauri -- dev'` を実行する。TracePrismのウィンドウが開いたら、ターミナルAをそのままにする。アプリのビルドには各OSのTauri依存パッケージが必要。初回はRust依存のコンパイルに時間がかかる。
 
 ## 2. サンプルの Rust コードを書く
 
