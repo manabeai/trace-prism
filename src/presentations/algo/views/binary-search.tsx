@@ -30,7 +30,14 @@ export const binarySearch: AlgoViewDefinition = {
     return (
       <Show when={ready()} fallback={<span class="dg-quiet">—</span>}>
         <div class="dg-binary-view" aria-label={`left ${left()}, right ${right()}, mid ${mid()}`}>
-          <div class="dg-binary-track">
+          <div
+            class="dg-binary-track"
+            tabIndex={props.inTable ? 0 : undefined}
+            role={props.inTable ? 'group' : undefined}
+            aria-label={
+              props.inTable ? `Range positions, left ${left()}, right ${right()}, mid ${mid()}` : undefined
+            }
+          >
             <For each={Array.from({ length: width() }, (_, index) => index)}>
               {(index) => (
                 <span

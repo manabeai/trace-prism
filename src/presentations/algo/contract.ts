@@ -23,7 +23,7 @@ export type AlgoViewDefinition = {
   summary: string;
   roles: readonly Role[];
   icon: Component<{ size?: string | number; stroke?: string }>;
-  component: Component<{ view: AlgoView; frame: Frame }>;
+  component: Component<{ view: AlgoView; frame: Frame; inTable?: boolean }>;
 };
 
 export function matchesRole(value: Value | undefined, shape: RoleShape): boolean {

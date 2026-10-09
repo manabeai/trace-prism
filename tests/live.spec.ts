@@ -337,6 +337,42 @@ test('history divider can collapse and restore either pane', async ({ page }) =>
   await expect.poll(() => width(graphPanel)).toBeLessThan(2);
 });
 
+test('history columns compress before the table needs horizontal scrolling', async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await mockRuns(page, [runs[0]]);
+  await page.goto('/');
+
+  const scroll = page.locator('.dg-table-scroll');
+  const divider = page.getByRole('separator', { name: 'Resize table and graph' });
+  const layout = await page.locator('.dg-history-layout').boundingBox();
+  const resizeTable = async (width: number) => {
+    const bounds = await divider.boundingBox();
+    await page.mouse.move(bounds!.x + bounds!.width / 2, bounds!.y + 70);
+    await page.mouse.down();
+    await page.mouse.move(layout!.x + width, bounds!.y + 70, { steps: 8 });
+    await page.mouse.up();
+  };
+  const overflow = () => scroll.evaluate((element) => element.scrollWidth - element.clientWidth);
+
+  await resizeTable(620);
+  await expect.poll(overflow).toBeLessThanOrEqual(2);
+  await expect(page.getByRole('columnheader')).toHaveCount(6);
+
+  await page.getByRole('button', { name: 'Add View' }).click();
+  await page
+    .getByRole('dialog')
+    .getByRole('button', { name: /Range & marker/ })
+    .click();
+  await page.getByRole('dialog').getByRole('button', { name: 'Add view' }).click();
+  await resizeTable(660);
+  await expect.poll(overflow).toBeLessThanOrEqual(2);
+  await expect(page.getByRole('columnheader')).toHaveCount(7);
+
+  await resizeTable(350);
+  await expect.poll(overflow).toBeGreaterThan(0);
+  await expect(page.locator('.dg-history-table')).toHaveCSS('table-layout', 'fixed');
+});
+
 test('history panes stack with usable graph space on a narrow screen', async ({ page }) => {
   await page.setViewportSize({ width: 620, height: 950 });
   await mockRuns(page, [runs[0]]);

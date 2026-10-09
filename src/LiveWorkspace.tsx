@@ -33,6 +33,7 @@ import { previewFrame, previewViews } from './presentations/algo/preview';
 import { createWorkspaceController } from './workspace/controller';
 import { BrandMark } from './design/BrandMark';
 import { createHistoryTable } from './workspace/history/table-adapter';
+import { historyColumnLayout } from './workspace/history/column-layout';
 import { FormatMenu } from './workspace/history/FormatMenu';
 import { ValueCell } from './workspace/history/ValueCell';
 import { SearchEditor } from './workspace/search/SearchEditor';
@@ -280,6 +281,7 @@ export function LiveWorkspace(props: { repository?: RunRepository }) {
     setFormats,
   } = createWorkspaceController(untrack(() => props.repository));
   const historyTable = createHistoryTable(tree, collapsed);
+  const columnLayout = createMemo(() => historyColumnLayout(shownColumns(), shownViews().length));
   const searchHitSet = createMemo(() => new Set(searchResults().hits));
   const searchTicks = createMemo(() => {
     const all = frames();
@@ -445,7 +447,7 @@ export function LiveWorkspace(props: { repository?: RunRepository }) {
         <For each={shownViews()}>
           {(view) => (
             <td class="dg-algo-cell">
-              <AlgoCell view={view} frame={node.frame} />
+              <AlgoCell view={view} frame={node.frame} inTable />
             </td>
           )}
         </For>
@@ -686,7 +688,19 @@ export function LiveWorkspace(props: { repository?: RunRepository }) {
                       class="dg-history-table-panel"
                     >
                       <div class="dg-table-scroll" ref={tableViewport}>
-                        <table class="dg-history-table">
+                        <table
+                          class="dg-history-table"
+                          style={{ 'min-width': `${columnLayout().minWidth}px` }}
+                        >
+                          <colgroup>
+                            <col style={{ width: columnLayout().sequenceWidth }} />
+                            <For each={columnLayout().valueWidths}>
+                              {(width) => <col style={{ width }} />}
+                            </For>
+                            <For each={shownViews()}>
+                              {() => <col style={{ width: columnLayout().viewWidth }} />}
+                            </For>
+                          </colgroup>
                           <thead>
                             <tr>
                               <th scope="col">seq</th>
@@ -695,7 +709,7 @@ export function LiveWorkspace(props: { repository?: RunRepository }) {
                                   <th scope="col" class={`dg-heading-${column.kind}`}>
                                     <div class="dg-column-head">
                                       <span>
-                                        <code>{column.name}</code>
+                                        <code title={`${column.name} · ${column.kind}`}>{column.name}</code>
                                         <small>{column.kind}</small>
                                       </span>
                                       <FormatMenu

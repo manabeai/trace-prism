@@ -39,4 +39,10 @@ test('the trace workspace has no detectable accessibility violations', async ({ 
   expect(
     bindings.violations.map(({ id, nodes }) => ({ id, targets: nodes.map((node) => node.target) })),
   ).toEqual([]);
+
+  await page.getByRole('dialog').getByRole('button', { name: 'Add view' }).click();
+  const withView = await new AxeBuilder({ page }).analyze();
+  expect(
+    withView.violations.map(({ id, nodes }) => ({ id, targets: nodes.map((node) => node.target) })),
+  ).toEqual([]);
 });

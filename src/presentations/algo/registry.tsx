@@ -16,8 +16,13 @@ export type AlgoView = BaseAlgoView<Template>;
 export type { Role } from './contract';
 export { candidateNames, validBindings } from './contract';
 
-export function AlgoCell(props: { view: AlgoView; frame: Frame }) {
+export function AlgoCell(props: { view: AlgoView; frame: Frame; inTable?: boolean }) {
   return (
-    <Dynamic component={templates[props.view.template].component} view={props.view} frame={props.frame} />
+    <Dynamic
+      component={templates[props.view.template].component}
+      view={props.view}
+      frame={props.frame}
+      inTable={props.inTable}
+    />
   );
 }

@@ -32,7 +32,14 @@ export const gridTraversal: AlgoViewDefinition = {
     });
     return (
       <Show when={valid()} fallback={<span class="dg-quiet">—</span>}>
-        <div class="dg-grid-view">
+        <div
+          class="dg-grid-view"
+          tabIndex={props.inTable ? 0 : undefined}
+          role={props.inTable ? 'group' : undefined}
+          aria-label={
+            props.inTable ? `Grid, current position ${coordinates()[0]}, ${coordinates()[1]}` : undefined
+          }
+        >
           <div class="dg-mini-grid" data-view-role="board" style={{ '--grid-columns': String(width()) }}>
             <For each={rows()}>
               {(line, y) => (

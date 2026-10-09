@@ -465,6 +465,7 @@
 }
 .dg-history-table-panel {
   flex-direction: column;
+  container: history-table / inline-size;
 }
 .dg-history-divider {
   position: relative;
@@ -532,8 +533,8 @@
 }
 .dg-history-table {
   border-collapse: collapse;
+  table-layout: fixed;
   width: 100%;
-  min-width: 960px;
   font-size: 11px;
   font-variant-numeric: tabular-nums;
 }
@@ -545,6 +546,7 @@
   text-align: left;
   vertical-align: middle;
   white-space: nowrap;
+  overflow: hidden;
 }
 .dg-history-table tr > *:last-child {
   border-right: 0;
@@ -560,11 +562,10 @@
   color: var(--dg-secondary);
   font-weight: 600;
 }
-.dg-history-table thead th:first-child {
-  width: 64px;
-}
 .dg-history-table thead th code {
   display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
   color: var(--dg-ink);
   font-size: 11px;
 }
@@ -574,18 +575,28 @@
   font-size: 9px;
   font-weight: 400;
 }
-.dg-heading-array {
-  min-width: 144px;
-}
-.dg-heading-set {
-  min-width: 90px;
-}
-.dg-heading-map {
-  min-width: 100px;
-}
 .dg-history-table thead th.dg-heading-algo {
-  min-width: 206px;
   background: var(--fn-soft);
+}
+@container history-table (max-width: 700px) {
+  .dg-history-table th,
+  .dg-history-table td {
+    padding-right: 5px;
+    padding-left: 5px;
+  }
+  .dg-history-table thead th small {
+    display: none;
+  }
+  .dg-column-head {
+    gap: 2px;
+  }
+  .dg-column-head button[aria-label^='Change '] {
+    width: 25px;
+    height: 25px;
+  }
+  .dg-column-head button[aria-label^='Change '] svg:last-child {
+    display: none;
+  }
 }
 .dg-group-row td {
   padding: 0 !important;
@@ -659,11 +670,13 @@
   box-shadow: 0 0 0 3px #3f70652e;
 }
 .dg-value-cell {
-  min-width: 70px;
+  min-width: 0;
 }
 .dg-value-body {
   display: inline-flex;
   align-items: center;
+  min-width: 0;
+  max-width: 100%;
   min-height: 34px;
 }
 .dg-value-body.is-updated > code {
@@ -780,6 +793,14 @@
   align-items: center;
   gap: 12px;
 }
+.dg-history-table .dg-grid-view {
+  max-width: 100%;
+  overflow-x: auto;
+}
+.dg-history-table .dg-grid-view:focus-visible {
+  outline: 2px solid var(--dg-accent);
+  outline-offset: -2px;
+}
 .dg-grid-view code {
   font-size: 11px;
   color: var(--dg-algo);
@@ -795,14 +816,25 @@
   gap: 6px;
   min-width: 183px;
 }
+.dg-history-table .dg-binary-view {
+  min-width: 0;
+  max-width: 100%;
+}
 .dg-binary-track {
   display: flex;
   gap: 3px;
 }
+.dg-history-table .dg-binary-track {
+  overflow-x: auto;
+}
+.dg-history-table .dg-binary-track:focus-visible {
+  outline: 2px solid var(--dg-accent);
+  outline-offset: -2px;
+}
 .dg-binary-track span {
   position: relative;
   display: block;
-  width: 21px;
+  flex: 0 0 21px;
   height: 13px;
   border-bottom: 3px solid #c1d1c3;
 }
@@ -1401,6 +1433,7 @@
   min-height: 35px;
 }
 .dg-column-head > span {
+  flex: 1;
   min-width: 0;
 }
 .dg-column-head code {
@@ -1860,13 +1893,6 @@ body {
   font-size: 26px;
   letter-spacing: -0.02em;
 }
-.lv-workspace .dg-history-table {
-  min-width: 760px;
-}
-.lv-workspace .dg-value-cell {
-  min-width: 110px;
-  max-width: 260px;
-}
 .lv-workspace .dg-value-body {
   max-width: 100%;
   white-space: normal;
@@ -1874,7 +1900,7 @@ body {
 .lv-workspace .dg-array,
 .lv-workspace .dg-set {
   flex-wrap: wrap;
-  max-width: 240px;
+  max-width: 100%;
 }
 .lv-workspace .dg-array span,
 .lv-workspace .dg-set span {
@@ -1885,7 +1911,7 @@ body {
   white-space: nowrap;
 }
 .lv-workspace .dg-bars {
-  max-width: 235px;
+  max-width: 100%;
   overflow: auto;
 }
 .lv-workspace .dg-bar-item {
@@ -1893,7 +1919,7 @@ body {
 }
 .lv-workspace .lv-plain-value {
   display: block;
-  max-width: 225px;
+  max-width: 100%;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -1901,7 +1927,7 @@ body {
 .lv-matrix {
   display: grid;
   gap: 2px;
-  max-width: 230px;
+  max-width: 100%;
   overflow: auto;
 }
 .lv-matrix > div {
@@ -1926,7 +1952,7 @@ body {
 .lv-entries {
   display: grid;
   gap: 3px;
-  max-width: 235px;
+  max-width: 100%;
   max-height: 110px;
   overflow: auto;
 }
