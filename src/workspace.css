@@ -89,6 +89,26 @@
   padding: 4px 7px;
   margin-left: 7px;
 }
+.dg-update-control {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border: 1px solid var(--dg-seam);
+  background: var(--fn-sheet);
+  color: var(--fn-ink);
+  padding: 5px 8px;
+  font: 11px var(--font-code);
+  text-decoration: none;
+  cursor: pointer;
+}
+.dg-update-control:hover:not(:disabled) {
+  border-color: var(--dg-accent);
+  background: var(--fn-soft);
+}
+.dg-update-control:disabled {
+  opacity: 0.65;
+  cursor: progress;
+}
 .dg-live-dot {
   width: 7px;
   height: 7px;

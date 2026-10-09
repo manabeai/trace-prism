@@ -30,6 +30,7 @@ import { FormatMenu } from './workspace/history/FormatMenu';
 import { ValueCell } from './workspace/history/ValueCell';
 import { SearchEditor } from './workspace/search/SearchEditor';
 import type { SearchResults } from './search/evaluate';
+import { UpdateControl } from './updater/UpdateControl';
 function RelationGraph(props: {
   graph: Graph;
   runId: string;
@@ -403,6 +404,7 @@ export function LiveWorkspace(props: { repository?: RunRepository }) {
           <span class="dg-live-dot" />
           {current()?.status === 'running' ? 'Recording' : 'Local traces'}
           <small>Rust SDK</small>
+          <UpdateControl />
         </div>
       </header>
       <Resizable class="dg-horizontal" role="main" aria-label="Workspace" initialSizes={[0.15, 0.85]}>

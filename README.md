@@ -2,7 +2,7 @@
 
 ## Tauriデスクトップ版（プレビュー）
 
-TracePrismはLinux・macOS・Windows向けのネイティブアプリです。Rust SDK `0.1.0-preview.3` が実行履歴をファイルに記録し、Tauriアプリが読み込みます。アプリのビルドにはNode.js 22.12以降、Rust、各OSの[Tauri依存パッケージ](https://tauri.app/start/prerequisites/)が必要です。
+TracePrismはLinux・macOS・Windows向けのネイティブアプリです。Rust SDK `0.1.0-preview.3` が実行履歴をファイルに記録し、Tauriアプリが読み込みます。アプリのビルドにはNode.js 22.12以降、Rust 1.90以降、各OSの[Tauri依存パッケージ](https://tauri.app/start/prerequisites/)が必要です。
 
 ```sh
 npm ci
@@ -17,9 +17,15 @@ LinuxでWebKitGTKをNixから導入する場合は、`npm ci` の後に `nix-she
 traceprism = { version = "=0.1.0-preview.3", optional = true }
 ```
 
-別のターミナルで通常の `cargo run --bin a` などを実行します。SDKは実行ごとのNDJSONを直接書き、アプリは保存先を読み直します。受信サーバーは不要です。インストーラーは `npm run tauri -- build` で作成できます。
+別のターミナルで通常の `cargo run --bin a` などを実行します。SDKは実行ごとのNDJSONを直接書き、アプリは保存先を読み直します。受信サーバーは不要です。署名鍵を使わない手元でのビルドは `npm run tauri -- build --no-sign --config src-tauri/tauri.ci.conf.json` で作成できます。
 
 配布用インストーラーは[GitHub Releases](https://github.com/manabeai/trace-prism/releases)で公開します。`v` で始まるタグをpushすると、Tauri公式の`tauri-action`がLinux、macOS（Apple Silicon・Intel）、Windowsの各環境でビルドします。全ジョブ成功後にプレビュー版を公開します。
+
+### アプリの更新
+
+`v0.2.1` 以降の更新対応版は、起動時にプレビュー版の更新を確認します。新しい版があると画面右上のボタンから署名を検証してインストールし、再起動できます。LinuxはAppImage、macOSはApple Silicon・Intel、WindowsはNSISインストーラーが対象です。Linuxの`.deb`は画面右上からReleasesを開き、手動で更新します。更新機能のない`v0.2`からは一度`v0.2.1`を手動でインストールしてください。
+
+タグのCIは更新用ファイルと署名をReleaseへ添付し、全プラットフォームの更新情報を検証した後、`preview-updates`ブランチの`latest.json`を切り替えます。署名用の秘密鍵はリポジトリには含めず、GitHub Actionsの`TAURI_SIGNING_PRIVATE_KEY` Secretに登録します。鍵を失うと既存インストールへの更新を署名できなくなるため、管理者は安全な場所にバックアップしてください。
 
 | OS      | 既定の履歴保存先                                                              |
 | ------- | ----------------------------------------------------------------------------- |
