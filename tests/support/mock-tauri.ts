@@ -5,12 +5,14 @@ type MockTauriWindow = Window & {
     invoke: (command: string, args?: { selectedId?: string | null }) => Promise<unknown>;
   };
   __traceprismListRunsCalls: number;
+  __traceprismSampleRuns: unknown[];
 };
 
 export async function mockRuns(page: Page, runs: unknown[]): Promise<void> {
   await page.addInitScript((sampleRuns) => {
     const nativeWindow = window as MockTauriWindow;
     nativeWindow.__traceprismListRunsCalls = 0;
+    nativeWindow.__traceprismSampleRuns = sampleRuns;
     nativeWindow.__TAURI_INTERNALS__ = {
       invoke: async (command, args) => {
         if (command === 'plugin:app|bundle_type') return 'appimage';

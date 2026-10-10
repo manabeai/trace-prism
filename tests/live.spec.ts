@@ -532,6 +532,54 @@ test('the seq slider keeps the selected table row in view', async ({ page }) => 
   await page.mouse.up();
 });
 
+test('manual table scrolling pauses live follow until selection is requested', async ({ page }) => {
+  const run = {
+    ...runs[0],
+    id: 'scrolling-live-run',
+    status: 'running',
+    frames: Array.from({ length: 48 }, (_, index) => ({
+      format: 'viz.trace/v2',
+      kind: 'snapshot',
+      runId: 'scrolling-live-run',
+      seq: String(index),
+      span: [],
+      values: [{ name: 'n', value: { t: 'int', v: String(index) } }],
+    })),
+  };
+  await mockRuns(page, [run]);
+  await page.goto('/');
+
+  const table = page.locator('.dg-table-scroll');
+  await expect(page.locator('.dg-frame-row')).toHaveCount(48);
+  await expect.poll(() => table.evaluate((element) => element.scrollTop)).toBeGreaterThan(0);
+  const initialScroll = await table.evaluate((element) => element.scrollTop);
+
+  const bounds = await table.boundingBox();
+  await page.mouse.move(bounds!.x + bounds!.width / 2, bounds!.y + bounds!.height / 2);
+  await page.mouse.wheel(0, -2000);
+  await expect.poll(() => table.evaluate((element) => element.scrollTop)).toBeLessThan(initialScroll);
+
+  await page.evaluate(() => {
+    const nativeWindow = window as Window & {
+      __traceprismSampleRuns: Array<{ frames: unknown[] }>;
+    };
+    nativeWindow.__traceprismSampleRuns[0].frames.push({
+      format: 'viz.trace/v2',
+      kind: 'snapshot',
+      runId: 'scrolling-live-run',
+      seq: '48',
+      span: [],
+      values: [{ name: 'n', value: { t: 'int', v: '48' } }],
+    });
+  });
+  await expect(page.locator('.dg-frame-row')).toHaveCount(49);
+  await expect(page.locator('.dg-playback strong')).toHaveText('seq 48');
+  expect(await table.evaluate((element) => element.scrollTop)).toBeLessThan(initialScroll);
+
+  await page.getByRole('button', { name: 'Latest' }).click();
+  await expect.poll(() => table.evaluate((element) => element.scrollTop)).toBeGreaterThan(initialScroll);
+});
+
 test('format popover stays open across run polling while moving into its options', async ({ page }) => {
   await mockRuns(page, [runs[0]]);
   await page.goto('/');

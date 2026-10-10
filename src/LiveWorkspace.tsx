@@ -334,7 +334,21 @@ export function LiveWorkspace(props: { repository?: RunRepository }) {
     onCleanup(() => media.removeEventListener('change', update));
   });
   let tableViewport: HTMLDivElement | undefined;
+  let browsingTable = false;
+  let focusedRunId = '';
+  const scrollSelectedRowIntoView = () => {
+    const row = tableViewport?.querySelector<HTMLElement>('.dg-frame-row.is-selected');
+    if (!row || !tableViewport) return;
+    const viewport = tableViewport.getBoundingClientRect();
+    const bounds = row.getBoundingClientRect();
+    const headerHeight = tableViewport.querySelector('thead')?.getBoundingClientRect().height ?? 0;
+    const top = viewport.top + headerHeight + 8;
+    const bottom = viewport.bottom - 8;
+    if (bounds.top < top) tableViewport.scrollTop += bounds.top - top;
+    else if (bounds.bottom > bottom) tableViewport.scrollTop += bounds.bottom - bottom;
+  };
   const selectRecord = (seq: Seq | null) => {
+    browsingTable = false;
     const frame = frames().find((item) => item.seq === seq);
     if (frame) {
       const ancestors = new Set<string>(
@@ -344,22 +358,19 @@ export function LiveWorkspace(props: { repository?: RunRepository }) {
         setCollapsed((keys) => keys.filter((key) => !ancestors.has(key)));
     }
     setSelectedSeq(seq);
+    requestAnimationFrame(scrollSelectedRowIntoView);
   };
   const focusKey = createMemo(() => `${current()?.id ?? ''}:${selected()?.seq ?? ''}`);
   createEffect(() => {
     const key = focusKey();
+    const runId = current()?.id ?? '';
+    if (runId !== focusedRunId) {
+      browsingTable = false;
+      focusedRunId = runId;
+    }
     if (key.endsWith(':')) return;
     const frame = requestAnimationFrame(() => {
-      if (focusKey() !== key) return;
-      const row = tableViewport?.querySelector<HTMLElement>('.dg-frame-row.is-selected');
-      if (!row || !tableViewport) return;
-      const viewport = tableViewport.getBoundingClientRect();
-      const bounds = row.getBoundingClientRect();
-      const headerHeight = tableViewport.querySelector('thead')?.getBoundingClientRect().height ?? 0;
-      const top = viewport.top + headerHeight + 8;
-      const bottom = viewport.bottom - 8;
-      if (bounds.top < top) tableViewport.scrollTop += bounds.top - top;
-      else if (bounds.bottom > bottom) tableViewport.scrollTop += bounds.bottom - bottom;
+      if (focusKey() === key && !browsingTable) scrollSelectedRowIntoView();
     });
     onCleanup(() => cancelAnimationFrame(frame));
   });
@@ -404,13 +415,16 @@ export function LiveWorkspace(props: { repository?: RunRepository }) {
           'is-search-dim': searchResults().active && !searchHitSet().has(node.frame.seq),
           'is-search-hit': searchResults().active && searchHitSet().has(node.frame.seq),
         }}
-        onClick={() => setSelectedSeq(node.frame.seq)}
+        onClick={() => selectRecord(node.frame.seq)}
       >
         <th scope="row">
           <button
             aria-label={`Select record ${node.frame.seq}`}
             style={{ '--depth': String(depth) }}
-            onClick={() => setSelectedSeq(node.frame.seq)}
+            onClick={(event) => {
+              event.stopPropagation();
+              selectRecord(node.frame.seq);
+            }}
           >
             <span class="dg-seq-dot" />
             {node.frame.seq}
@@ -687,7 +701,23 @@ export function LiveWorkspace(props: { repository?: RunRepository }) {
                       collapsedSize={0}
                       class="dg-history-table-panel"
                     >
-                      <div class="dg-table-scroll" ref={tableViewport}>
+                      <div
+                        class="dg-table-scroll"
+                        ref={tableViewport}
+                        tabIndex={0}
+                        aria-label="Value history table"
+                        onWheel={() => (browsingTable = true)}
+                        onTouchMove={() => (browsingTable = true)}
+                        onPointerDown={() => (browsingTable = true)}
+                        onKeyDown={(event) => {
+                          if (
+                            ['ArrowUp', 'ArrowDown', 'PageUp', 'PageDown', 'Home', 'End', ' '].includes(
+                              event.key,
+                            )
+                          )
+                            browsingTable = true;
+                        }}
+                      >
                         <table
                           class="dg-history-table"
                           style={{ 'min-width': `${columnLayout().minWidth}px` }}
