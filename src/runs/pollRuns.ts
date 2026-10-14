@@ -6,7 +6,7 @@ export function pollRuns(
   selectedId: () => string | null,
   onRuns: (result: DecodedRuns) => void,
   onError: (error: unknown) => void,
-  intervalMs = 1000,
+  intervalMs: number | null = 1000,
 ): { stop: () => void; refresh: () => void } {
   let stopped = false;
   let timer: ReturnType<typeof setTimeout> | undefined;
@@ -26,7 +26,8 @@ export function pollRuns(
     } finally {
       request = undefined;
       if (!stopped) {
-        timer = setTimeout(() => void tick(), refreshPending ? 0 : intervalMs);
+        const nextDelay = refreshPending ? 0 : intervalMs;
+        if (nextDelay !== null) timer = setTimeout(() => void tick(), nextDelay);
         refreshPending = false;
       }
     }

@@ -2,6 +2,8 @@
 
 本文はリファクタリング時点の設計記録。現在の遷移元ID参照 `fromId` とGraphの表示切替は [v2 Protocol](../protocol/v2/README.md) を参照。
 
+2026-10-14 現在、実行履歴の更新通知は Tauri の fs プラグインによるディレクトリ監視を使う。`TauriRunRepository.watch()` が監視を登録し、`observeRuns()` が通知後の読み込みを直列化する。監視を登録できない場合に限り、`pollRuns()` が 1 秒間隔で再試行する。保存先は Rust の `traceprism::run_dir()` で決め、そのディレクトリのみを監視 scope に追加する。
+
 状態: 段階的に実装中。現行の画面、`viz.trace/v2`、Rust SDKの動作を維持する。実行履歴はファイルに保存し、Tauriアプリが読み取る。旧操作モックと固定データのデザインモックは削除済み。
 
 2026-10-02 の実装では、`trace/` の型・復元・span 階層・関係グラフ、schema に基づく decode、branded な `RunId` / `Seq`、`runs/` の取得ポートと直列ポーリング、実行別状態を持つ workspace controller、値形式と Algo View のレジストリを導入した。履歴行の階層展開には TanStack Table v9 の行モデルを使い、移行した Format Menu のスタイルは CSS Module に置いた。Vitest の単体・コンポーネントテスト、Playwright の操作・axe 検査、ESLint、Prettier、Husky、CI を品質ゲートとして実行する。現行画面の共有スタイルは `workspace.css` に統合した。残る性能計測と CSS Modules の展開は、機能単位で進める。
@@ -37,9 +39,10 @@ src/
     relation-graph.ts       from または span → 記録関係のグラフ
     selectors.ts            run 単位の読み取り専用 selector
   runs/
-    RunRepository.ts        データ取得のポート
-    TauriRunRepository.ts   list_runs IPC 用アダプター
-    pollRuns.ts             ポーリングと停止処理
+    RunRepository.ts        データ取得と更新通知のポート
+    TauriRunRepository.ts   list_runs IPC と fs watch のアダプター
+    observeRuns.ts          更新通知と読み込みの接続
+    pollRuns.ts             直列読み込みと監視失敗時のポーリング
   presentations/
     values/
       contract.tsx          ValueFormat<T>・ValuePresentation<K>・型消去アダプター
@@ -270,7 +273,7 @@ export class TauriRunRepository implements RunRepository {
 }
 ```
 
-取得元が変わっても、workspace は `RunRepository` だけを参照する。ポーリングの間隔と停止は `pollRuns.ts` が担当する。
+取得元が変わっても、workspace は `RunRepository` だけを参照する。現在は `watch()` の通知を `observeRuns.ts` が受け、`pollRuns.ts` の直列読み込みを起動する。監視が使えない場合のみ、同じ読み込み処理を定期実行する。
 
 ### 値の表示形式: 種別ごとの実装と型消去
 
@@ -383,7 +386,7 @@ export function WorkspaceShell(props: { model: WorkspaceController }) {
 
 Table アダプターは `HistoryNode[]`、`ColumnDescriptor[]`、制御された UI 状態を入力とし、選択・展開・列表示の操作を出力する。グラフと再生 UI は TanStack の行オブジェクトを参照しない。移行時には DOM の意味と CSS class を維持し、既存の操作テストと画面比較を利用する。
 
-TanStack Table 自体には行の仮想化がない。大きな trace で DOM のコストが問題になれば、行数と高さが変わる Matrix セルを実測してから `@tanstack/solid-virtual` を追加する。現在は全実行を毎秒取得するたびに履歴全体を materialize し直すため、ポーリングを `RunRepository` の背後に隔離する。増分 append と構造共有の導入に備えるが、最適化前に純粋な reducer と結果が一致することを検証する。
+TanStack Table 自体には行の仮想化がない。大きな trace で DOM のコストが問題になれば、行数と高さが変わる Matrix セルを実測してから `@tanstack/solid-virtual` を追加する。現在はディレクトリの変更通知を受けるたびに実行一覧と選択中の履歴を読み直し、履歴全体を materialize し直す。増分 append と構造共有の導入に備えるが、最適化前に純粋な reducer と結果が一致することを検証する。
 
 ## Workspace の状態と操作
 

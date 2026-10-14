@@ -17,7 +17,7 @@ import {
 } from '../presentations/algo/registry';
 import { TauriRunRepository } from '../runs/TauriRunRepository';
 import type { RunRepository } from '../runs/RunRepository';
-import { pollRuns } from '../runs/pollRuns';
+import { observeRuns } from '../runs/observeRuns';
 import { emptyQuery, searchFields, type Query } from '../search/model';
 import { evaluateSearch } from '../search/evaluate';
 
@@ -82,7 +82,7 @@ export function createWorkspaceController(repository: RunRepository = new TauriR
 
   const model = createMemo(() => materialize(current()?.frames ?? []));
   const frames = createMemo(() => model().frames);
-  // Keep keyed header components mounted when polling rematerializes the same columns.
+  // Keep keyed header components mounted when a refreshed run has the same columns.
   const columnModel = createMemo<{ runId: RunId | null; columns: Column[] }>((previous) => {
     const runId = current()?.id ?? null;
     const observed = model().columns;
@@ -128,7 +128,7 @@ export function createWorkspaceController(repository: RunRepository = new TauriR
 
   let refreshRuns = () => {};
   onMount(() => {
-    const polling = pollRuns(
+    const observation = observeRuns(
       repository,
       () => runId(),
       (result) => {
@@ -138,8 +138,8 @@ export function createWorkspaceController(repository: RunRepository = new TauriR
       },
       (cause) => setError(`Could not load runs: ${String(cause)}`),
     );
-    refreshRuns = polling.refresh;
-    onCleanup(polling.stop);
+    refreshRuns = observation.refresh;
+    onCleanup(observation.stop);
   });
 
   const chooseRun = (id: RunId) => {

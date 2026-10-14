@@ -3,5 +3,11 @@
   "identifier": "default",
   "description": "メインウィンドウにTauriの基本権限を許可する",
   "windows": ["main"],
-  "permissions": ["core:default", "updater:default", "process:allow-restart"]
+  "permissions": [
+    "core:default",
+    "updater:default",
+    "process:allow-restart",
+    "fs:allow-watch",
+    "fs:allow-unwatch"
+  ]
 }

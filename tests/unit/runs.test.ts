@@ -3,6 +3,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { decodeRuns } from '../../src/trace/decode';
 import { materialize } from '../../src/trace/materialize';
 import { pollRuns } from '../../src/runs/pollRuns';
+import { observeRuns } from '../../src/runs/observeRuns';
 import type { RunRepository } from '../../src/runs/RunRepository';
 import type { DecodedRuns } from '../../src/trace/decode';
 
@@ -101,5 +102,52 @@ describe('run polling', () => {
     await vi.advanceTimersByTimeAsync(0);
     expect(onRuns).toHaveBeenCalledTimes(1);
     polling.stop();
+  });
+});
+
+describe('run observation', () => {
+  it('subscribes before loading, refreshes on changes, and releases the watcher', async () => {
+    vi.useFakeTimers();
+    let notifyChange: () => void = () => undefined;
+    const unwatch = vi.fn();
+    const list = vi.fn(async () => ({ runs: [], errors: [] }));
+    const watch = vi.fn(async (callback: () => void) => {
+      notifyChange = callback;
+      return unwatch;
+    });
+    const onRuns = vi.fn();
+    const observation = observeRuns({ list, watch }, () => null, onRuns, vi.fn());
+    expect(watch).toHaveBeenCalledTimes(1);
+    expect(list).not.toHaveBeenCalled();
+
+    await vi.advanceTimersByTimeAsync(0);
+    expect(list).toHaveBeenCalledTimes(1);
+    await vi.advanceTimersByTimeAsync(5000);
+    expect(list).toHaveBeenCalledTimes(1);
+
+    notifyChange();
+    await vi.advanceTimersByTimeAsync(0);
+    expect(list).toHaveBeenCalledTimes(2);
+    expect(onRuns).toHaveBeenCalledTimes(2);
+
+    observation.stop();
+    expect(unwatch).toHaveBeenCalledTimes(1);
+    notifyChange();
+    await vi.advanceTimersByTimeAsync(5000);
+    expect(list).toHaveBeenCalledTimes(2);
+  });
+
+  it('falls back to polling when a watcher cannot be established', async () => {
+    vi.useFakeTimers();
+    const list = vi.fn(async () => ({ runs: [], errors: [] }));
+    const watch = vi.fn(async () => {
+      throw new Error('watch unavailable');
+    });
+    const observation = observeRuns({ list, watch }, () => null, vi.fn(), vi.fn());
+    await vi.advanceTimersByTimeAsync(0);
+    expect(list).toHaveBeenCalledTimes(1);
+    await vi.advanceTimersByTimeAsync(1000);
+    expect(list).toHaveBeenCalledTimes(2);
+    observation.stop();
   });
 });
