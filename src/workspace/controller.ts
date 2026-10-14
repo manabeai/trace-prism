@@ -11,10 +11,10 @@ import {
   initialBindings,
   templates,
   validBindings,
-  type AlgoView,
+  type CompositeView,
   type Role,
   type Template,
-} from '../presentations/algo/registry';
+} from '../presentations/composite/registry';
 import { TauriRunRepository } from '../runs/TauriRunRepository';
 import type { RunRepository } from '../runs/RunRepository';
 import { observeRuns } from '../runs/observeRuns';
@@ -49,7 +49,7 @@ export function createWorkspaceController(repository: RunRepository = new TauriR
   const [states, setStates] = createSignal<Record<string, RunState>>({});
   const [error, setError] = createSignal('');
   const [warning, setWarning] = createSignal('');
-  const [viewsByRun, setViewsByRun] = createSignal<Record<string, AlgoView[]>>({});
+  const [viewsByRun, setViewsByRun] = createSignal<Record<string, CompositeView[]>>({});
   const [dialogOpen, setDialogOpen] = createSignal(false);
   const [stage, setStage] = createSignal<'choose' | 'bind'>('choose');
   const [template, setTemplate] = createSignal<Template>(defaultTemplate);
@@ -165,7 +165,7 @@ export function createWorkspaceController(repository: RunRepository = new TauriR
   };
   const candidates = (role: Role) => candidateNames(frames(), role);
   const bindingsFor = (next: Template) => initialBindings(templates[next], frames());
-  const openDialog = (view?: AlgoView) => {
+  const openDialog = (view?: CompositeView) => {
     setEditingId(view?.id ?? null);
     setTemplate(view?.template ?? defaultTemplate);
     setStage(view ? 'bind' : 'choose');
@@ -183,7 +183,7 @@ export function createWorkspaceController(repository: RunRepository = new TauriR
     const old = editingId();
     setViewsByRun((all) => {
       const items = all[id] ?? [];
-      const next: AlgoView[] =
+      const next: CompositeView[] =
         old === null
           ? [
               ...items,

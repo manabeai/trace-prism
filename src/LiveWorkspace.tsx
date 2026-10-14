@@ -17,7 +17,7 @@ import type { HistoryNode } from './trace/types';
 import type { Seq } from './trace/ids';
 import type { RunRepository } from './runs/RunRepository';
 import { formatOptions } from './presentations/values/registry';
-import { AlgoCell, templates } from './presentations/algo/registry';
+import { CompositeCell, templates } from './presentations/composite/registry';
 import { createWorkspaceController } from './workspace/controller';
 import { BrandMark } from './design/BrandMark';
 import { createHistoryTable } from './workspace/history/table-adapter';
@@ -228,8 +228,8 @@ export function LiveWorkspace(props: { repository?: RunRepository }) {
         </For>
         <For each={shownViews()}>
           {(view) => (
-            <td class="dg-algo-cell">
-              <AlgoCell view={view} frame={node.frame} inTable />
+            <td class="dg-view-cell">
+              <CompositeCell view={view} frame={node.frame} inTable />
             </td>
           )}
         </For>
@@ -524,14 +524,14 @@ export function LiveWorkspace(props: { repository?: RunRepository }) {
                               </For>
                               <For each={shownViews()}>
                                 {(view) => (
-                                  <th scope="col" class="dg-heading-algo">
+                                  <th scope="col" class="dg-heading-view">
                                     <div class="dg-column-head">
                                       <span>
                                         <code>{templates[view.template].name}</code>
                                         <small>View</small>
                                       </span>
                                       <button
-                                        class="dg-algo-head-action"
+                                        class="dg-view-head-action"
                                         aria-label={`Edit ${templates[view.template].name} bindings`}
                                         onClick={() => openDialog(view)}
                                       >

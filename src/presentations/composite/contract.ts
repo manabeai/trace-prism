@@ -18,13 +18,13 @@ export type Role = {
   optional?: boolean;
   preferredNames?: readonly string[];
 };
-export type AlgoView<TemplateId extends string = string> = {
+export type CompositeView<TemplateId extends string = string> = {
   id: number;
   template: TemplateId;
   bindings: Record<string, string>;
   enabled: boolean;
 };
-export type AlgoViewDefinition = {
+export type CompositeViewDefinition = {
   id: string;
   name: string;
   description: string;
@@ -32,7 +32,7 @@ export type AlgoViewDefinition = {
   roles: readonly Role[];
   preview: Readonly<Record<string, Value>>;
   icon: Component<{ size?: string | number; stroke?: string }>;
-  component: Component<{ view: AlgoView; frame: Frame; inTable?: boolean }>;
+  component: Component<{ view: CompositeView; frame: Frame; inTable?: boolean }>;
 };
 
 export function candidateNames(frames: Frame[], role: Role): string[] {
@@ -46,7 +46,10 @@ export function candidateNames(frames: Frame[], role: Role): string[] {
   return [...names].flatMap(([name, accepted]) => (accepted ? [name] : []));
 }
 
-export function initialBindings(definition: AlgoViewDefinition, frames: Frame[]): Record<string, string> {
+export function initialBindings(
+  definition: CompositeViewDefinition,
+  frames: Frame[],
+): Record<string, string> {
   return Object.fromEntries(
     definition.roles.map((role) => {
       const names = candidateNames(frames, role);
@@ -57,7 +60,7 @@ export function initialBindings(definition: AlgoViewDefinition, frames: Frame[])
 }
 
 export function validBindings(
-  definition: AlgoViewDefinition,
+  definition: CompositeViewDefinition,
   bindings: Record<string, string>,
   frames: Frame[],
 ): boolean {

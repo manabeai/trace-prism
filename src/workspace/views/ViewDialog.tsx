@@ -3,14 +3,14 @@ import { Dynamic } from 'solid-js/web';
 import { Dialog } from '@kobalte/core/dialog';
 import { IconCheck, IconChevronLeft, IconChevronRight, IconCode, IconX } from '@tabler/icons-solidjs';
 import {
-  AlgoCell,
+  CompositeCell,
   defaultTemplate,
   templates,
   templateKeys,
   validBindings,
   type Template,
-} from '../../presentations/algo/registry';
-import { previewFor } from '../../presentations/algo/preview';
+} from '../../presentations/composite/registry';
+import { previewFor } from '../../presentations/composite/preview';
 import type { createWorkspaceController } from '../controller';
 
 type ViewEditorModel = Pick<
@@ -41,7 +41,7 @@ function ViewPreview(props: { template: Template; activeRole?: string }) {
         <strong>{templates[props.template].name}</strong>
       </div>
       <div class="dg-preview-canvas">
-        <AlgoCell view={preview().view} frame={preview().frame} />
+        <CompositeCell view={preview().view} frame={preview().frame} />
       </div>
       <p>{hint()}</p>
     </div>

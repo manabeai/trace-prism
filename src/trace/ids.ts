@@ -34,8 +34,8 @@ export function valueColumnId(name: ValueName): ColumnId {
   return `value:${name}` as ColumnId;
 }
 
-export function algoColumnId(id: ViewInstanceId): ColumnId {
-  return `algo:${id}` as ColumnId;
+export function viewColumnId(id: ViewInstanceId): ColumnId {
+  return `view:${id}` as ColumnId;
 }
 
 export function viewInstanceId(input: string): ViewInstanceId {

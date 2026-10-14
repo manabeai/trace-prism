@@ -1,9 +1,9 @@
 import { createMemo, For, Show } from 'solid-js';
 import { IconGitBranch } from '@tabler/icons-solidjs';
-import { roleAccepts, type AlgoViewDefinition } from '../contract';
+import { roleAccepts, type CompositeViewDefinition } from '../contract';
 import { numberOf } from '../../value-shapes';
 
-export const binarySearch: AlgoViewDefinition = {
+export const rangeMarker: CompositeViewDefinition = {
   id: 'binary',
   name: 'Range & marker',
   description: 'Show a numeric range, its marker, and a true or false value.',

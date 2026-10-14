@@ -1,10 +1,10 @@
 import { createMemo, For, Show } from 'solid-js';
 import { IconGridDots } from '@tabler/icons-solidjs';
-import { roleAccepts, type AlgoViewDefinition } from '../contract';
+import { roleAccepts, type CompositeViewDefinition } from '../contract';
 import { isMatrix, isPosition, numberOf } from '../../value-shapes';
 import { valueText } from '../../../trace/value';
 
-export const gridTraversal: AlgoViewDefinition = {
+export const gridPosition: CompositeViewDefinition = {
   id: 'grid',
   name: 'Grid & position',
   description: 'Show a matrix with one highlighted position.',

@@ -227,16 +227,16 @@ export default function FlavorGallery() {
                 <div class="fl-side-divider" />
                 <div class="fl-section-heading">
                   <h2>
-                    <IconBinaryTree size="16" stroke="1.8" /> Algo Views
+                    <IconBinaryTree size="16" stroke="1.8" /> Composite Views
                   </h2>
                 </div>
-                <div class="fl-algo-view">
+                <div class="fl-view-view">
                   <IconColumns3 size="16" stroke="1.7" />
                   <span>Binary search</span>
                   <IconChevronRight size="15" stroke="1.5" />
                 </div>
                 <span class="fl-add-view">
-                  <IconCirclePlus size="16" stroke="1.7" /> Add Algo View
+                  <IconCirclePlus size="16" stroke="1.7" /> Add Composite View
                 </span>
               </section>
               <section class="fl-sidebar-bottom">
@@ -352,7 +352,7 @@ export default function FlavorGallery() {
                             </span>
                           </td>
                           <td>
-                            <div class="fl-algo-mini">
+                            <div class="fl-view-mini">
                               <span>
                                 L <b>{row.left}</b>
                               </span>

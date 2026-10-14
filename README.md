@@ -48,7 +48,7 @@ cargo run --manifest-path examples/Cargo.toml --bin dfs
 cargo run --manifest-path examples/Cargo.toml --bin serde-struct
 ```
 
-実行ごとに独立した履歴がアプリに表示されます。左上で値の列を選び、列見出しのアイコンで表示形式を変更します。Algo Viewを追加すると必要な値をクリックで割り当てられます。TableとGraphは左右に並び、共通のseq選択に連動します。中央の二本線をドラッグして幅を変え、片側を完全に畳むこともできます。`from:` があればGraphは依存関係を初期表示し、**ID tree** ボタンでspan ID階層へ切り替えられます。[DFSサンプルの見方](docs/local-walkthrough.md#4-dfs-の呼び出し木を確認する)も参照してください。
+実行ごとに独立した履歴がアプリに表示されます。左上で値の列を選び、列見出しのアイコンで表示形式を変更します。Composite Viewを追加すると必要な値をクリックで割り当てられます。TableとGraphは左右に並び、共通のseq選択に連動します。中央の二本線をドラッグして幅を変え、片側を完全に畳むこともできます。`from:` があればGraphは依存関係を初期表示し、**ID tree** ボタンでspan ID階層へ切り替えられます。[DFSサンプルの見方](docs/local-walkthrough.md#4-dfs-の呼び出し木を確認する)も参照してください。
 
 [`serde-struct`](examples/serde_struct.rs) は `Serialize` を実装した遅延セグ木の構造体を記録する例です。`len`、`sum`、`lazy` が一つの `record` 値のフィールドとして表示されます。専用のセグ木 View はまだありません。`Serialize` の derive は `viz` feature のときだけ有効なので、featureなしのビルドや単体ソースのコンパイルでは serde に依存しません。
 
@@ -85,7 +85,7 @@ record!([i, j], from: origin, a, left, right);
 
 SDKは [`viz.trace/v2` のsnapshot/patch](protocol/v2/README.md)を記録します。最初の記録が完全なsnapshot、その後は値が変わった名前だけを `put` するpatchです。同値の場合も空のpatchを残し、観測点を失いません。`span` は型付きIDの配列です。`from: 親ID` は同じ型の `fromId` に変換され、`from: FrameRef` は従来どおり過去のseq参照 `from` になります。UIはseq順に完全な状態を復元します。古いv1の保存済みtraceも読み取れます。
 
-現在のMVPはRust SDK、ファイル保存、実行履歴、値の履歴表・表示形式、Algo Viewの二分探索・グリッド、関係グラフまで動作します。
+現在のMVPはRust SDK、ファイル保存、実行履歴、値の履歴表・表示形式、Composite View の範囲とマーカー・グリッドと位置・ノードリンクグラフ、関係グラフまで動作します。
 
 ## 開発と品質チェック
 
@@ -100,13 +100,13 @@ cargo test --manifest-path examples/Cargo.toml
 
 `npm run check` は ESLint、Prettier、アプリとテストの型検査、Vitest を実行します。Husky の pre-commit hook は staged file の整形・lint、型検査、単体テストを実行し、GitHub Actions ではビルド、protocol、Playwright、Rust も検査します。
 
-フロントエンドは [リファクタリング設計](docs/frontend-refactor-design.md) に沿って、trace、実行取得、表示レジストリ、workspace controller を分離しています。[Value 表示形式の追加規則](docs/value-presentations.md) と [Algo View の追加規則](docs/algo-view-presentations.md) にファイル構成と追加手順を記載しています。履歴の span 展開は TanStack Table v9 の行モデルを使用します。既存 CSS を機能単位で CSS Modules へ移す方針のため、Tailwind は導入していません。
+フロントエンドは [リファクタリング設計](docs/frontend-refactor-design.md) に沿って、trace、実行取得、表示レジストリ、workspace controller を分離しています。[Value 表示形式の追加規則](docs/value-presentations.md) と [Composite View の追加規則](docs/composite-views.md) にファイル構成と追加手順を記載しています。履歴の span 展開は TanStack Table v9 の行モデルを使用します。既存 CSS を機能単位で CSS Modules へ移す方針のため、Tailwind は導入していません。
 
 採用した Field Notes の設計規則は [DESIGN.md](DESIGN.md) にまとめています。[デザインフレーバー比較](docs/design-flavor-study.md) は `/flavors` で開けます。同じ履歴を 3 種類のフォント・色・Tooltip で比較できます。
 
 現行画面の静止画は [履歴表](docs/field-notes/workspace-desktop.png)・[モバイル](docs/field-notes/workspace-mobile.png)・[表示形式メニュー](docs/field-notes/format-menu.png)・[遷移グラフ](docs/field-notes/transition-graph.png)で確認できます。
 
-Field Notes の[コンポーネントカタログ](docs/field-notes-catalog.md)は `/catalog` で開けます。色・書体・操作部品・値表示・履歴・オーバーレイを操作しながら確認できます。Storybook は `npm run storybook` で起動し、本番の Value 表示、書式メニュー、Algo View、Workspace の状態を固定 trace で確認できます。
+Field Notes の[コンポーネントカタログ](docs/field-notes-catalog.md)は `/catalog` で開けます。色・書体・操作部品・値表示・履歴・オーバーレイを操作しながら確認できます。Storybook は `npm run storybook` で起動し、本番の Value 表示、書式メニュー、Composite View、Workspace の状態を固定 trace で確認できます。
 
 Storybook の構成、fixture、story の追加方法は [Storybook ガイド](docs/storybook.md)を参照してください。静的ビルドは `npm run build:storybook` で検証できます。
 

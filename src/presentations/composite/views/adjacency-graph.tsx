@@ -2,7 +2,7 @@ import { createMemo, createUniqueId, For, Show } from 'solid-js';
 import { IconSitemap } from '@tabler/icons-solidjs';
 import type { Value } from '../../../trace/types';
 import { isBooleanArray, isIntegerSet } from '../../value-shapes';
-import { roleAccepts, type AlgoViewDefinition } from '../contract';
+import { roleAccepts, type CompositeViewDefinition } from '../contract';
 import styles from './adjacency-graph.module.css';
 
 type Adjacency = number[][];
@@ -36,7 +36,7 @@ function point(index: number, count: number): Point {
   return { x: 128 + 99 * Math.cos(angle), y: 94 + 68 * Math.sin(angle) };
 }
 
-export const adjacencyGraph: AlgoViewDefinition = {
+export const adjacencyGraph: CompositeViewDefinition = {
   id: 'graph',
   name: 'Node-link graph',
   description:

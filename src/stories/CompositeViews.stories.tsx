@@ -1,20 +1,20 @@
 import type { Meta, StoryObj } from 'storybook-solidjs-vite';
-import { AlgoCell, templates, type AlgoView } from '../presentations/algo/registry';
+import { CompositeCell, templates, type CompositeView } from '../presentations/composite/registry';
 import { graphFrame, gridFrame, sampleFrame } from './fixtures';
 
-const binaryView: AlgoView = {
+const rangeView: CompositeView = {
   id: 1,
   template: 'binary',
   bindings: { left: 'left', right: 'right', mid: 'mid', predicate: 'ok' },
   enabled: true,
 };
-const gridView: AlgoView = {
+const gridView: CompositeView = {
   id: 2,
   template: 'grid',
   bindings: { board: 'board', position: 'pos' },
   enabled: true,
 };
-const graphView: AlgoView = {
+const graphView: CompositeView = {
   id: 3,
   template: 'graph',
   bindings: { adjacency: 'adjacency', visited: 'seen', v: 'u' },
@@ -22,20 +22,20 @@ const graphView: AlgoView = {
 };
 
 const meta = {
-  title: 'Views/Recorded frame',
-  component: AlgoCell,
+  title: 'Composite Views/Recorded frame',
+  component: CompositeCell,
   tags: ['autodocs'],
   render: (args) => (
     <div class="workspace-root workspace-theme lv-workspace sb-surface">
       <h2 class="sb-surface-title">{templates[args.view.template].name}</h2>
-      <AlgoCell {...args} />
+      <CompositeCell {...args} />
     </div>
   ),
-} satisfies Meta<typeof AlgoCell>;
+} satisfies Meta<typeof CompositeCell>;
 
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-export const BinarySearch: Story = { args: { view: binaryView, frame: sampleFrame } };
-export const GridTraversal: Story = { args: { view: gridView, frame: gridFrame } };
+export const RangeMarker: Story = { args: { view: rangeView, frame: sampleFrame } };
+export const GridPosition: Story = { args: { view: gridView, frame: gridFrame } };
 export const Graph: Story = { args: { view: graphView, frame: graphFrame } };

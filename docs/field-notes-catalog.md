@@ -26,4 +26,4 @@
 - **History:** Values / Runs のサイドバー、seq 選択、span 階層のある列表示、Timeline、変更がある seq のみへの絞り込み、選択位置の詳細。サイドバーのチェックと run 選択は局所的な状態見本で、下の固定サンプル trace は切り替わらない。変更 seq の絞り込みは Sequence and inspection の行リストだけに適用し、表と Timeline は全 seq を保持する。
 - **Overlays:** Kobalte の Tooltip、Popover、Dialog の質感とキーボード操作。
 
-カタログ内の数値とトレースはデザイン確認用の固定データで、SDK や保存済み実行からは取得しない。カタログの Array 表示は視覚・操作の参考実装で、本番の表示処理は既存の表示レジストリで管理する。Storybook の Value 表示・書式メニュー・Algo View は本番コンポーネントを直接使用する。
+カタログ内の数値とトレースはデザイン確認用の固定データで、SDK や保存済み実行からは取得しない。カタログの Array 表示は視覚・操作の参考実装で、本番の表示処理は既存の表示レジストリで管理する。Storybook の Value 表示・書式メニュー・Composite View は本番コンポーネントを直接使用する。

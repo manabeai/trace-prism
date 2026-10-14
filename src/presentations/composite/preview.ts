@@ -1,8 +1,8 @@
 import type { Frame } from '../../trace/types';
 import { seqId } from '../../trace/ids';
-import { templates, type AlgoView, type Template } from './registry';
+import { templates, type CompositeView, type Template } from './registry';
 
-export function previewFor(template: Template): { frame: Frame; view: AlgoView } {
+export function previewFor(template: Template): { frame: Frame; view: CompositeView } {
   const definition = templates[template];
   return {
     frame: {

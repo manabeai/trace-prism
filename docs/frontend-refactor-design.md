@@ -6,13 +6,13 @@
 
 状態: 段階的に実装中。現行の画面、`viz.trace/v2`、Rust SDKの動作を維持する。実行履歴はファイルに保存し、Tauriアプリが読み取る。旧操作モックと固定データのデザインモックは削除済み。
 
-2026-10-02 の実装では、`trace/` の型・復元・span 階層・関係グラフ、schema に基づく decode、branded な `RunId` / `Seq`、`runs/` の取得ポートと直列ポーリング、実行別状態を持つ workspace controller、値形式と Algo View のレジストリを導入した。履歴行の階層展開には TanStack Table v9 の行モデルを使い、移行した Format Menu のスタイルは CSS Module に置いた。Vitest の単体・コンポーネントテスト、Playwright の操作・axe 検査、ESLint、Prettier、Husky、CI を品質ゲートとして実行する。現行画面の共有スタイルは `workspace.css` に統合した。残る性能計測と CSS Modules の展開は、機能単位で進める。
+2026-10-02 の実装では、`trace/` の型・復元・span 階層・関係グラフ、schema に基づく decode、branded な `RunId` / `Seq`、`runs/` の取得ポートと直列ポーリング、実行別状態を持つ workspace controller、値形式と Composite View のレジストリを導入した。履歴行の階層展開には TanStack Table v9 の行モデルを使い、移行した Format Menu のスタイルは CSS Module に置いた。Vitest の単体・コンポーネントテスト、Playwright の操作・axe 検査、ESLint、Prettier、Husky、CI を品質ゲートとして実行する。現行画面の共有スタイルは `workspace.css` に統合した。残る性能計測と CSS Modules の展開は、機能単位で進める。
 
 ## 本質
 
-**trace の事実、事実から導出した状態、表示の解釈を分離する。** `seq` は状態を確定する順序、`span` は履歴のグルーピング、`from` は記録間の関係であり、いずれも UI の表示形式を指定しない。二重配列が Matrix か隣接リストかも trace の形だけでは決められない。表示形式と Algo View は、同じ観測値に後から適用・変更できる設定とする。
+**trace の事実、事実から導出した状態、表示の解釈を分離する。** `seq` は状態を確定する順序、`span` は履歴のグルーピング、`from` は記録間の関係であり、いずれも UI の表示形式を指定しない。二重配列が Matrix か隣接リストかも trace の形だけでは決められない。表示形式と Composite View は、同じ観測値に後から適用・変更できる設定とする。
 
-移行前は `LiveWorkspace.tsx` に API ポーリング、実行選択、materialize、span 行、関係グラフ、列表示、表示形式の判定、Algo View の定義と binding、ダイアログ、描画が集中していた。`formatOptions()` の `switch` は、最初に観測した数値の二重配列に Matrix / Text だけを提示していた。旧 `trace-model.ts` も v1 変換、v2 materialize、span 階層、グラフ射影を併せ持っていた。本設計はこれらの結合を解き、拡張時に中央の分岐を増やさないことを目的とする。
+移行前は `LiveWorkspace.tsx` に API ポーリング、実行選択、materialize、span 行、関係グラフ、列表示、表示形式の判定、Composite View の定義と binding、ダイアログ、描画が集中していた。`formatOptions()` の `switch` は、最初に観測した数値の二重配列に Matrix / Text だけを提示していた。旧 `trace-model.ts` も v1 変換、v2 materialize、span 階層、グラフ射影を併せ持っていた。本設計はこれらの結合を解き、拡張時に中央の分岐を増やさないことを目的とする。
 
 ## 依存方向と責務
 
@@ -20,7 +20,7 @@
 Tauri IPC / 保存済み trace
   → v1・v2 の decode → 正規化した記録 → materializer → 実行単位の selector
   → workspace controller → 履歴・グラフ・再生・表示設定
-  → 値の表示形式レジストリ / Algo View レジストリ → Solid コンポーネント
+  → 値の表示形式レジストリ / Composite View レジストリ → Solid コンポーネント
   → 履歴表に限って TanStack Table アダプター
 ```
 
@@ -49,16 +49,16 @@ src/
       registry.tsx          種別ごとのディスパッチと fallback
       kinds/<kind>/         index.ts は登録、<format>.tsx は形式ごとの描画
       shared.tsx            共通の Text fallback
-    algo/
+    composite/
       contract.ts           role・binding・解決結果
       registry.ts           定義の検索と binding 検証
-      views/                binary-search・grid-traversal 等
+      views/                range-marker・grid-position 等
   workspace/
     controller.ts           Solid の状態と selector の接続
     WorkspaceShell.tsx      pane・sidebar・dialog の組み立て
     history/
       rows.ts               HistoryNode → 表の行
-      columns.ts            raw 値列と Algo View 列の定義
+      columns.ts            raw 値列と Composite View 列の定義
       table-adapter.ts      TanStack Table v9 の設定
       HistoryTable.tsx      表の DOM
     graph/                  記録関係グラフの描画
@@ -83,7 +83,7 @@ type RunId = Brand<'RunId'>;
 type Seq = Brand<'Seq'>;                  // 正規形の十進 u64 文字列
 type ValueName = Brand<'ValueName'>;
 type SpanKey = Brand<'SpanKey'>;          // 型付き span path のエンコード結果
-type ColumnId = Brand<'ColumnId'>;        // value:<name> | algo:<instance>
+type ColumnId = Brand<'ColumnId'>;        // value:<name> | view:<instance>
 type ViewInstanceId = Brand<'ViewInstanceId'>;
 type FrameKey = Readonly<{ runId: RunId; seq: Seq }>;
 ```
@@ -118,9 +118,9 @@ declare function defineValuePresentation<K extends Value['t']>(
 
 Number、Badge、Cells、Bars、Matrix、Set の Members/Count、Map の Entries/Count、Record の Fields、Text は種別ごとのファイルへ移した。型付き差分は別の関心事として扱い、見た目から記録されていない操作を事実として推定しない。
 
-## Algo View の拡張境界
+## Composite View の拡張境界
 
-Algo View の定義は安定 ID、メタデータ、名前付き role、各 role の型ガード、必須・任意の区別、binding の候補、validator、renderer を持つ。mapped type で role の型を renderer まで伝播させる。レジストリは frame ごとの binding を検証した後にだけ、型を消去する。値が不足するか型が違えば、無検査の参照ではなく型付きの「描画不可」結果を返す。
+Composite View の定義は安定 ID、メタデータ、名前付き role、各 role の型ガード、必須・任意の区別、binding の候補、validator、renderer を持つ。mapped type で role の型を renderer まで伝播させる。レジストリは frame ごとの binding を検証した後にだけ、型を消去する。値が不足するか型が違えば、無検査の参照ではなく型付きの「描画不可」結果を返す。
 
 ```ts
 type Guarded<G> = G extends ValueGuard<infer T> ? T : never;
@@ -128,7 +128,7 @@ type Bound<R extends Record<string, ValueGuard<Value>>> = {
   [K in keyof R]: Guarded<R[K]>;
 };
 
-interface AlgoViewDefinition<R extends Record<string, ValueGuard<Value>>> {
+interface CompositeViewDefinition<R extends Record<string, ValueGuard<Value>>> {
   id: string;
   roles: R;
   resolve: (frame: Frame, bindings: Record<keyof R, string>) =>
@@ -163,8 +163,8 @@ export const adjacencyListFormat: ValueFormat<ValueOf<'array'>> = {
 ```
 
 ```tsx
-// presentations/algo/binary-search.tsx
-export const binarySearchView = defineAlgoView({
+// presentations/composite/range-marker.tsx
+export const rangeMarkerView = defineCompositeView({
   id: 'binary-search',
   roles: {
     left: required(isInteger),
@@ -173,7 +173,7 @@ export const binarySearchView = defineAlgoView({
     predicate: optional(isBoolean),
   },
   render: ({ left, right, mid, predicate }) =>
-    <BinarySearchTrack left={left} right={right} mid={mid} predicate={predicate} />,
+    <RangeMarker left={left} right={right} mid={mid} predicate={predicate} />,
 });
 ```
 
@@ -183,19 +183,19 @@ const formats = createValueFormatRegistry([
   numberFormat, cellsFormat, barsFormat, matrixFormat, textFormat,
   adjacencyListFormat,
 ]);
-const algoViews = createAlgoViewRegistry([binarySearchView, gridTraversalView]);
+const compositeViews = createCompositeViewRegistry([rangeMarkerView, gridPositionView]);
 
 export function LiveWorkspace() {
   const workspace = createWorkspaceController({
     runs: tauriRunRepository,
     formats,
-    algoViews,
+    compositeViews,
   });
   return <WorkspaceShell model={workspace} />;
 }
 ```
 
-`LiveWorkspace` に表示形式やアルゴリズムごとの分岐を置かない。`adjacencyListFormat` を登録しても初期選択は従来の Matrix のままにでき、ユーザーが列見出しのメニューで切り替える。Algo View は複数値の binding を解決して seq ごとの列へ描画する。これらは wire や materializer を変更しない。
+`LiveWorkspace` に表示形式やアルゴリズムごとの分岐を置かない。`adjacencyListFormat` を登録しても初期選択は従来の Matrix のままにでき、ユーザーが列見出しのメニューで切り替える。Composite View は複数値の binding を解決して seq ごとの列へ描画する。これらは wire や materializer を変更しない。
 
 ## 各レイヤのコード例
 
@@ -288,19 +288,19 @@ export const arrayPresentation = defineValuePresentation<'array'>({
 
 各形式は `ValueFormat<ValueOf<K>>` の契約を満たす。`defineValuePresentation` は異種の定義を registry へ集約するためのアダプターであり、`kind` と `isApplicable` のガード、および `ValueOf<K>` から `Value` への型消去を一箇所に閉じ込める。戻り型の `ErasedValuePresentation` は registry 内部用で、各種別が直接実装するインターフェースではない。履歴表には `switch (value.t)` や `switch (formatId)` を置かない。
 
-### Algo View: role の解決を描画から分離
+### Composite View: role の解決を描画から分離
 
 ```tsx
-// presentations/algo/views/grid-traversal.tsx
-export const gridTraversalView = defineAlgoView({
+// presentations/composite/views/grid-position.tsx
+export const gridPositionView = defineCompositeView({
   id: 'grid-traversal',
   roles: { board: required(isNumericMatrix), position: required(isPosition) },
   render: ({ board, position }) =>
-    <GridTraversal board={board} position={position} />,
+    <GridPosition board={board} position={position} />,
 });
 
-// presentations/algo/registry.ts
-const result = algoViews.resolve('grid-traversal', frame, {
+// presentations/composite/registry.ts
+const result = compositeViews.resolve('grid-traversal', frame, {
   board: valueName('board'), position: valueName('pos'),
 });
 // result: { ok: true, values: { board, position } }
@@ -333,7 +333,7 @@ export function createWorkspaceController(repository: RunRepository) {
 }
 ```
 
-controller は選択状態を持ち、`trace/` の materialize と selector を呼ぶ。値の解釈や `<table>` の DOM は持たない。列表示、形式選択、Algo View インスタンスなどは run ID をキーにした別の UI state として加える。
+controller は選択状態を持ち、`trace/` の materialize と selector を呼ぶ。値の解釈や `<table>` の DOM は持たない。列表示、形式選択、Composite View インスタンスなどは run ID をキーにした別の UI state として加える。
 
 ### 履歴表アダプター: 表の操作だけを TanStack に委譲
 
@@ -378,11 +378,11 @@ export function WorkspaceShell(props: { model: WorkspaceController }) {
 }
 ```
 
-`LiveWorkspace` は repository と二種類の registry を注入する入口、`WorkspaceShell` は UI の配置、個別 renderer は観測値の表示を担当する。新しい表示形式や Algo View によって controller や Shell が分岐を増やさないことを、拡張契約のテストでも確認する。
+`LiveWorkspace` は repository と二種類の registry を注入する入口、`WorkspaceShell` は UI の配置、個別 renderer は観測値の表示を担当する。新しい表示形式や Composite View によって controller や Shell が分岐を増やさないことを、拡張契約のテストでも確認する。
 
 ## 履歴表と TanStack Table
 
-履歴表の操作には `@tanstack/solid-table` v9 を採用する。Solid アダプターの `createTable` に必要な feature を明示登録する。すでに導出した span 木の行展開、値と Algo View の列表示、必要になったときの列幅管理を担当させる。`getSubRows` を使い、行 ID は run ID を含む `run/span:<encoded path>` または `run/seq:<decimal seq>`、列 ID は `value:<field name>` または `algo:<view instance ID>` とする。span 行は全列幅のグループ行、記録行は型付きセルを描画する。記録順と span の意味は trace model が持つため、表側のソート、グルーピング、ページネーション、フィルタリングは有効にしない。「Changes only」は変化のないセルの内容を省略し、観測記録そのものは削除しない。
+履歴表の操作には `@tanstack/solid-table` v9 を採用する。Solid アダプターの `createTable` に必要な feature を明示登録する。すでに導出した span 木の行展開、値と Composite View の列表示、必要になったときの列幅管理を担当させる。`getSubRows` を使い、行 ID は run ID を含む `run/span:<encoded path>` または `run/seq:<decimal seq>`、列 ID は `value:<field name>` または `view:<view instance ID>` とする。span 行は全列幅のグループ行、記録行は型付きセルを描画する。記録順と span の意味は trace model が持つため、表側のソート、グルーピング、ページネーション、フィルタリングは有効にしない。「Changes only」は変化のないセルの内容を省略し、観測記録そのものは削除しない。
 
 Table アダプターは `HistoryNode[]`、`ColumnDescriptor[]`、制御された UI 状態を入力とし、選択・展開・列表示の操作を出力する。グラフと再生 UI は TanStack の行オブジェクトを参照しない。移行時には DOM の意味と CSS class を維持し、既存の操作テストと画面比較を利用する。
 
@@ -390,11 +390,11 @@ TanStack Table 自体には行の仮想化がない。大きな trace で DOM �
 
 ## Workspace の状態と操作
 
-controller は選択中の run、選択中の seq（明示的な「最新を追う」状態を含む）、実行ごとの列表示、形式、Algo View のインスタンス、span の展開、表・グラフの切り替え、差分のみ表示を管理する。selector は読み取り専用で memoize された frame と列を返す。Solid の reactivity を保つため、UI にはコピーした snapshot ではなく accessor または導出値を渡す。Dialog と Popover は引き続き Kobalte、pane のリサイズは corvu に任せる。設定の保存境界は trace とコンポーネントの双方から分離するが、初回実装は現状を保つためメモリ内でもよい。
+controller は選択中の run、選択中の seq（明示的な「最新を追う」状態を含む）、実行ごとの列表示、形式、Composite View のインスタンス、span の展開、表・グラフの切り替え、差分のみ表示を管理する。selector は読み取り専用で memoize された frame と列を返す。Solid の reactivity を保つため、UI にはコピーした snapshot ではなく accessor または導出値を渡す。Dialog と Popover は引き続き Kobalte、pane のリサイズは corvu に任せる。設定の保存境界は trace とコンポーネントの双方から分離するが、初回実装は現状を保つためメモリ内でもよい。
 
 ## 検証と静的解析
 
-純粋な処理と限定した Solid コンポーネントの契約には Vitest、一連の操作には Playwright を使う。単体テストの対象は v1/v2 decode、snapshot/patch の materialize、ブランド ID の不正値拒否と名前空間分離、大きな seq、`from` と時系列の独立、span の prefix と ID の再出現、行・列 ID の安定性、表示形式の適用判定とフォールバック、role の候補、binding の検証、実行ごとの状態分離。`RunId`、`Seq`、`ValueName`、`ColumnId` の混同には `@ts-expect-error` によるコンパイル時の否定例も置く。Format Menu と binding ダイアログの操作・アクセシビリティはコンポーネントテストで確認する。既存の Playwright テストは実行選択、表・グラフの切り替え、再生、形式変更、Algo View 追加の受け入れ基準として残す。表の renderer を置き換える前に desktop と compact layout の画面比較用画像を採取する。
+純粋な処理と限定した Solid コンポーネントの契約には Vitest、一連の操作には Playwright を使う。単体テストの対象は v1/v2 decode、snapshot/patch の materialize、ブランド ID の不正値拒否と名前空間分離、大きな seq、`from` と時系列の独立、span の prefix と ID の再出現、行・列 ID の安定性、表示形式の適用判定とフォールバック、role の候補、binding の検証、実行ごとの状態分離。`RunId`、`Seq`、`ValueName`、`ColumnId` の混同には `@ts-expect-error` によるコンパイル時の否定例も置く。Format Menu と binding ダイアログの操作・アクセシビリティはコンポーネントテストで確認する。既存の Playwright テストは実行選択、表・グラフの切り替え、再生、形式変更、Composite View 追加の受け入れ基準として残す。表の renderer を置き換える前に desktop と compact layout の画面比較用画像を採取する。
 
 ESLint の flat config に `eslint-plugin-solid` の TypeScript 向けルール、特に `solid/reactivity`、`solid/no-destructure`、`solid/prefer-for` を入れる。TypeScript には `typescript-eslint`、型検査には `tsc --noEmit` を使う。`strict` を維持し、危険な添字アクセスを直してから `noUncheckedIndexedAccess` を追加する。1.0 未満の Solid plugin は minor version を固定する。Node 22.12.0 では `@typescript-eslint` 8.71.0 の間接依存が Node 22.13.0 を要求するため、TypeScript 5.9.3 と `typescript-eslint` 8.55.0 に固定し、Solid plugin の `@typescript-eslint/utils` も同版へ override する。
 
@@ -431,12 +431,12 @@ Tailwind は現時点では導入しない。既存画面の見た目はグロ�
 
 1. モデルの単体テストと選んだ画面比較画像で既存動作を固定し、lint と型検査の基準を作る。
 2. decode、materialize、span 階層、関係グラフを、出力を変えずに純粋なモジュールへ分離する。
-3. 値の表示形式と Algo View のレジストリを導入し、メニューと初期表示を維持しながら既存実装を一つずつ移す。
+3. 値の表示形式と Composite View のレジストリを導入し、メニューと初期表示を維持しながら既存実装を一つずつ移す。
 4. workspace controller と RunRepository 境界を導入し、ポーリングと実行ごとの UI 状態の挙動を保つ。
 5. アダプターの背後にある履歴表を TanStack Table v9 に置き換え、選択、入れ子の展開、列メニュー、表とグラフの整合を検証する。
 6. Husky と CI の品質ゲートを有効にする。その後、実測した trace に基づいて仮想化や増分 materialize を検討する。
 
-完了条件は動作と構造の両方に置く。同じ v2 trace と現行サンプルが同じように表示されること。ドメインモジュールが UI framework を import しないこと。値の renderer または Algo View の追加が、materializer・表・workspace shell の編集ではなく、個別実装とレジストリへの登録で完結すること。単体テスト、型検査、lint、build、ブラウザテストが通ること。
+完了条件は動作と構造の両方に置く。同じ v2 trace と現行サンプルが同じように表示されること。ドメインモジュールが UI framework を import しないこと。値の renderer または Composite View の追加が、materializer・表・workspace shell の編集ではなく、個別実装とレジストリへの登録で完結すること。単体テスト、型検査、lint、build、ブラウザテストが通ること。
 
 ## 参照資料
 

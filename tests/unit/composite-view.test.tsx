@@ -3,21 +3,21 @@ import { cleanup, render } from '@solidjs/testing-library';
 import { createSignal } from 'solid-js';
 import { afterEach, describe, expect, it } from 'vitest';
 import {
-  AlgoCell,
+  CompositeCell,
   candidateNames,
   initialBindings,
   templates,
   validBindings,
-  type AlgoView,
-} from '../../src/presentations/algo/registry';
+  type CompositeView,
+} from '../../src/presentations/composite/registry';
 import { seqId } from '../../src/trace/ids';
 import type { Frame } from '../../src/trace/types';
-import { previewFor } from '../../src/presentations/algo/preview';
-import type { AlgoViewDefinition } from '../../src/presentations/algo/contract';
+import { previewFor } from '../../src/presentations/composite/preview';
+import type { CompositeViewDefinition } from '../../src/presentations/composite/contract';
 
 afterEach(cleanup);
 
-const view: AlgoView = {
+const view: CompositeView = {
   id: 1,
   template: 'binary',
   bindings: { left: 'left', right: 'right', mid: 'mid', predicate: 'ok' },
@@ -40,7 +40,7 @@ function frame(mid: string): Frame {
   };
 }
 
-describe('Algo View renderer', () => {
+describe('Composite View renderer', () => {
   it('derives a valid preview and bindings from each registered definition', () => {
     for (const template of Object.keys(templates) as (keyof typeof templates)[]) {
       const definition = templates[template];
@@ -56,7 +56,7 @@ describe('Algo View renderer', () => {
   });
 
   it('uses a view-local predicate and preferred names when resolving bindings', () => {
-    const definition: AlgoViewDefinition = {
+    const definition: CompositeViewDefinition = {
       id: 'custom',
       name: 'Custom',
       description: '',
@@ -88,7 +88,7 @@ describe('Algo View renderer', () => {
 
   it('follows the selected frame reactively', () => {
     const [selected, setSelected] = createSignal(frame('1'));
-    const { container } = render(() => <AlgoCell view={view} frame={selected()} />);
+    const { container } = render(() => <CompositeCell view={view} frame={selected()} />);
     expect(container.textContent).toContain('M 1');
     expect(container.querySelector('.dg-bool')?.textContent).toBe('false');
     setSelected(frame('2'));
@@ -124,13 +124,13 @@ describe('Algo View renderer', () => {
         u: { name: 'u', value: { t: 'int', v: '1' } },
       },
     };
-    const graphView: AlgoView = {
+    const graphView: CompositeView = {
       id: 2,
       template: 'graph',
       bindings: { adjacency: 'adjacency', visited: 'seen', v: 'u' },
       enabled: true,
     };
-    const { container } = render(() => <AlgoCell view={graphView} frame={graphFrame} />);
+    const { container } = render(() => <CompositeCell view={graphView} frame={graphFrame} />);
     expect(container.querySelectorAll('svg[role="img"] g')).toHaveLength(3);
     expect(container.querySelectorAll('svg[role="img"] line')).toHaveLength(3);
     expect(container.querySelector('[aria-label="Vertex 1, visited, current"]')).not.toBeNull();
@@ -174,7 +174,7 @@ describe('Algo View renderer', () => {
         },
       },
     };
-    const { container: setContainer } = render(() => <AlgoCell view={graphView} frame={setFrame} />);
+    const { container: setContainer } = render(() => <CompositeCell view={graphView} frame={setFrame} />);
     expect(candidateNames([setFrame], templates.graph.roles[1])).toEqual(['seen']);
     expect(setContainer.querySelector('[aria-label="Vertex 2, visited"]')).not.toBeNull();
   });

@@ -46,7 +46,6 @@ test('v2 trace materializes in the live workspace and remains explorable', async
   await page.getByRole('button', { name: 'Bars' }).click();
   await expect(page.locator('.dg-table-scroll .dg-bars')).toHaveCount(4);
 
-  await expect(page.getByRole('heading', { name: 'Algo Views' })).toHaveCount(0);
   await page.getByRole('button', { name: 'Add View' }).click();
   await expect(page.locator('.dg-stage-choose .dg-template-preview .dg-binary-view')).toBeVisible();
   await page.locator('.dg-template-list button').filter({ hasText: 'Grid & position' }).hover();
@@ -54,7 +53,7 @@ test('v2 trace materializes in the live workspace and remains explorable', async
   await page.locator('.dg-template-list button').filter({ hasText: 'Range & marker' }).click();
   await expect(page.locator('.dg-binding-current')).toContainText(['left', 'right', 'mid', 'ok']);
   await page.getByRole('dialog').getByRole('button', { name: 'Add view' }).click();
-  await expect(page.locator('.dg-algo-cell')).toHaveCount(4);
+  await expect(page.locator('.dg-view-cell')).toHaveCount(4);
 
   await expect(page.locator('.dg-graph-meta strong')).toHaveText('Transition graph');
   await expect(page.locator('.dg-graph-node')).toHaveCount(4);
@@ -300,22 +299,22 @@ test('node-link view binds an adjacency list with optional visited and current v
   }
   await page.getByRole('dialog').getByRole('button', { name: 'Add view' }).click();
 
-  await expect(page.locator('.dg-algo-cell svg[role="img"]')).toHaveAttribute(
+  await expect(page.locator('.dg-view-cell svg[role="img"]')).toHaveAttribute(
     'aria-label',
     'Input graph: 3 vertices, 3 directed edges, current vertex 0',
   );
-  await expect(page.locator('.dg-algo-cell svg line')).toHaveCount(3);
-  await expect(page.locator('.dg-algo-cell [aria-label="Vertex 0, visited, current"]')).toHaveCount(1);
+  await expect(page.locator('.dg-view-cell svg line')).toHaveCount(3);
+  await expect(page.locator('.dg-view-cell [aria-label="Vertex 0, visited, current"]')).toHaveCount(1);
 
   await page.locator('.dg-view-list').getByRole('button', { name: 'Edit Node-link graph bindings' }).click();
   await page.locator('.dg-binding-row').nth(1).getByRole('button', { name: 'None' }).click();
   await page.locator('.dg-binding-row').nth(2).getByRole('button', { name: 'None' }).click();
   await page.getByRole('button', { name: 'Save bindings' }).click();
-  await expect(page.locator('.dg-algo-cell svg[role="img"]')).toHaveAttribute(
+  await expect(page.locator('.dg-view-cell svg[role="img"]')).toHaveAttribute(
     'aria-label',
     'Input graph: 3 vertices, 3 directed edges',
   );
-  await expect(page.locator('.dg-algo-cell [aria-label="Vertex 0"]')).toHaveCount(1);
+  await expect(page.locator('.dg-view-cell [aria-label="Vertex 0"]')).toHaveCount(1);
 });
 
 test('table and graph stay side by side and share record focus', async ({ page }) => {

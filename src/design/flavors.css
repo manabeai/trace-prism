@@ -365,14 +365,14 @@
 .fl-side-divider {
   height: 20px;
 }
-.fl-algo-view,
+.fl-view-view,
 .fl-add-view,
 .fl-run {
   display: flex;
   align-items: center;
   gap: 8px;
 }
-.fl-algo-view {
+.fl-view-view {
   padding: 9px;
   border: 1px solid var(--fl-border);
   border-radius: var(--fl-radius);
@@ -380,10 +380,10 @@
   font-size: 10px;
   font-weight: 650;
 }
-.fl-algo-view svg:first-child {
+.fl-view-view svg:first-child {
   color: var(--fl-accent);
 }
-.fl-algo-view svg:last-child {
+.fl-view-view svg:last-child {
   margin-left: auto;
   color: var(--fl-muted);
 }
@@ -632,11 +632,11 @@
   background: var(--fl-soft);
   color: var(--fl-success);
 }
-.fl-algo-mini {
+.fl-view-mini {
   display: flex;
   gap: 4px;
 }
-.fl-algo-mini span {
+.fl-view-mini span {
   display: inline-flex;
   gap: 3px;
   padding: 4px;
@@ -645,11 +645,11 @@
   color: var(--fl-muted);
   font-size: 9px;
 }
-.fl-algo-mini b {
+.fl-view-mini b {
   color: var(--fl-ink);
   font-family: 'IBM Plex Mono', monospace;
 }
-.fl-algo-mini .is-mid {
+.fl-view-mini .is-mid {
   border-color: var(--fl-accent);
   color: var(--fl-accent);
 }

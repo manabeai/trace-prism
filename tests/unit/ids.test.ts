@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { runId, seqId, valueColumnId, valueName, viewInstanceId, algoColumnId } from '../../src/trace/ids';
+import { runId, seqId, valueColumnId, valueName, viewInstanceId, viewColumnId } from '../../src/trace/ids';
 
 describe('trace IDs', () => {
   it('validates canonical wire identities before branding', () => {
@@ -10,8 +10,8 @@ describe('trace IDs', () => {
     expect(() => seqId('18446744073709551616')).toThrow();
   });
 
-  it('keeps raw value columns and Algo View columns disjoint', () => {
+  it('keeps raw value columns and Composite View columns disjoint', () => {
     expect(valueColumnId(valueName('a'))).toBe('value:a');
-    expect(algoColumnId(viewInstanceId('1'))).toBe('algo:1');
+    expect(viewColumnId(viewInstanceId('1'))).toBe('view:1');
   });
 });

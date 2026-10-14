@@ -12,7 +12,7 @@
   --dg-array: var(--fn-action);
   --dg-set: var(--fn-copper);
   --dg-map: var(--fn-action);
-  --dg-algo: var(--fn-action);
+  --dg-view: var(--fn-action);
   --font-code: 'IBM Plex Mono', monospace;
   display: flex;
   flex-direction: column;
@@ -332,7 +332,7 @@
   flex: 0 0 27px;
   height: 27px;
   background: var(--fn-soft);
-  color: var(--dg-algo);
+  color: var(--dg-view);
   font-size: 14px;
 }
 .dg-view-item label > span:last-child {
@@ -575,7 +575,7 @@
   font-size: 9px;
   font-weight: 400;
 }
-.dg-history-table thead th.dg-heading-algo {
+.dg-history-table thead th.dg-heading-view {
   background: var(--fn-soft);
 }
 @container history-table (max-width: 700px) {
@@ -784,8 +784,8 @@
   background: #a8b9a9;
 }
 .dg-mini-grid span.current {
-  background: var(--dg-algo);
-  border-color: var(--dg-algo);
+  background: var(--dg-view);
+  border-color: var(--dg-view);
   box-shadow: inset 0 0 0 2px #fff;
 }
 .dg-grid-view {
@@ -803,12 +803,12 @@
 }
 .dg-grid-view code {
   font-size: 11px;
-  color: var(--dg-algo);
+  color: var(--dg-view);
 }
-.dg-algo-cell {
+.dg-view-cell {
   background: var(--fn-sheet);
 }
-.dg-frame-row.is-selected .dg-algo-cell {
+.dg-frame-row.is-selected .dg-view-cell {
   background: var(--fn-soft);
 }
 .dg-binary-view {
@@ -849,7 +849,7 @@
   width: 7px;
   height: 7px;
   border-radius: 50%;
-  background: var(--dg-algo);
+  background: var(--dg-view);
 }
 .dg-binary-track small {
   position: absolute;
@@ -866,7 +866,7 @@
   margin-top: 10px;
 }
 .dg-binary-readout code {
-  color: var(--dg-algo);
+  color: var(--dg-view);
   font-size: 9px;
 }
 .dg-binary-readout .dg-bool {
@@ -1115,14 +1115,14 @@
   cursor: pointer;
 }
 .dg-graph-node.is-actionable:hover circle {
-  stroke: var(--dg-algo);
+  stroke: var(--dg-view);
   stroke-width: 3;
 }
 .dg-graph-node:focus-visible {
   outline: none;
 }
 .dg-graph-node:focus-visible circle {
-  stroke: var(--dg-algo);
+  stroke: var(--dg-view);
   stroke-width: 4;
 }
 .dg-graph-legend {
@@ -1439,7 +1439,7 @@
 .dg-column-head code {
   white-space: nowrap;
 }
-.dg-algo-head-action {
+.dg-view-head-action {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1453,12 +1453,12 @@
   background: transparent;
   color: var(--dg-accent);
 }
-.dg-algo-head-action:hover {
+.dg-view-head-action:hover {
   border-color: var(--fn-rule);
   background: var(--fn-soft);
 }
-.dg-algo-head-action {
-  color: var(--dg-algo);
+.dg-view-head-action {
+  color: var(--dg-view);
 }
 .dg-diff-control {
   font-size: 11px;
@@ -1671,7 +1671,7 @@
 }
 .dg-template-list button > svg:first-child {
   flex: none;
-  color: var(--dg-algo);
+  color: var(--dg-view);
 }
 .dg-template-list button > svg:last-child {
   flex: none;
