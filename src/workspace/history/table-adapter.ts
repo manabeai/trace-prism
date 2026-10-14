@@ -5,8 +5,9 @@ import {
   rowExpandingFeature,
   tableFeatures,
 } from '@tanstack/solid-table';
-import type { Accessor } from 'solid-js';
+import { createMemo, type Accessor } from 'solid-js';
 import type { HistoryNode } from '../../trace/types';
+import type { RunId } from '../../trace/ids';
 import { spanKey } from '../../trace/value';
 
 const features = tableFeatures({ rowExpandingFeature, expandedRowModel: createExpandedRowModel() });
@@ -19,12 +20,20 @@ function groups(nodes: HistoryNode[]): GroupNode[] {
   return nodes.flatMap((node) => (node.kind === 'group' ? [node, ...groups(node.children)] : []));
 }
 
-export function createHistoryTable(tree: Accessor<HistoryNode[]>, collapsed: Accessor<string[]>) {
+export function createHistoryTable(
+  tree: Accessor<HistoryNode[]>,
+  collapsed: Accessor<string[]>,
+  runId: Accessor<RunId | undefined>,
+) {
+  const data = createMemo(() => {
+    runId();
+    return tree().slice();
+  });
   return createTable({
     features,
     columns,
     get data() {
-      return tree();
+      return data();
     },
     get state() {
       const hidden = new Set(collapsed());
@@ -32,12 +41,13 @@ export function createHistoryTable(tree: Accessor<HistoryNode[]>, collapsed: Acc
         expanded: Object.fromEntries(
           groups(tree())
             .filter((node) => !hidden.has(spanKey(node.span)))
-            .map((node) => [`span:${spanKey(node.span)}`, true]),
+            .map((node) => [`${runId()}/span:${spanKey(node.span)}`, true]),
         ),
       };
     },
     getSubRows: (node) => (node.kind === 'group' ? node.children : undefined),
-    getRowId: (node) => (node.kind === 'group' ? `span:${spanKey(node.span)}` : `seq:${node.frame.seq}`),
+    getRowId: (node) =>
+      node.kind === 'group' ? `${runId()}/span:${spanKey(node.span)}` : `${runId()}/seq:${node.frame.seq}`,
     getRowCanExpand: (row) => row.original.kind === 'group',
   });
 }

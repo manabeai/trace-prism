@@ -6,6 +6,8 @@ import { defineValuePresentation } from '../../src/presentations/values/contract
 import { textFormat } from '../../src/presentations/values/shared';
 import type { Column, Frame, Value } from '../../src/trace/types';
 import { seqId } from '../../src/trace/ids';
+import { diffValues } from '../../src/trace/diff';
+import { ValueCell } from '../../src/workspace/history/ValueCell';
 
 afterEach(cleanup);
 
@@ -50,6 +52,27 @@ describe('value formats', () => {
     expect(options({ t: 'record', fields: [] })).toEqual(['fields', 'text']);
   });
 
+  it('offers formats that become applicable in later frames of the same column', () => {
+    const first: Frame = {
+      seq: seqId('0'),
+      span: [],
+      source: 'test.rs:1',
+      changed: ['x'],
+      deltas: {},
+      values: { x: { name: 'x', value: { t: 'array', items: [{ t: 'string', v: 'a' }] } } },
+    };
+    const later: Frame = {
+      ...first,
+      seq: seqId('1'),
+      values: { x: { name: 'x', value: { t: 'array', items: [{ t: 'int', v: '2' }] } } },
+    };
+    expect(formatOptions({ name: 'x', kind: 'array' }, [first, later]).map((option) => option.id)).toEqual([
+      'cells',
+      'bars',
+      'text',
+    ]);
+  });
+
   it('dispatches shared format IDs by value kind and falls back when a format no longer fits', () => {
     const array = render(() => renderValue({ t: 'array', items: [{ t: 'int', v: '2' }] }, 'cells'));
     expect(array.container.querySelector('.dg-array')?.textContent).toBe('2');
@@ -67,6 +90,49 @@ describe('value formats', () => {
       renderValue({ t: 'array', items: [{ t: 'array', items: [{ t: 'int', v: '7' }] }] }, 'bars'),
     );
     expect(changedShape.container.querySelector('.lv-plain-value')?.textContent).toBe('[[7]]');
+  });
+
+  it('highlights a count only when the displayed size changes', () => {
+    const key = (v: string) => ({ t: 'string' as const, v });
+    const entry = (name: string, number: string) => ({
+      key: key(name),
+      value: { t: 'int' as const, v: number },
+    });
+    const before: Value = { t: 'map', entries: [entry('a', '1')] };
+    const edited: Value = { t: 'map', entries: [entry('a', '2')] };
+    const replaced: Value = { t: 'map', entries: [entry('b', '2')] };
+    const grown: Value = { t: 'map', entries: [entry('a', '1'), entry('b', '2')] };
+    const cell = (value: Value, changes: ReturnType<typeof diffValues>) =>
+      render(() => ValueCell({ field: { name: 'x', value }, format: 'count', changes }));
+
+    const edit = cell(edited, diffValues(before, edited));
+    expect(edit.container.querySelector('code')?.textContent).toBe('1 entries');
+    expect(edit.container.querySelector('.dg-value-body')?.classList.contains('is-updated')).toBe(false);
+    edit.unmount();
+
+    const replace = cell(replaced, diffValues(before, replaced));
+    expect(replace.container.querySelector('.dg-value-body')?.classList.contains('is-updated')).toBe(false);
+    replace.unmount();
+
+    const add = cell(grown, diffValues(before, grown));
+    expect(add.container.querySelector('.dg-value-body')?.classList.contains('is-updated')).toBe(true);
+    add.unmount();
+
+    const beforeSet: Value = { t: 'set', items: [{ t: 'int', v: '1' }] };
+    const afterSet: Value = { t: 'set', items: [{ t: 'int', v: '2' }] };
+    const set = cell(afterSet, diffValues(beforeSet, afterSet));
+    expect(set.container.querySelector('code')?.textContent).toBe('1 items');
+    expect(set.container.querySelector('.dg-value-body')?.classList.contains('is-updated')).toBe(false);
+  });
+
+  it('uses the fallback format to decide whether an incompatible selection changed visibly', () => {
+    const before: Value = { t: 'array', items: [{ t: 'string', v: 'a' }] };
+    const after: Value = { t: 'array', items: [{ t: 'string', v: 'b' }] };
+    const output = render(() =>
+      ValueCell({ field: { name: 'x', value: after }, format: 'bars', changes: diffValues(before, after) }),
+    );
+    expect(output.container.querySelector('.lv-plain-value')?.textContent).toBe('["b"]');
+    expect(output.container.querySelector('.dg-value-body')?.classList.contains('is-updated')).toBe(true);
   });
 
   it('keeps each format renderer attached to its own value kind', () => {

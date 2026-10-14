@@ -1,6 +1,6 @@
 import { createMemo, For, Show } from 'solid-js';
 import { IconGitBranch } from '@tabler/icons-solidjs';
-import type { AlgoViewDefinition } from '../contract';
+import { roleAccepts, type AlgoViewDefinition } from '../contract';
 import { numberOf } from '../../value-shapes';
 
 export const binarySearch: AlgoViewDefinition = {
@@ -9,11 +9,32 @@ export const binarySearch: AlgoViewDefinition = {
   description: 'Show a numeric range, its marker, and a true or false value.',
   summary: 'Two bounds + marker + condition',
   roles: [
-    { name: 'left', shape: 'int', previewHint: 'Moves the start of the highlighted range.' },
-    { name: 'right', shape: 'int', previewHint: 'Moves the end of the highlighted range.' },
-    { name: 'mid', shape: 'int', previewHint: 'Moves the marker.' },
-    { name: 'predicate', shape: 'bool', previewHint: 'Changes the true or false indicator.' },
+    {
+      name: 'left',
+      shape: 'int',
+      accepts: roleAccepts.int,
+      previewHint: 'Moves the start of the highlighted range.',
+    },
+    {
+      name: 'right',
+      shape: 'int',
+      accepts: roleAccepts.int,
+      previewHint: 'Moves the end of the highlighted range.',
+    },
+    { name: 'mid', shape: 'int', accepts: roleAccepts.int, previewHint: 'Moves the marker.' },
+    {
+      name: 'predicate',
+      shape: 'bool',
+      accepts: roleAccepts.bool,
+      previewHint: 'Changes the true or false indicator.',
+    },
   ],
+  preview: {
+    left: { t: 'int', v: '2' },
+    right: { t: 'int', v: '8' },
+    mid: { t: 'int', v: '5' },
+    predicate: { t: 'bool', v: true },
+  },
   icon: IconGitBranch,
   component: (props) => {
     const bound = (role: string) => props.frame.values[props.view.bindings[role]]?.value;

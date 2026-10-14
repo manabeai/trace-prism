@@ -2,7 +2,7 @@ import type { JSX } from 'solid-js';
 import { IconList } from '@tabler/icons-solidjs';
 import type { Column, Frame, Value } from '../../trace/types';
 import type { ValueChange, ValuePath } from '../../trace/diff';
-import type { ErasedValuePresentation, FormatOption, ValueKind } from './contract';
+import type { ErasedValueFormat, ErasedValuePresentation, FormatOption, ValueKind } from './contract';
 import { arrayPresentation } from './kinds/array';
 import { boolPresentation } from './kinds/bool';
 import { floatPresentation } from './kinds/float';
@@ -27,15 +27,23 @@ const presentations = {
 
 export type { FormatOption } from './contract';
 
+function formatFor(value: Value, formatId: string): ErasedValueFormat {
+  const presentation = presentations[value.t];
+  return (
+    presentation.formats.find((item) => item.id === formatId && item.accepts(value)) ?? presentation.fallback
+  );
+}
+
 export function formatOptions(column: Column, frames: Frame[]): FormatOption[] {
   const observed = frames
     .map((frame) => frame.values[column.name]?.value)
-    .find((value): value is Value => value !== undefined);
-  if (!observed) return [{ id: 'text', label: 'Text', icon: IconList }];
-  const presentation = presentations[observed.t];
-  return [...presentation.formats, presentation.fallback]
-    .filter((format) => format.accepts(observed))
-    .map((format) => ({ id: format.id, label: format.label(observed), icon: format.icon }));
+    .filter((value): value is Value => value?.t === column.kind);
+  if (!observed.length) return [{ id: 'text', label: 'Text', icon: IconList }];
+  const presentation = presentations[column.kind];
+  return [...presentation.formats, presentation.fallback].flatMap((format) => {
+    const applicable = observed.find(format.accepts);
+    return applicable ? [{ id: format.id, label: format.label(applicable), icon: format.icon }] : [];
+  });
 }
 
 export function renderValue(
@@ -45,7 +53,13 @@ export function renderValue(
   matches: readonly ValuePath[] = [],
 ): JSX.Element {
   if (!value) return <span class="dg-quiet">—</span>;
-  const presentation = presentations[value.t];
-  const format = presentation.formats.find((item) => item.id === formatId && item.accepts(value));
-  return (format ?? presentation.fallback).render(value, changes, matches);
+  return formatFor(value, formatId).render(value, changes, matches);
+}
+
+export function formatHasVisibleChange(
+  value: Value | undefined,
+  formatId: string,
+  changes: readonly ValueChange[] = [],
+): boolean {
+  return value !== undefined && formatFor(value, formatId).isChanged(value, changes);
 }

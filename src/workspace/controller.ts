@@ -7,6 +7,8 @@ import { materialize } from '../trace/materialize';
 import { formatOptions } from '../presentations/values/registry';
 import {
   candidateNames,
+  defaultTemplate,
+  initialBindings,
   templates,
   validBindings,
   type AlgoView,
@@ -50,7 +52,7 @@ export function createWorkspaceController(repository: RunRepository = new TauriR
   const [viewsByRun, setViewsByRun] = createSignal<Record<string, AlgoView[]>>({});
   const [dialogOpen, setDialogOpen] = createSignal(false);
   const [stage, setStage] = createSignal<'choose' | 'bind'>('choose');
-  const [template, setTemplate] = createSignal<Template>('binary');
+  const [template, setTemplate] = createSignal<Template>(defaultTemplate);
   const [editingId, setEditingId] = createSignal<number | null>(null);
   const [draft, setDraft] = createSignal<Record<string, string>>({});
 
@@ -162,24 +164,17 @@ export function createWorkspaceController(repository: RunRepository = new TauriR
     return options.some((option) => option.id === selected) ? selected : options[0].id;
   };
   const candidates = (role: Role) => candidateNames(frames(), role);
-  const initialBindings = (next: Template) =>
-    Object.fromEntries(
-      templates[next].roles.map((role) => {
-        const names = candidates(role);
-        const preferred = [role.name, ...(role.preferredNames ?? [])].find((name) => names.includes(name));
-        return [role.name, preferred ?? (role.optional ? '' : (names[0] ?? ''))];
-      }),
-    );
+  const bindingsFor = (next: Template) => initialBindings(templates[next], frames());
   const openDialog = (view?: AlgoView) => {
     setEditingId(view?.id ?? null);
-    setTemplate(view?.template ?? 'binary');
+    setTemplate(view?.template ?? defaultTemplate);
     setStage(view ? 'bind' : 'choose');
-    setDraft(view?.bindings ?? initialBindings('binary'));
+    setDraft(view?.bindings ?? bindingsFor(defaultTemplate));
     setDialogOpen(true);
   };
   const chooseTemplate = (next: Template) => {
     setTemplate(next);
-    setDraft(initialBindings(next));
+    setDraft(bindingsFor(next));
     setStage('bind');
   };
   const saveView = () => {

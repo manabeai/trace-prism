@@ -2,7 +2,7 @@ import { createMemo, createUniqueId, For, Show } from 'solid-js';
 import { IconSitemap } from '@tabler/icons-solidjs';
 import type { Value } from '../../../trace/types';
 import { isBooleanArray, isIntegerSet } from '../../value-shapes';
-import type { AlgoViewDefinition } from '../contract';
+import { roleAccepts, type AlgoViewDefinition } from '../contract';
 import styles from './adjacency-graph.module.css';
 
 type Adjacency = number[][];
@@ -46,12 +46,14 @@ export const adjacencyGraph: AlgoViewDefinition = {
     {
       name: 'adjacency',
       shape: 'array',
+      accepts: (value) => adjacencyOf(value) !== undefined,
       previewHint: 'Changes the vertices and links.',
       preferredNames: ['graph', 'g'],
     },
     {
       name: 'visited',
-      shape: 'visited',
+      shape: 'bool[] or set<int>',
+      accepts: roleAccepts.visited,
       previewHint: 'Highlights visited vertices.',
       optional: true,
       preferredNames: ['seen'],
@@ -59,11 +61,26 @@ export const adjacencyGraph: AlgoViewDefinition = {
     {
       name: 'v',
       shape: 'int',
+      accepts: roleAccepts.int,
       previewHint: 'Highlights the current vertex.',
       optional: true,
       preferredNames: ['u', 'current'],
     },
   ],
+  preview: {
+    adjacency: {
+      t: 'array',
+      items: [[1, 2], [2], [3], []].map((row) => ({
+        t: 'array' as const,
+        items: row.map((item) => ({ t: 'int' as const, v: String(item) })),
+      })),
+    },
+    visited: {
+      t: 'array',
+      items: [true, true, false, false].map((item) => ({ t: 'bool' as const, v: item })),
+    },
+    v: { t: 'int', v: '1' },
+  },
   icon: IconSitemap,
   component: (props) => {
     const arrowId = createUniqueId();

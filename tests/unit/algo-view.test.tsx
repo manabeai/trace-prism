@@ -5,12 +5,15 @@ import { afterEach, describe, expect, it } from 'vitest';
 import {
   AlgoCell,
   candidateNames,
+  initialBindings,
   templates,
   validBindings,
   type AlgoView,
 } from '../../src/presentations/algo/registry';
 import { seqId } from '../../src/trace/ids';
 import type { Frame } from '../../src/trace/types';
+import { previewFor } from '../../src/presentations/algo/preview';
+import type { AlgoViewDefinition } from '../../src/presentations/algo/contract';
 
 afterEach(cleanup);
 
@@ -38,6 +41,51 @@ function frame(mid: string): Frame {
 }
 
 describe('Algo View renderer', () => {
+  it('derives a valid preview and bindings from each registered definition', () => {
+    for (const template of Object.keys(templates) as (keyof typeof templates)[]) {
+      const definition = templates[template];
+      const { frame: example, view: exampleView } = previewFor(template);
+      expect(exampleView.template).toBe(template);
+      for (const role of definition.roles) {
+        expect(exampleView.bindings[role.name]).toBe(role.name);
+        const value = example.values[role.name]?.value;
+        expect(value && role.accepts(value)).toBe(true);
+      }
+      expect(validBindings(definition, exampleView.bindings, [example])).toBe(true);
+    }
+  });
+
+  it('uses a view-local predicate and preferred names when resolving bindings', () => {
+    const definition: AlgoViewDefinition = {
+      id: 'custom',
+      name: 'Custom',
+      description: '',
+      summary: '',
+      roles: [
+        {
+          name: 'item',
+          shape: 'positive int',
+          accepts: (value) => value.t === 'int' && BigInt(value.v) > 0n,
+          previewHint: '',
+          preferredNames: ['positive'],
+        },
+      ],
+      preview: { item: { t: 'int', v: '1' } },
+      icon: () => null,
+      component: () => null,
+    };
+    const example = {
+      ...frame('1'),
+      values: {
+        negative: { name: 'negative', value: { t: 'int' as const, v: '-1' } },
+        positive: { name: 'positive', value: { t: 'int' as const, v: '2' } },
+      },
+    };
+    expect(candidateNames([example], definition.roles[0])).toEqual(['positive']);
+    expect(initialBindings(definition, [example])).toEqual({ item: 'positive' });
+    expect(validBindings(definition, { item: 'negative' }, [example])).toBe(false);
+  });
+
   it('follows the selected frame reactively', () => {
     const [selected, setSelected] = createSignal(frame('1'));
     const { container } = render(() => <AlgoCell view={view} frame={selected()} />);
@@ -89,6 +137,22 @@ describe('Algo View renderer', () => {
     expect(container.textContent).toContain('3 vertices · 3 edges');
 
     expect(candidateNames([graphFrame], templates.graph.roles[1])).toEqual(['seen']);
+    expect(
+      candidateNames(
+        [
+          {
+            ...graphFrame,
+            values: {
+              invalid: {
+                name: 'invalid',
+                value: { t: 'array', items: [{ t: 'int', v: '99' }] },
+              },
+            },
+          },
+        ],
+        templates.graph.roles[0],
+      ),
+    ).toEqual([]);
     expect(validBindings(templates.graph, { adjacency: 'adjacency' }, [graphFrame])).toBe(true);
     expect(validBindings(templates.graph, { adjacency: 'adjacency', visited: 'u' }, [graphFrame])).toBe(
       false,

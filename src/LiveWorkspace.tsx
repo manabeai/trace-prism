@@ -2,34 +2,22 @@ import { createEffect, createMemo, createSignal, For, onCleanup, onMount, Show, 
 import type { JSX } from 'solid-js';
 import { Dynamic } from 'solid-js/web';
 import Resizable from '@corvu/resizable';
-import { Dialog } from '@kobalte/core/dialog';
 import {
-  IconBinaryTree,
   IconCheck,
   IconChevronDown,
   IconChevronLeft,
   IconChevronRight,
-  IconCode,
   IconEye,
-  IconGitBranch,
   IconHistory,
   IconPlus,
   IconSettings,
-  IconX,
 } from '@tabler/icons-solidjs';
 import { spanKey, spanText } from './trace/value';
-import type { Graph, GraphNode, HistoryNode } from './trace/types';
+import type { HistoryNode } from './trace/types';
 import type { Seq } from './trace/ids';
 import type { RunRepository } from './runs/RunRepository';
 import { formatOptions } from './presentations/values/registry';
-import {
-  AlgoCell,
-  templates,
-  validBindings,
-  type AlgoView,
-  type Template,
-} from './presentations/algo/registry';
-import { previewFrame, previewViews } from './presentations/algo/preview';
+import { AlgoCell, templates } from './presentations/algo/registry';
 import { createWorkspaceController } from './workspace/controller';
 import { BrandMark } from './design/BrandMark';
 import { createHistoryTable } from './workspace/history/table-adapter';
@@ -37,7 +25,8 @@ import { historyColumnLayout } from './workspace/history/column-layout';
 import { FormatMenu } from './workspace/history/FormatMenu';
 import { ValueCell } from './workspace/history/ValueCell';
 import { SearchEditor } from './workspace/search/SearchEditor';
-import type { SearchResults } from './search/evaluate';
+import { RelationGraph } from './workspace/graph/RelationGraph';
+import { ViewDialog } from './workspace/views/ViewDialog';
 import { UpdateControl } from './updater/UpdateControl';
 
 const runTimeFormatter = new Intl.DateTimeFormat('ja-JP', {
@@ -48,191 +37,8 @@ const runTimeFormatter = new Intl.DateTimeFormat('ja-JP', {
   hourCycle: 'h23',
 });
 
-function ViewPreview(props: { template: Template; activeRole?: string }) {
-  const hint = () =>
-    templates[props.template].roles.find((role) => role.name === props.activeRole)?.previewHint ??
-    templates[props.template].description;
-  return (
-    <div class="dg-template-preview dg-bind-preview" data-active-role={props.activeRole || undefined}>
-      <div class="dg-preview-heading">
-        <span>Example preview</span>
-        <strong>{templates[props.template].name}</strong>
-      </div>
-      <div class="dg-preview-canvas">
-        <AlgoCell view={previewViews[props.template]} frame={previewFrame} />
-      </div>
-      <p>{hint()}</p>
-    </div>
-  );
-}
-
-function RelationGraph(props: {
-  graph: Graph;
-  runId: string;
-  selectedSeq: string;
-  select: (seq: Seq) => void;
-  canSwitch: boolean;
-  switchMode: () => void;
-  search: SearchResults;
-}) {
-  const [zoom, setZoom] = createSignal(100);
-  let viewport: HTMLDivElement | undefined;
-  let lastFocus = '';
-  const nodes = createMemo(() => new Map(props.graph.nodes.map((node) => [node.id, node])));
-  const focusSelected = (behavior: ScrollBehavior, force = false) => {
-    const node = props.graph.nodes.find(
-      (item) => item.seq === props.selectedSeq || item.seqs?.includes(props.selectedSeq as Seq),
-    );
-    const scale = zoom() / 100;
-    const focus = node ? `${props.runId}:${node.id}:${node.x}:${node.y}:${scale}` : '';
-    if (!node || !viewport || (!force && focus === lastFocus)) return;
-    viewport.scrollTo({
-      left: node.x * scale - viewport.clientWidth / 2,
-      top: node.y * scale - viewport.clientHeight / 2,
-      behavior,
-    });
-    lastFocus = focus;
-  };
-  createEffect(() => focusSelected(lastFocus ? 'smooth' : 'instant'));
-  onMount(() => {
-    if (!viewport) return;
-    const observer = new ResizeObserver(() => focusSelected('instant', true));
-    observer.observe(viewport);
-    onCleanup(() => observer.disconnect());
-  });
-  const endpoint = (id: string): GraphNode => nodes().get(id)!;
-  const edgePath = (from: string, to: string) => {
-    const a = endpoint(from),
-      b = endpoint(to),
-      middle = (a.y + b.y) / 2;
-    return `M ${a.x} ${a.y + 18} C ${a.x} ${middle}, ${b.x} ${middle}, ${b.x} ${b.y - 18}`;
-  };
-  return (
-    <section class="dg-graph" aria-label="Record relation graph">
-      <div class="dg-graph-meta">
-        <div>
-          <strong>{props.graph.mode === 'transition' ? 'Transition graph' : 'Span hierarchy'}</strong>
-          <span>
-            {props.graph.mode === 'transition'
-              ? 'Edges follow explicit from references'
-              : 'IDs follow span prefixes'}
-          </span>
-          <Show when={props.canSwitch}>
-            <button
-              class="dg-graph-mode-switch"
-              type="button"
-              aria-label={props.graph.mode === 'transition' ? 'Show ID hierarchy' : 'Show from links'}
-              onClick={() => props.switchMode()}
-            >
-              <Show when={props.graph.mode === 'transition'} fallback={<IconGitBranch size="15" />}>
-                <IconBinaryTree size="15" />
-              </Show>
-              {props.graph.mode === 'transition' ? 'ID tree' : 'From links'}
-            </button>
-          </Show>
-        </div>
-        <label>
-          Zoom{' '}
-          <input
-            type="range"
-            min="70"
-            max="140"
-            value={zoom()}
-            onInput={(event) => setZoom(Number(event.currentTarget.value))}
-          />
-          <output>{zoom()}%</output>
-        </label>
-      </div>
-      <div class="dg-graph-scroll" ref={viewport}>
-        <svg
-          viewBox={`0 0 ${props.graph.width} ${props.graph.height}`}
-          style={{
-            width: `${(props.graph.width * zoom()) / 100}px`,
-            height: `${(props.graph.height * zoom()) / 100}px`,
-          }}
-          role="group"
-          aria-label="Record relations"
-        >
-          <For each={props.graph.edges}>
-            {(edge) => (
-              <path
-                class="dg-graph-edge"
-                classList={{
-                  'is-selected':
-                    nodes().get(edge.to)?.seq === props.selectedSeq ||
-                    nodes()
-                      .get(edge.to)
-                      ?.seqs?.includes(props.selectedSeq as Seq),
-                  'is-search-dim':
-                    props.search.active &&
-                    !(nodes().get(edge.to)?.seq && props.search.bySeq.has(nodes().get(edge.to)!.seq!)) &&
-                    !nodes()
-                      .get(edge.to)
-                      ?.seqs?.some((seq) => props.search.bySeq.has(seq)),
-                }}
-                d={edgePath(edge.from, edge.to)}
-              />
-            )}
-          </For>
-          <For each={props.graph.nodes}>
-            {(node) => (
-              <g
-                class="dg-graph-node"
-                classList={{
-                  'is-span': node.kind === 'span',
-                  'is-selected':
-                    node.seq === props.selectedSeq || node.seqs?.includes(props.selectedSeq as Seq),
-                  'is-actionable': node.seq !== undefined,
-                  'is-search-dim':
-                    props.search.active &&
-                    !(node.seq && props.search.bySeq.has(node.seq)) &&
-                    !node.seqs?.some((seq) => props.search.bySeq.has(seq)),
-                  'is-search-hit':
-                    props.search.active && Boolean(node.seq && props.search.bySeq.has(node.seq)),
-                }}
-                transform={`translate(${node.x} ${node.y})`}
-                role={node.seq !== undefined ? 'button' : undefined}
-                tabindex={node.seq !== undefined ? 0 : undefined}
-                aria-label={
-                  node.seq !== undefined ? `Record ${node.seq}, span ${node.detail}` : `Span ${node.detail}`
-                }
-                onClick={() => node.seq !== undefined && props.select(node.seq)}
-                onKeyDown={(event) => {
-                  if (node.seq !== undefined && (event.key === 'Enter' || event.key === ' ')) {
-                    event.preventDefault();
-                    props.select(node.seq);
-                  }
-                }}
-              >
-                <circle r={node.kind === 'span' ? 23 : 18} />
-                <text text-anchor="middle" dominant-baseline="central">
-                  {node.label}
-                </text>
-                <title>{node.detail}</title>
-              </g>
-            )}
-          </For>
-        </svg>
-      </div>
-      <div class="dg-graph-legend">
-        <span>
-          <i class="dg-legend-span" />
-          span
-        </span>
-        <span>
-          <i class="dg-legend-record" />
-          record
-        </span>
-        <span>
-          <i class="dg-legend-current" />
-          selected
-        </span>
-      </div>
-    </section>
-  );
-}
-
 export function LiveWorkspace(props: { repository?: RunRepository }) {
+  const controller = createWorkspaceController(untrack(() => props.repository));
   const {
     runs,
     current,
@@ -251,14 +57,6 @@ export function LiveWorkspace(props: { repository?: RunRepository }) {
     setSearchText,
     searchFieldList,
     searchResults,
-    dialogOpen,
-    setDialogOpen,
-    stage,
-    setStage,
-    template,
-    editingId,
-    draft,
-    setDraft,
     frames,
     columns,
     shownColumns,
@@ -272,15 +70,12 @@ export function LiveWorkspace(props: { repository?: RunRepository }) {
     chooseRun,
     toggleColumn,
     activeFormat,
-    candidates,
     openDialog,
-    chooseTemplate,
-    saveView,
     toggleView,
     setSelectedSeq,
     setFormats,
-  } = createWorkspaceController(untrack(() => props.repository));
-  const historyTable = createHistoryTable(tree, collapsed);
+  } = controller;
+  const historyTable = createHistoryTable(tree, collapsed, () => current()?.id);
   const columnLayout = createMemo(() => historyColumnLayout(shownColumns(), shownViews().length));
   const searchHitSet = createMemo(() => new Set(searchResults().hits));
   const searchTicks = createMemo(() => {
@@ -297,33 +92,6 @@ export function LiveWorkspace(props: { repository?: RunRepository }) {
   const [wideSizes, setWideSizes] = createSignal([2 / 3, 1 / 3]);
   const [narrowSizes, setNarrowSizes] = createSignal([0.5, 0.5]);
   const [stacked, setStacked] = createSignal(false);
-  const [previewTemplate, setPreviewTemplate] = createSignal<Template>('binary');
-  const [highlightedRole, setHighlightedRole] = createSignal<string | null>(null);
-  let choosePanel: HTMLDivElement | undefined;
-  let bindHeading: HTMLHeadingElement | undefined;
-  const openAddView = () => {
-    setPreviewTemplate('binary');
-    setHighlightedRole(null);
-    openDialog();
-  };
-  const openViewEditor = (view: AlgoView) => {
-    setHighlightedRole(null);
-    openDialog(view);
-  };
-  const selectViewLayout = (next: Template) => {
-    setHighlightedRole(null);
-    chooseTemplate(next);
-    queueMicrotask(() => bindHeading?.focus({ preventScroll: true }));
-  };
-  const returnToLayouts = () => {
-    setHighlightedRole(null);
-    setStage('choose');
-    queueMicrotask(() =>
-      choosePanel
-        ?.querySelector<HTMLButtonElement>(`[data-template="${template()}"]`)
-        ?.focus({ preventScroll: true }),
-    );
-  };
   const historySizes = () => (stacked() ? narrowSizes() : wideSizes());
   const setHistorySizes = (sizes: number[]) => (stacked() ? setNarrowSizes(sizes) : setWideSizes(sizes));
   onMount(() => {
@@ -524,7 +292,7 @@ export function LiveWorkspace(props: { repository?: RunRepository }) {
                   class="dg-add-view"
                   aria-label="Add View"
                   disabled={!frames().length}
-                  onClick={openAddView}
+                  onClick={() => openDialog()}
                 >
                   <span class="dg-add-view-icon" aria-hidden="true">
                     <IconPlus size="16" stroke="1.8" />
@@ -558,7 +326,7 @@ export function LiveWorkspace(props: { repository?: RunRepository }) {
                         </label>
                         <button
                           aria-label={`Edit ${templates[view.template].name} bindings`}
-                          onClick={() => openViewEditor(view)}
+                          onClick={() => openDialog(view)}
                         >
                           <IconSettings size="15" />
                         </button>
@@ -765,7 +533,7 @@ export function LiveWorkspace(props: { repository?: RunRepository }) {
                                       <button
                                         class="dg-algo-head-action"
                                         aria-label={`Edit ${templates[view.template].name} bindings`}
-                                        onClick={() => openViewEditor(view)}
+                                        onClick={() => openDialog(view)}
                                       >
                                         <IconSettings size="17" />
                                       </button>
@@ -807,7 +575,7 @@ export function LiveWorkspace(props: { repository?: RunRepository }) {
                         <RelationGraph
                           graph={graph()}
                           runId={current()?.id ?? ''}
-                          selectedSeq={selected()?.seq ?? ''}
+                          selectedSeq={selected()?.seq}
                           select={selectRecord}
                           canSwitch={canSwitchGraph()}
                           switchMode={() =>
@@ -879,159 +647,7 @@ export function LiveWorkspace(props: { repository?: RunRepository }) {
           </div>
         </Resizable.Panel>
       </Resizable>
-      <Dialog open={dialogOpen()} onOpenChange={setDialogOpen}>
-        <Dialog.Portal>
-          <Dialog.Overlay class="dg-dialog-overlay" />
-          <div class="dg-dialog-positioner">
-            <Dialog.Content class="dg-dialog dg-dialog-picker workspace-theme">
-              <div class="dg-dialog-header">
-                <Dialog.Title>
-                  {editingId() !== null ? `Edit ${templates[template()].name}` : 'Add View'}
-                </Dialog.Title>
-                <Dialog.CloseButton aria-label="Close dialog">
-                  <IconX size="18" />
-                </Dialog.CloseButton>
-              </div>
-              <Dialog.Description>
-                {editingId() !== null
-                  ? templates[template()].description
-                  : 'Combine recorded values into a view. Choose a layout, then assign its inputs.'}
-              </Dialog.Description>
-              <div class="dg-stage-viewport">
-                <div class="dg-stage-track" classList={{ 'is-binding': stage() === 'bind' }}>
-                  <div
-                    ref={choosePanel}
-                    class="dg-stage dg-stage-choose"
-                    aria-hidden={stage() !== 'choose'}
-                    inert={stage() !== 'choose'}
-                  >
-                    <div class="dg-view-picker">
-                      <div class="dg-template-list" aria-label="View layouts">
-                        <For each={Object.values(templates)}>
-                          {(definition) => (
-                            <button
-                              data-template={definition.id}
-                              classList={{ active: previewTemplate() === definition.id }}
-                              onMouseEnter={() => setPreviewTemplate(definition.id as Template)}
-                              onFocus={() => setPreviewTemplate(definition.id as Template)}
-                              onClick={() => selectViewLayout(definition.id as Template)}
-                            >
-                              <Dynamic component={definition.icon} size="21" stroke="1.7" />
-                              <span>
-                                <strong>{definition.name}</strong>
-                                <small>{definition.summary}</small>
-                              </span>
-                              <IconChevronRight size="15" stroke="1.8" />
-                            </button>
-                          )}
-                        </For>
-                      </div>
-                      <ViewPreview template={previewTemplate()} />
-                    </div>
-                  </div>
-                  <div
-                    class="dg-stage dg-stage-bind"
-                    aria-hidden={stage() !== 'bind'}
-                    inert={stage() !== 'bind'}
-                  >
-                    <div class="dg-bind-layout">
-                      <div class="dg-bind-fields">
-                        <div class="dg-bind-intro">
-                          <h3 ref={bindHeading} tabIndex={-1}>
-                            {templates[template()].name}
-                          </h3>
-                          <p>{templates[template()].description}</p>
-                        </div>
-                        <div class="dg-binding-list">
-                          <For each={templates[template()].roles}>
-                            {(role) => (
-                              <div
-                                class="dg-binding-row"
-                                data-role={role.name}
-                                onMouseEnter={() => setHighlightedRole(role.name)}
-                                onMouseLeave={() => setHighlightedRole(null)}
-                                onFocusIn={() => setHighlightedRole(role.name)}
-                                onFocusOut={(event) => {
-                                  if (!event.currentTarget.contains(event.relatedTarget as Node))
-                                    setHighlightedRole(null);
-                                }}
-                              >
-                                <div class="dg-binding-heading">
-                                  <strong>{role.name}</strong>
-                                  <small>
-                                    {role.shape === 'visited' ? 'bool[] or set<int>' : role.shape}
-                                    {role.optional ? ' · optional' : ''}
-                                  </small>
-                                </div>
-                                <div class="dg-binding-current">
-                                  <IconCode size="15" />
-                                  <code>{draft()[role.name] || 'Not assigned'}</code>
-                                </div>
-                                <div class="dg-binding-choices">
-                                  <Show when={role.optional}>
-                                    <button
-                                      classList={{ active: !draft()[role.name] }}
-                                      onClick={() => setDraft((current) => ({ ...current, [role.name]: '' }))}
-                                    >
-                                      None
-                                      <Show when={!draft()[role.name]}>
-                                        <IconCheck size="14" />
-                                      </Show>
-                                    </button>
-                                  </Show>
-                                  <For
-                                    each={candidates(role)}
-                                    fallback={
-                                      role.optional ? null : (
-                                        <span class="lv-no-candidates">No compatible value</span>
-                                      )
-                                    }
-                                  >
-                                    {(name) => (
-                                      <button
-                                        classList={{ active: draft()[role.name] === name }}
-                                        onClick={() =>
-                                          setDraft((current) => ({ ...current, [role.name]: name }))
-                                        }
-                                      >
-                                        <code>{name}</code>
-                                        <Show when={draft()[role.name] === name}>
-                                          <IconCheck size="14" />
-                                        </Show>
-                                      </button>
-                                    )}
-                                  </For>
-                                </div>
-                              </div>
-                            )}
-                          </For>
-                        </div>
-                      </div>
-                      <ViewPreview template={template()} activeRole={highlightedRole() ?? undefined} />
-                    </div>
-                    <div class="dg-dialog-actions">
-                      <Show when={editingId() === null}>
-                        <button class="dg-back-action" onClick={returnToLayouts}>
-                          <IconChevronLeft size="16" />
-                          Back
-                        </button>
-                      </Show>
-                      <button
-                        class="dg-primary-action"
-                        disabled={!validBindings(templates[template()], draft(), frames())}
-                        onClick={saveView}
-                      >
-                        <IconCheck size="16" />
-                        {editingId() === null ? 'Add view' : 'Save bindings'}
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </Dialog.Content>
-          </div>
-        </Dialog.Portal>
-      </Dialog>
+      <ViewDialog model={controller} />
     </div>
   );
 }

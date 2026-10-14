@@ -12,9 +12,11 @@ export const templates = {
 } as const;
 
 export type Template = keyof typeof templates;
+export const templateKeys = Object.keys(templates) as Template[];
+export const defaultTemplate: Template = templateKeys[0];
 export type AlgoView = BaseAlgoView<Template>;
 export type { Role } from './contract';
-export { candidateNames, validBindings } from './contract';
+export { candidateNames, initialBindings, validBindings } from './contract';
 
 export function AlgoCell(props: { view: AlgoView; frame: Frame; inTable?: boolean }) {
   return (

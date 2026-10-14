@@ -1,6 +1,6 @@
 import { createMemo, For, Show } from 'solid-js';
 import { IconGridDots } from '@tabler/icons-solidjs';
-import type { AlgoViewDefinition } from '../contract';
+import { roleAccepts, type AlgoViewDefinition } from '../contract';
 import { isMatrix, isPosition, numberOf } from '../../value-shapes';
 import { valueText } from '../../../trace/value';
 
@@ -10,9 +10,40 @@ export const gridTraversal: AlgoViewDefinition = {
   description: 'Show a matrix with one highlighted position.',
   summary: 'Matrix + position',
   roles: [
-    { name: 'board', shape: 'matrix', previewHint: 'Changes the grid cells and walls.' },
-    { name: 'position', shape: 'position', previewHint: 'Moves the highlighted cell.' },
+    {
+      name: 'board',
+      shape: 'matrix',
+      accepts: roleAccepts.matrix,
+      previewHint: 'Changes the grid cells and walls.',
+    },
+    {
+      name: 'position',
+      shape: 'position',
+      accepts: roleAccepts.position,
+      previewHint: 'Moves the highlighted cell.',
+    },
   ],
+  preview: {
+    board: {
+      t: 'array',
+      items: [
+        [0, 0, 1, 0],
+        [1, 0, 1, 0],
+        [0, 0, 0, 0],
+        [0, 1, 0, 1],
+      ].map((row) => ({
+        t: 'array' as const,
+        items: row.map((cell) => ({ t: 'int' as const, v: String(cell) })),
+      })),
+    },
+    position: {
+      t: 'array',
+      items: [
+        { t: 'int', v: '2' },
+        { t: 'int', v: '1' },
+      ],
+    },
+  },
   icon: IconGridDots,
   component: (props) => {
     const board = createMemo(() => props.frame.values[props.view.bindings.board]?.value);

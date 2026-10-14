@@ -133,20 +133,18 @@ function sameSegment(left: ValuePathSegment, right: ValuePathSegment): boolean {
   }
 }
 
+function pathsOverlap(left: ValuePath, right: ValuePath): boolean {
+  return left
+    .slice(0, Math.min(left.length, right.length))
+    .every((segment, index) => sameSegment(segment, right[index]));
+}
+
 export function changesAffectPath(changes: readonly ValueChange[], path: ValuePath): boolean {
-  return changes.some((change) =>
-    change.path
-      .slice(0, Math.min(change.path.length, path.length))
-      .every((segment, index) => sameSegment(segment, path[index])),
-  );
+  return changes.some((change) => pathsOverlap(change.path, path));
 }
 
 export function matchesAffectPath(matches: readonly ValuePath[], path: ValuePath): boolean {
-  return matches.some((match) =>
-    match
-      .slice(0, Math.min(match.length, path.length))
-      .every((segment, index) => sameSegment(segment, path[index])),
-  );
+  return matches.some((match) => pathsOverlap(match, path));
 }
 
 export function framesWithChangeAt(

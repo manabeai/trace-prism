@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { changesAffectPath, diffValues, framesWithChangeAt } from '../../src/trace/diff';
+import { changesAffectPath, diffValues, framesWithChangeAt, matchesAffectPath } from '../../src/trace/diff';
 import { materialize } from '../../src/trace/materialize';
 import type { TraceRecord, Value } from '../../src/trace/types';
 
@@ -131,5 +131,17 @@ describe('typed value differences', () => {
     expect(diffValues({ t: 'int', v: '-0' }, { t: 'int', v: '0' })).toEqual([]);
     expect(diffValues({ t: 'float', v: '1.0' }, { t: 'float', v: '1e0' })).toEqual([]);
     expect(diffValues({ t: 'float', v: '-0' }, { t: 'float', v: '0' })).toEqual([]);
+  });
+
+  it('relates ancestor and child paths while preserving typed collection identity', () => {
+    const key = { kind: 'key' as const, key: { t: 'int' as const, v: '01' } };
+    const child = [key, { kind: 'index' as const, index: 2 }];
+    const changes = [{ kind: 'updated' as const, path: child, before: int('1'), after: int('2') }];
+    expect(changesAffectPath(changes, [key])).toBe(true);
+    expect(changesAffectPath(changes, [{ kind: 'key', key: { t: 'int', v: '1' } }])).toBe(true);
+    expect(changesAffectPath(changes, [{ kind: 'key', key: { t: 'string', v: '1' } }])).toBe(false);
+    expect(matchesAffectPath([[key]], child)).toBe(true);
+    expect(matchesAffectPath([[key]], [{ kind: 'key', key: { t: 'string', v: '1' } }])).toBe(false);
+    expect(changesAffectPath([{ kind: 'added', path: [], after: int('2') }], child)).toBe(true);
   });
 });

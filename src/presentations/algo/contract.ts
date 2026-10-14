@@ -2,10 +2,18 @@ import type { Component } from 'solid-js';
 import type { Frame, Value } from '../../trace/types';
 import { isBooleanArray, isIntegerSet, isMatrix, isPosition } from '../value-shapes';
 
-export type RoleShape = 'int' | 'bool' | 'array' | 'visited' | 'matrix' | 'position';
+export const roleAccepts = {
+  int: (value: Value) => value.t === 'int',
+  bool: (value: Value) => value.t === 'bool',
+  visited: (value: Value) => isBooleanArray(value) || isIntegerSet(value),
+  matrix: isMatrix,
+  position: isPosition,
+};
+
 export type Role = {
   name: string;
-  shape: RoleShape;
+  shape: string;
+  accepts: (value: Value) => boolean;
   previewHint: string;
   optional?: boolean;
   preferredNames?: readonly string[];
@@ -22,32 +30,29 @@ export type AlgoViewDefinition = {
   description: string;
   summary: string;
   roles: readonly Role[];
+  preview: Readonly<Record<string, Value>>;
   icon: Component<{ size?: string | number; stroke?: string }>;
   component: Component<{ view: AlgoView; frame: Frame; inTable?: boolean }>;
 };
 
-export function matchesRole(value: Value | undefined, shape: RoleShape): boolean {
-  if (!value) return false;
-  switch (shape) {
-    case 'int':
-      return value.t === 'int';
-    case 'bool':
-      return value.t === 'bool';
-    case 'array':
-      return value.t === 'array';
-    case 'visited':
-      return isBooleanArray(value) || isIntegerSet(value);
-    case 'matrix':
-      return isMatrix(value);
-    case 'position':
-      return isPosition(value);
+export function candidateNames(frames: Frame[], role: Role): string[] {
+  const names = new Map<string, boolean>();
+  for (const frame of frames) {
+    for (const [name, field] of Object.entries(frame.values)) {
+      if (!names.has(name)) names.set(name, false);
+      if (!names.get(name) && role.accepts(field.value)) names.set(name, true);
+    }
   }
+  return [...names].flatMap(([name, accepted]) => (accepted ? [name] : []));
 }
 
-export function candidateNames(frames: Frame[], role: Role): string[] {
-  const names = new Set(frames.flatMap((frame) => Object.keys(frame.values)));
-  return [...names].filter((name) =>
-    frames.some((frame) => matchesRole(frame.values[name]?.value, role.shape)),
+export function initialBindings(definition: AlgoViewDefinition, frames: Frame[]): Record<string, string> {
+  return Object.fromEntries(
+    definition.roles.map((role) => {
+      const names = candidateNames(frames, role);
+      const preferred = [role.name, ...(role.preferredNames ?? [])].find((name) => names.includes(name));
+      return [role.name, preferred ?? (role.optional ? '' : (names[0] ?? ''))];
+    }),
   );
 }
 

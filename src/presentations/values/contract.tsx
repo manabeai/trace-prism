@@ -12,6 +12,7 @@ export interface ValueFormat<T extends Value> {
   label: string | ((value: T) => string);
   icon: FormatIcon;
   isApplicable?: (value: T) => boolean;
+  isChanged?: (value: T, changes: readonly ValueChange[]) => boolean;
   render: (value: T, changes: readonly ValueChange[], matches: readonly ValuePath[]) => JSX.Element;
 }
 
@@ -28,6 +29,7 @@ export interface ErasedValueFormat {
   icon: FormatIcon;
   accepts: (value: Value) => boolean;
   label: (value: Value) => string;
+  isChanged: (value: Value, changes: readonly ValueChange[]) => boolean;
   render: (value: Value, changes: readonly ValueChange[], matches: readonly ValuePath[]) => JSX.Element;
 }
 
@@ -60,6 +62,8 @@ export function defineValuePresentation<K extends ValueKind>(
             ? format.label(value)
             : format.label
           : format.id,
+      isChanged: (value, changes) =>
+        accepts(value) && (format.isChanged?.(value, changes) ?? changes.length > 0),
       render: (value, changes, matches) =>
         accepts(value) ? (
           format.render(value, changes, matches)
