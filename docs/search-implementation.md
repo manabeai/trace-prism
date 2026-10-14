@@ -27,11 +27,15 @@ ok is true
 ## 境界
 
 - `src/search/model.ts`: 値の型形状、型付き条件、リテラル、正規文字列表現。
-- `src/search/grammar.ts`: 型別の射影・演算子・右辺候補と、クリック／入力からの条件更新。
-- `src/search/evaluate.ts`: Trace フレーム上の評価。結果は seq ごとの一致変数名と値パスを持つ。
+- `src/search/projections.ts`: 射影の適用条件、結果型、候補表示、値の計算。
+- `src/search/predicates.ts`: 条件演算子の適用条件、右辺の型、候補表示、値パスを含む一致判定。
+- `src/search/grammar.ts`: フィールド・射影・演算子・右辺を選ぶ状態遷移。
+- `src/search/evaluate.ts`: Trace フレーム上で条件を合成し、seq ごとの一致変数名と値パスを返す。
 - `src/workspace/search/SearchEditor.tsx`: 検索欄の入力・候補・ヒット移動。Trace の評価規則を持たない。
 - `src/workspace/controller.ts`: run ごとの条件を保持し、Table・Graph・seq bar に同一の検索結果を渡す。
 
 `changed` は Materializer が保持する差分パスを使う。最初のフレームには比較元がないためヒットしない。表の値表示には検索の一致パスを渡し、配列要素・Set メンバー・Matrix セル・Map エントリ・record フィールドを個別に強調する。Graph の辺の生成や Table の時系列順は検索結果で変えない。
 
 Map は `size` / `hasKey` / 等値・非等値 / `changed`、record は等値・非等値 / `changed` を扱う。Map や record 全体の右辺には、同型の `@変数名` を使う。型不明の値は `changed` と参照比較を中心に扱う。より複雑なリテラルや record 内フィールドの射影は、この型・文法境界に追加する。
+
+演算子を増やすときは `model.ts` の `Predicate` 型に ID を加え、`predicates.ts` に適用条件・右辺の型（単項条件なら省略）・一致判定を一件定義する。`changed` のように射影前の値を使う場合は `input: 'source'` を指定する。射影は `Projection` 型と `projections.ts` に同様に追加する。候補、条件の完成判定、評価はこれらの定義を参照するため、`grammar.ts` と `evaluate.ts` に個別の分岐を増やさない。候補と実際の一致、必要なら一致パスを `tests/unit/search.test.ts` で検証する。

@@ -1,4 +1,6 @@
 import { valueText } from '../trace/value';
+import { predicateCandidatesFor } from './predicates';
+import { projectionCandidatesFor } from './projections';
 import {
   normalize,
   operandShape,
@@ -15,93 +17,6 @@ import {
   type SearchField,
   type Shape,
 } from './model';
-
-const predicate = (key: Predicate, detail: string, type?: Shape): Candidate => ({
-  kind: 'predicate',
-  key,
-  label: key,
-  detail,
-  type,
-});
-const projection = (key: Projection, detail: string, type: Shape): Candidate => ({
-  kind: 'projection',
-  key,
-  label: key,
-  detail,
-  type,
-});
-const int: Shape = { kind: 'int' };
-
-function projectionsFor(shape: Shape): Candidate[] {
-  if (shape.kind === 'array') {
-    const items = shape.item.kind === 'int' || shape.item.kind === 'float';
-    return [
-      projection('size', 'Number of elements', int),
-      ...(items
-        ? [
-            projection('sum', 'Sum of elements', shape.item),
-            projection('min', 'Smallest element', shape.item),
-            projection('max', 'Largest element', shape.item),
-          ]
-        : []),
-    ];
-  }
-  if (shape.kind === 'set' || shape.kind === 'map') return [projection('size', 'Number of entries', int)];
-  if (shape.kind === 'string') return [projection('size', 'Number of characters', int)];
-  return [];
-}
-
-function orderable(shape: Shape): boolean {
-  return ['int', 'float', 'string', 'char', 'bool'].includes(shape.kind);
-}
-
-function predicatesFor(shape: Shape): Candidate[] {
-  const changed = predicate('changed', 'Changed at this seq');
-  const equality = [predicate('==', 'Equals', shape), predicate('!=', 'Does not equal', shape)];
-  const order = [
-    predicate('<', 'Less than', shape),
-    predicate('<=', 'Less than or equal', shape),
-    predicate('>', 'Greater than', shape),
-    predicate('>=', 'Greater than or equal', shape),
-  ];
-  if (shape.kind === 'int' || shape.kind === 'float') return [...order, ...equality, changed];
-  if (shape.kind === 'bool')
-    return [
-      predicate('is true', 'Value is true'),
-      predicate('is false', 'Value is false'),
-      ...equality,
-      changed,
-    ];
-  if (shape.kind === 'null') return [predicate('is null', 'Value is null'), changed];
-  if (shape.kind === 'string')
-    return [
-      predicate('contains', 'Contains text', shape),
-      predicate('startsWith', 'Starts with text', shape),
-      predicate('endsWith', 'Ends with text', shape),
-      ...equality,
-      changed,
-    ];
-  if (shape.kind === 'char') return [...equality, changed];
-  if (shape.kind === 'array')
-    return [
-      predicate('contains', 'Contains an element', shape.item),
-      ...(orderable(shape.item)
-        ? order.map((item) => ({ ...item, detail: `Lexicographically ${item.detail.toLowerCase()}` }))
-        : []),
-      ...equality,
-      changed,
-    ];
-  if (shape.kind === 'set')
-    return [
-      predicate('contains', 'Contains a member', shape.item),
-      predicate('subsetOf', 'Proper subset of', shape),
-      predicate('supersetOf', 'Proper superset of', shape),
-      ...equality,
-      changed,
-    ];
-  if (shape.kind === 'map') return [predicate('hasKey', 'Contains a key', shape.key), ...equality, changed];
-  return [...equality, changed];
-}
 
 function literalSamples(shape: Shape, fields: readonly SearchField[]): Candidate[] {
   const recorded = fields
@@ -149,13 +64,10 @@ export function candidatesFor(fields: readonly SearchField[], query: Query, draf
     }));
   else if (stage === 'operation' && clause)
     candidates = [
-      ...projectionsFor(clause.field.shape),
-      ...predicatesFor(clause.field.shape),
-      ...(clause.field.nullable && clause.field.shape.kind !== 'null'
-        ? [predicate('is null', 'Value is null')]
-        : []),
+      ...projectionCandidatesFor(clause.field.shape),
+      ...predicateCandidatesFor(clause.field.shape, clause.field.nullable),
     ];
-  else if (stage === 'predicate' && clause) candidates = predicatesFor(projectedShape(clause));
+  else if (stage === 'predicate' && clause) candidates = predicateCandidatesFor(projectedShape(clause));
   else if (stage === 'operand' && clause) {
     const expected = operandShape(clause);
     candidates = [

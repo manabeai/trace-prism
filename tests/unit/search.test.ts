@@ -11,6 +11,7 @@ import {
   searchFields,
   serializeQuery,
   stageOf,
+  type SearchField,
 } from '../../src/search/model';
 
 const int = (value: string): Value => ({ t: 'int', v: value });
@@ -56,13 +57,15 @@ const columns = [
 ];
 const fields = searchFields(columns, frames);
 
-function query(...words: string[]) {
+function queryFor(searchable: readonly SearchField[], ...words: string[]) {
   return words.reduce((current, word) => {
-    const next = commitText(fields, current, word);
+    const next = commitText(searchable, current, word);
     if (!next) throw new Error(`Cannot add ${word} to ${serializeQuery(current)}`);
     return next;
   }, emptyQuery());
 }
+
+const query = (...words: string[]) => queryFor(fields, ...words);
 
 describe('typed trace search', () => {
   it('offers operations from observed value shapes and typed right-hand values', () => {
@@ -78,6 +81,34 @@ describe('typed trace search', () => {
     expect(evaluateSearch(frames, query('a', '>=', '9007199254740994'), '').hits).toEqual([seqId('1')]);
     expect(evaluateSearch(frames, query('A', '<', '[2, 6, 8]'), '').hits).toEqual([seqId('0')]);
     expect(evaluateSearch(frames, query('A', '==', '@A'), '').hits).toEqual([seqId('0'), seqId('1')]);
+  });
+
+  it('uses the same projection definitions for suggestions, result types, and evaluation', () => {
+    expect(candidatesFor(fields, query('A'), '').map((item) => item.key)).toEqual(
+      expect.arrayContaining(['size', 'sum', 'min', 'max']),
+    );
+    expect(evaluateSearch(frames, query('A', 'sum', '>=', '17'), '').hits).toEqual([seqId('1')]);
+    expect(evaluateSearch(frames, query('A', 'min', '==', '2'), '').hits).toEqual([seqId('0'), seqId('1')]);
+    expect(evaluateSearch(frames, query('A', 'max', '==', '8'), '').hits).toEqual([seqId('0'), seqId('1')]);
+    expect(evaluateSearch(frames, query('label', 'size', '==', '7'), '').hits).toEqual([
+      seqId('0'),
+      seqId('1'),
+    ]);
+  });
+
+  it('uses predicate definitions for unary stages, text, and set relationships', () => {
+    expect(stageOf(query('a', 'changed'))).toBe('complete');
+    expect(stageOf(query('visited', 'subsetOf'))).toBe('operand');
+    expect(evaluateSearch(frames, query('label', 'startsWith', '"run"'), '').hits).toEqual([seqId('0')]);
+    expect(evaluateSearch(frames, query('label', 'endsWith', '"led"'), '').hits).toEqual([seqId('1')]);
+    expect(evaluateSearch(frames, query('visited', 'subsetOf', '{1, 2, 3}'), '').hits).toEqual([
+      seqId('0'),
+      seqId('1'),
+    ]);
+    expect(evaluateSearch(frames, query('visited', 'supersetOf', '{1}'), '').hits).toEqual([
+      seqId('0'),
+      seqId('1'),
+    ]);
   });
 
   it('treats sets as unordered and returns exact paths for changed elements', () => {
@@ -108,6 +139,7 @@ describe('typed trace search', () => {
     expect(
       candidatesFor(candidates, commitText(candidates, emptyQuery(), 'flag')!, '').map((item) => item.key),
     ).toEqual(expect.arrayContaining(['is true', 'is null']));
+    expect(evaluateSearch(nullable, queryFor(candidates, 'flag', 'is null'), '').hits).toEqual([seqId('0')]);
   });
 
   it('infers map entry types after an empty snapshot and matches record shapes by field name', () => {
@@ -125,6 +157,11 @@ describe('typed trace search', () => {
     }));
     const mapField = searchFields([{ name: 'counts', kind: 'map' }], mapFrames)[0];
     expect(mapField.shape).toEqual({ kind: 'map', key: { kind: 'int' }, value: { kind: 'int' } });
+    expect(
+      evaluateSearch(mapFrames, queryFor([mapField], 'counts', 'hasKey', '1'), '')
+        .bySeq.get(seqId('1'))
+        ?.fields.get('counts'),
+    ).toEqual([[{ kind: 'key', key: int('1') }]]);
     expect(
       sameShape(
         {

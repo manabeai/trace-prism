@@ -1,4 +1,9 @@
 import type { Column, Frame, Value } from '../trace/types';
+import { normalize } from './normalize';
+import { predicates } from './predicates';
+import { projections } from './projections';
+
+export { normalize } from './normalize';
 
 export type Shape =
   | { kind: 'int' | 'float' | 'bool' | 'string' | 'char' | 'null' | 'unknown' }
@@ -43,8 +48,6 @@ export type Candidate = {
 };
 
 export const emptyQuery = (): Query => ({ clauses: [], connectors: [] });
-export const normalize = (text: string) => text.normalize('NFKC').toLocaleLowerCase();
-
 export function shapeOf(value: Value, sourceType?: string): Shape {
   if (value.t === 'string') return { kind: /\bchar\b/i.test(sourceType ?? '') ? 'char' : 'string' };
   if (value.t === 'array' || value.t === 'set')
@@ -118,18 +121,14 @@ export function shapeLabel(shape: Shape): string {
 }
 
 export function projectedShape(clause: Clause): Shape {
-  if (!clause.projection) return clause.field.shape;
-  if (clause.projection === 'size') return { kind: 'int' };
-  if (clause.field.shape.kind === 'array') return clause.field.shape.item;
-  return { kind: 'unknown' };
+  return clause.projection
+    ? projections[clause.projection].resultShape(clause.field.shape)
+    : clause.field.shape;
 }
 
 export function operandShape(clause: Clause): Shape {
   const shape = projectedShape(clause);
-  if (clause.predicate === 'contains')
-    return shape.kind === 'array' || shape.kind === 'set' ? shape.item : { kind: 'string' };
-  if (clause.predicate === 'hasKey' && shape.kind === 'map') return shape.key;
-  return shape;
+  return clause.predicate ? (predicates[clause.predicate].operandShape?.(shape) ?? shape) : shape;
 }
 
 export function stageOf(query: Query): Stage {
@@ -137,7 +136,7 @@ export function stageOf(query: Query): Stage {
   const clause = query.clauses.at(-1);
   if (!clause) return 'field';
   if (!clause.predicate) return clause.projection ? 'predicate' : 'operation';
-  if (['changed', 'is true', 'is false', 'is null'].includes(clause.predicate)) return 'complete';
+  if (!predicates[clause.predicate].operandShape) return 'complete';
   return clause.operand ? 'complete' : 'operand';
 }
 
